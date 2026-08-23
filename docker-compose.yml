@@ -1,0 +1,42 @@
+# CHAINVISION — docker-compose skeleton
+# Postgres is Supabase-hosted (not run locally) — see 00_PROJECT_CONTEXT.md Architecture Note.
+# Build contexts below point at folders to be filled in by P1.2 (frontend), P1.3 (p1-backend), P1.4 (pr2-backend).
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+
+  p1-backend:
+    build:
+      context: ./p1-backend
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./p1-backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  pr2-backend:
+    build:
+      context: ./pr2-backend
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8080:8080"
