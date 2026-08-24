@@ -1,0 +1,1764 @@
+diff --git a/frontend/index.css b/frontend/index.css
+index bd6213e..e305f68 100644
+--- a/frontend/index.css
++++ b/frontend/index.css
+@@ -1,3 +1,45 @@
++@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
++
+ @tailwind base;
+ @tailwind components;
+-@tailwind utilities;
+\ No newline at end of file
++@tailwind utilities;
++
++@layer base {
++  html {
++    color-scheme: dark;
++  }
++  body {
++    @apply bg-ink text-paper antialiased;
++  }
++  ::selection {
++    @apply bg-signal/30 text-paper;
++  }
++}
++
++@layer utilities {
++  .bg-grid {
++    background-image:
++      linear-gradient(to right, rgba(133, 147, 175, 0.08) 1px, transparent 1px),
++      linear-gradient(to bottom, rgba(133, 147, 175, 0.08) 1px, transparent 1px);
++    background-size: 36px 36px;
++  }
++
++  .fade-edges {
++    mask-image: linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
++    -webkit-mask-image: linear-gradient(
++      to right,
++      transparent 0,
++      black 48px,
++      black calc(100% - 48px),
++      transparent 100%
++    );
++  }
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .animate-ticker,
++  .animate-pulse-dot,
++  .animate-rise-in {
++    animation: none !important;
++  }
++}
+\ No newline at end of file
+diff --git a/frontend/index.html b/frontend/index.html
+index ef92238..18baf89 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -3,6 +3,8 @@
+   <head>
+     <meta charset="UTF-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <link rel="preconnect" href="https://fonts.googleapis.com" />
++    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <title>Chainvision</title>
+   </head>
+   <body>
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 7546bd0..99c8c13 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -1,8 +1,16 @@
+ import { Route, Routes } from 'react-router-dom'
+ 
++import PlannerHome from './pages/planner/PlannerHome'
++import PlannerLayout from './pages/planner/PlannerLayout'
++import PlannerSectionPlaceholder from './pages/planner/PlannerSectionPlaceholder'
++import InventoryView from './pages/planner/InventoryView'
++import ExpiryHeatmap from './pages/planner/ExpiryHeatmap'
++import RecommendationsView from './pages/planner/RecommendationsView'
++import { PulseIcon } from './components/icons'
++
+ function Placeholder() {
+   return (
+-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-slate-100">
++    <main className="flex min-h-screen items-center justify-center bg-ink px-6 text-paper">
+       <h1 className="text-center text-3xl font-semibold tracking-tight">
+         CHAINVISION - under construction
+       </h1>
+@@ -13,6 +21,27 @@ function Placeholder() {
+ function App() {
+   return (
+     <Routes>
++      <Route path="/planner" element={<PlannerLayout />}>
++        <Route index element={<PlannerHome />} />
++        <Route path="inventory" element={<InventoryView />} />
++        <Route path="expiry-risk" element={<ExpiryHeatmap />} />
++        <Route path="replenishment" element={<RecommendationsView />} />
++        <Route
++          path="demand-signals"
++          element={
++            <PlannerSectionPlaceholder
++              icon={PulseIcon}
++              title="Demand Signals"
++              description="Sensed demand against forecast, by region — including the flu-season spikes that trigger Tier-2 stockouts."
++              comingIn={[
++                'Historical and sensed demand by SKU/region',
++                'Forecast vs. actual comparison',
++                'Regional spike detection (e.g. flu-season demand)',
++              ]}
++            />
++          }
++        />
++      </Route>
+       <Route path="*" element={<Placeholder />} />
+     </Routes>
+   )
+diff --git a/frontend/src/api/p1Client.ts b/frontend/src/api/p1Client.ts
+new file mode 100644
+index 0000000..e5fa63c
+--- /dev/null
++++ b/frontend/src/api/p1Client.ts
+@@ -0,0 +1,32 @@
++import axios from 'axios'
++
++const baseURL = import.meta.env.VITE_P1_API_BASE
++
++if (!baseURL) {
++  // Fail loudly in dev — a silently-relative baseURL is a confusing bug
++  // to chase later.
++  console.warn('[p1Client] VITE_P1_API_BASE is not set — check your .env')
++}
++
++/**
++ * Shared axios instance for the P1 backend. Planner components should
++ * import this instead of calling axios directly, so auth headers,
++ * base URL, and error logging stay in one place.
++ */
++export const p1Client = axios.create({
++  baseURL,
++  timeout: 10_000,
++  headers: {
++    'Content-Type': 'application/json',
++  },
++})
++
++p1Client.interceptors.response.use(
++  (response) => response,
++  (error) => {
++    console.error('[p1Client] request failed:', error?.response?.status, error?.message)
++    return Promise.reject(error)
++  },
++)
++
++export default p1Client
+diff --git a/frontend/src/components/NavBar.tsx b/frontend/src/components/NavBar.tsx
+new file mode 100644
+index 0000000..92764fb
+--- /dev/null
++++ b/frontend/src/components/NavBar.tsx
+@@ -0,0 +1,96 @@
++import { NavLink } from 'react-router-dom'
++
++import { useAuthStub } from '../hooks/useAuthStub'
++import {
++  CrateIcon,
++  HourglassIcon,
++  NetworkMark,
++  OverviewIcon,
++  PulseIcon,
++  RouteIcon,
++} from './icons'
++
++const NAV_ITEMS = [
++  { to: '/planner', label: 'Overview', icon: OverviewIcon, end: true },
++  { to: '/planner/inventory', label: 'Inventory', icon: CrateIcon, end: false },
++  { to: '/planner/expiry-risk', label: 'Expiry Risk', icon: HourglassIcon, end: false },
++  { to: '/planner/replenishment', label: 'Replenishment', icon: RouteIcon, end: false },
++  { to: '/planner/demand-signals', label: 'Demand Signals', icon: PulseIcon, end: false },
++] as const
++
++export default function NavBar() {
++  const { user, role, loading } = useAuthStub()
++
++  return (
++    <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line bg-panel md:w-64">
++      {/* Brand */}
++      <div className="flex items-center gap-3 border-b border-line px-4 py-5 md:px-6">
++        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel2 text-signal">
++          <NetworkMark className="h-5 w-5" />
++          <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse-dot rounded-full bg-signal" />
++        </div>
++        <div className="hidden md:block">
++          <p className="font-display text-sm font-semibold tracking-tight text-paper">CHAINVISION</p>
++          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-mist">Planner</p>
++        </div>
++      </div>
++
++      {/* Nav links */}
++      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4 md:px-3">
++        {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
++          <NavLink
++            key={to}
++            to={to}
++            end={end}
++            className={({ isActive }) =>
++              [
++                'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
++                isActive
++                  ? 'bg-panel2 text-paper'
++                  : 'text-mist hover:bg-panel2/60 hover:text-paper',
++              ].join(' ')
++            }
++          >
++            {({ isActive }) => (
++              <>
++                <span
++                  className={[
++                    'absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-signal transition-opacity',
++                    isActive ? 'opacity-100' : 'opacity-0',
++                  ].join(' ')}
++                />
++                <Icon
++                  className={[
++                    'h-[18px] w-[18px] shrink-0 transition-colors',
++                    isActive ? 'text-signal' : 'text-mist group-hover:text-signal',
++                  ].join(' ')}
++                />
++                <span className="hidden truncate md:inline">{label}</span>
++              </>
++            )}
++          </NavLink>
++        ))}
++      </nav>
++
++      {/* Auth-stub user card */}
++      <div className="border-t border-line p-3 md:p-4">
++        <div className="flex items-center gap-3 rounded-lg bg-panel2 px-3 py-2.5">
++          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-xs text-signal">
++            {loading ? '···' : user?.initials}
++          </div>
++          <div className="hidden min-w-0 md:block">
++            <p className="truncate text-xs font-medium text-paper">
++              {loading ? 'Loading session…' : user?.name}
++            </p>
++            <p className="truncate font-mono text-[10px] uppercase tracking-wider text-mist">
++              {loading ? '—' : role}
++            </p>
++          </div>
++        </div>
++        <p className="mt-2 hidden font-mono text-[9px] uppercase tracking-[0.2em] text-alert/80 md:block">
++          Stub session · Phase 23 swaps this
++        </p>
++      </div>
++    </aside>
++  )
++}
+diff --git a/frontend/src/components/badges.tsx b/frontend/src/components/badges.tsx
+new file mode 100644
+index 0000000..9a3b62c
+--- /dev/null
++++ b/frontend/src/components/badges.tsx
+@@ -0,0 +1,68 @@
++import type { ReactNode } from 'react'
++
++export type Urgency = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
++export type ExpiryRisk = 'OK' | 'WARNING' | 'CRITICAL' | 'EXPIRED'
++
++const URGENCY_STYLES: Record<Urgency, string> = {
++  LOW: 'text-mist border-line bg-panel2',
++  MEDIUM: 'text-signal border-signal/30 bg-signal/10',
++  HIGH: 'text-alert border-alert/30 bg-alert/10',
++  CRITICAL: 'text-critical border-critical/40 bg-critical/10',
++}
++
++export function UrgencyBadge({ urgency }: { urgency: Urgency }) {
++  return (
++    <span
++      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${URGENCY_STYLES[urgency]}`}
++    >
++      {urgency}
++    </span>
++  )
++}
++
++const RISK_STYLES: Record<ExpiryRisk, string> = {
++  OK: 'text-signal border-signal/30 bg-signal/10',
++  WARNING: 'text-alert border-alert/30 bg-alert/10',
++  CRITICAL: 'text-critical border-critical/40 bg-critical/10',
++  EXPIRED: 'text-paper border-critical bg-critical/60',
++}
++
++export function RiskBadge({ risk }: { risk: ExpiryRisk }) {
++  return (
++    <span
++      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${RISK_STYLES[risk]}`}
++    >
++      {risk}
++    </span>
++  )
++}
++
++export const RISK_CELL_STYLES: Record<ExpiryRisk | 'EMPTY', string> = {
++  OK: 'bg-signal/20 border-signal/40 text-signal',
++  WARNING: 'bg-alert/25 border-alert/50 text-alert',
++  CRITICAL: 'bg-critical/30 border-critical/60 text-critical',
++  EXPIRED: 'bg-critical/70 border-critical text-paper',
++  EMPTY: 'bg-panel border-line text-mist/40',
++}
++
++export function RefreshButton({
++  onClick,
++  loading,
++  children = 'Refresh',
++}: {
++  onClick: () => void
++  loading?: boolean
++  children?: ReactNode
++}) {
++  return (
++    <button
++      type="button"
++      onClick={onClick}
++      disabled={loading}
++      className="inline-flex items-center gap-2 rounded-lg border border-line bg-panel2 px-3.5 py-1.5 text-xs font-medium text-paper transition-colors hover:border-signal/40 hover:text-signal disabled:cursor-not-allowed disabled:opacity-50"
++    >
++      <span className={loading ? 'animate-pulse-dot' : ''}>↻</span>
++      {loading ? 'Refreshing…' : children}
++    </button>
++  )
++}
+diff --git a/frontend/src/components/icons.tsx b/frontend/src/components/icons.tsx
+new file mode 100644
+index 0000000..3442b1c
+--- /dev/null
++++ b/frontend/src/components/icons.tsx
+@@ -0,0 +1,96 @@
++// Minimal, hand-drawn line icons themed around distribution/logistics.
++// Kept dependency-free (no icon package) so the P1 frontend scaffold
++// doesn't grow its bundle for five glyphs.
++
++type IconProps = {
++  className?: string
++}
++
++const base = {
++  viewBox: '0 0 24 24',
++  fill: 'none',
++  stroke: 'currentColor',
++  strokeWidth: 1.6,
++  strokeLinecap: 'round' as const,
++  strokeLinejoin: 'round' as const,
++}
++
++export function OverviewIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.4" />
++      <rect x="13" y="3.5" width="7.5" height="4.5" rx="1.4" />
++      <rect x="13" y="10.5" width="7.5" height="10" rx="1.4" />
++      <rect x="3.5" y="13.5" width="7.5" height="7" rx="1.4" />
++    </svg>
++  )
++}
++
++export function CrateIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <path d="M3.5 8.2 12 4l8.5 4.2v7.6L12 20l-8.5-4.2Z" />
++      <path d="M3.5 8.2 12 12l8.5-4.2" />
++      <path d="M12 12v8" />
++      <path d="M7.75 6.1 16.25 10.3" />
++    </svg>
++  )
++}
++
++export function HourglassIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <path d="M6 3.5h12" />
++      <path d="M6 20.5h12" />
++      <path d="M7 3.5v3.1c0 1.6.9 3.1 2.4 3.9l2.6 1.5 2.6-1.5c1.5-.8 2.4-2.3 2.4-3.9V3.5" />
++      <path d="M7 20.5v-3.1c0-1.6.9-3.1 2.4-3.9l2.6-1.5 2.6 1.5c1.5.8 2.4 2.3 2.4 3.9v3.1" />
++    </svg>
++  )
++}
++
++export function RouteIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <circle cx="5" cy="18" r="2" />
++      <circle cx="19" cy="6" r="2" />
++      <path d="M5 16c0-6 3-9 6-9h1" />
++      <path d="M15.5 7.8 12.2 6.5l.6-3.5" />
++    </svg>
++  )
++}
++
++export function PulseIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <path d="M3 12h3.5l2-6 4 12 2-9 1.5 3H21" />
++    </svg>
++  )
++}
++
++export function ChevronIcon({ className }: IconProps) {
++  return (
++    <svg {...base} className={className}>
++      <path d="m9 6 6 6-6 6" />
++    </svg>
++  )
++}
++
++/** Brand mark: three linked distribution nodes with a live signal pulse. */
++export function NetworkMark({ className }: IconProps) {
++  return (
++    <svg viewBox="0 0 32 32" className={className}>
++      <path
++        d="M8 22 16 10l8 12"
++        fill="none"
++        stroke="currentColor"
++        strokeWidth="1.6"
++        strokeLinecap="round"
++        strokeLinejoin="round"
++        opacity="0.55"
++      />
++      <circle cx="16" cy="10" r="3" fill="currentColor" />
++      <circle cx="8" cy="22" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
++      <circle cx="24" cy="22" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
++    </svg>
++  )
++}
+diff --git a/frontend/src/hooks/useAuthStub.ts b/frontend/src/hooks/useAuthStub.ts
+new file mode 100644
+index 0000000..49a702f
+--- /dev/null
++++ b/frontend/src/hooks/useAuthStub.ts
+@@ -0,0 +1,56 @@
++import { useEffect, useState } from 'react'
++
++/**
++ * ⚠️ TEMPORARY STUB — replaced in Phase 23 by a real hook backed by a
++ * Supabase Auth session (see 00_PROJECT_CONTEXT.md Section 5.5).
++ *
++ * Every other component must depend on this hook's RETURN SHAPE
++ * ({ user, role, loading }) and never on the fact that it currently
++ * fakes a session — that's what makes the Phase 23 swap a one-file
++ * change (only this file gets rewritten; call sites don't move).
++ */
++
++export type PlannerRole = 'planner' | 'planning_manager'
++
++export interface AuthStubUser {
++  id: string
++  name: string
++  email: string
++  initials: string
++  dc: string
++}
++
++export interface UseAuthStubResult {
++  user: AuthStubUser | null
++  role: PlannerRole | null
++  loading: boolean
++}
++
++const STUB_USER: AuthStubUser = {
++  id: 'stub-planner-001',
++  name: 'Ananya Rao',
++  email: 'ananya.rao@medcarepharma.demo',
++  initials: 'AR',
++  dc: 'Kolkata DC',
++}
++
++const STUB_ROLE: PlannerRole = 'planner'
++
++// Small artificial delay so consumers exercise their real loading state
++// instead of always rendering the resolved user on first paint.
++const STUB_SESSION_DELAY_MS = 250
++
++export function useAuthStub(): UseAuthStubResult {
++  const [loading, setLoading] = useState(true)
++
++  useEffect(() => {
++    const timeout = setTimeout(() => setLoading(false), STUB_SESSION_DELAY_MS)
++    return () => clearTimeout(timeout)
++  }, [])
++
++  return {
++    user: loading ? null : STUB_USER,
++    role: loading ? null : STUB_ROLE,
++    loading,
++  }
++}
+diff --git a/frontend/src/hooks/useReferenceData.ts b/frontend/src/hooks/useReferenceData.ts
+new file mode 100644
+index 0000000..cfd3448
+--- /dev/null
++++ b/frontend/src/hooks/useReferenceData.ts
+@@ -0,0 +1,72 @@
++import { useEffect, useState } from 'react'
++
++import { p1Client } from '../api/p1Client'
++
++export interface SkuRef {
++  id: string
++  skuCode: string
++  name: string
++  category: string
++}
++
++export interface DcRef {
++  id: string
++  dcCode: string
++  name: string
++  region: string
++}
++
++export interface ReferenceData {
++  skus: SkuRef[]
++  dcs: DcRef[]
++  skuById: Map<string, SkuRef>
++  dcById: Map<string, DcRef>
++  loading: boolean
++  error: boolean
++}
++
++/**
++ * Loads the SKU and distribution-center catalogs once and exposes
++ * id → record lookup maps. Every planner view that renders inventory,
++ * expiry, or recommendation rows needs to turn a bare skuId/dcId into
++ * a readable code, so this is shared rather than refetched per view.
++ */
++export function useReferenceData(): ReferenceData {
++  const [skus, setSkus] = useState<SkuRef[]>([])
++  const [dcs, setDcs] = useState<DcRef[]>([])
++  const [loading, setLoading] = useState(true)
++  const [error, setError] = useState(false)
++
++  useEffect(() => {
++    let cancelled = false
++
++    Promise.all([
++      p1Client.get<{ data: SkuRef[] }>('/skus'),
++      p1Client.get<{ data: DcRef[] }>('/distribution-centers'),
++    ])
++      .then(([skuRes, dcRes]) => {
++        if (cancelled) return
++        setSkus(skuRes.data.data)
++        setDcs(dcRes.data.data)
++      })
++      .catch(() => {
++        if (!cancelled) setError(true)
++      })
++      .finally(() => {
++        if (!cancelled) setLoading(false)
++      })
++
++    return () => {
++      cancelled = true
++    }
++  }, [])
++
++  return {
++    skus,
++    dcs,
++    skuById: new Map(skus.map((sku) => [sku.id, sku])),
++    dcById: new Map(dcs.map((dc) => [dc.id, dc])),
++    loading,
++    error,
++  }
++}
+diff --git a/frontend/src/pages/planner/DemandSpikeSimulator.tsx b/frontend/src/pages/planner/DemandSpikeSimulator.tsx
+new file mode 100644
+index 0000000..7ec6c12
+--- /dev/null
++++ b/frontend/src/pages/planner/DemandSpikeSimulator.tsx
+@@ -0,0 +1,190 @@
++import { useState, type ReactNode } from 'react'
++
++import { p1Client } from '../../api/p1Client'
++import type { DcRef, SkuRef } from '../../hooks/useReferenceData'
++
++type Step = 'idle' | 'signal' | 'recalculating' | 'done' | 'error'
++
++interface RecalculateSummary {
++  count: number
++  byUrgency: Record<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL', number>
++}
++
++export default function DemandSpikeSimulator({
++  skus,
++  dcs,
++  onRecommendationsUpdated,
++}: {
++  skus: SkuRef[]
++  dcs: DcRef[]
++  onRecommendationsUpdated: () => void
++}) {
++  const [skuId, setSkuId] = useState('')
++  const [dcId, setDcId] = useState('')
++  const [adjustmentPct, setAdjustmentPct] = useState(60)
++  const [historicalDemand, setHistoricalDemand] = useState(500)
++  const [step, setStep] = useState<Step>('idle')
++  const [summary, setSummary] = useState<RecalculateSummary | null>(null)
++  const [errorMessage, setErrorMessage] = useState('')
++
++  const canSubmit = skuId && dcId && step !== 'signal' && step !== 'recalculating'
++
++  const runSimulation = async () => {
++    setErrorMessage('')
++    setSummary(null)
++    setStep('signal')
++    try {
++      await p1Client.post('/demand-signals', {
++        skuId,
++        dcId,
++        historicalDemand,
++        sensedAdjustmentPct: adjustmentPct,
++        source: 'planner-demand-spike-simulator',
++      })
++
++      setStep('recalculating')
++      const recalcResponse = await p1Client.post<{
++        data: { count: number; byUrgency: RecalculateSummary['byUrgency'] }
++      }>('/replenishment/recalculate', { skuId, dcId })
++
++      setSummary(recalcResponse.data.data)
++      setStep('done')
++      onRecommendationsUpdated()
++    } catch (error) {
++      const message = axiosMessage(error)
++      setErrorMessage(message)
++      setStep('error')
++    }
++  }
++
++  return (
++    <div className="rounded-xl border border-line bg-panel p-5">
++      <div className="mb-4 flex items-center justify-between">
++        <div>
++          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Demo trigger</p>
++          <h3 className="mt-0.5 font-display text-base font-semibold text-paper">Demand spike simulator</h3>
++        </div>
++        <StepIndicator step={step} />
++      </div>
++
++      <p className="mb-4 max-w-2xl text-sm text-mist">
++        Sends a sensed-demand signal for a SKU/DC, then triggers a targeted replenishment
++        recalculation — the exact moment a Tier-2 flu-season spike turns into a fresh
++        recommendation.
++      </p>
++
++      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
++        <Field label="SKU">
++          <select
++            value={skuId}
++            onChange={(e) => setSkuId(e.target.value)}
++            className="w-full rounded-lg border border-line bg-ink px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++          >
++            <option value="">Select SKU…</option>
++            {skus.map((sku) => (
++              <option key={sku.id} value={sku.id}>
++                {sku.skuCode} · {sku.name}
++              </option>
++            ))}
++          </select>
++        </Field>
++
++        <Field label="Distribution center">
++          <select
++            value={dcId}
++            onChange={(e) => setDcId(e.target.value)}
++            className="w-full rounded-lg border border-line bg-ink px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++          >
++            <option value="">Select DC…</option>
++            {dcs.map((dc) => (
++              <option key={dc.id} value={dc.id}>
++                {dc.dcCode} · {dc.name}
++              </option>
++            ))}
++          </select>
++        </Field>
++
++        <Field label="Sensed adjustment (%)">
++          <input
++            type="number"
++            value={adjustmentPct}
++            onChange={(e) => setAdjustmentPct(Number(e.target.value))}
++            className="w-full rounded-lg border border-line bg-ink px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++          />
++        </Field>
++
++        <Field label="Baseline historical demand">
++          <input
++            type="number"
++            value={historicalDemand}
++            onChange={(e) => setHistoricalDemand(Number(e.target.value))}
++            className="w-full rounded-lg border border-line bg-ink px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++          />
++        </Field>
++      </div>
++
++      <div className="mt-4 flex flex-wrap items-center gap-3">
++        <button
++          type="button"
++          onClick={runSimulation}
++          disabled={!canSubmit}
++          className="inline-flex items-center gap-2 rounded-lg bg-signal px-4 py-2 text-sm font-semibold text-ink transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
++        >
++          Trigger demand spike
++        </button>
++
++        {step === 'done' && summary && (
++          <p className="text-sm text-signal">
++            {summary.count} recommendation{summary.count === 1 ? '' : 's'} generated — CRITICAL{' '}
++            {summary.byUrgency.CRITICAL}, HIGH {summary.byUrgency.HIGH}, MEDIUM {summary.byUrgency.MEDIUM}, LOW{' '}
++            {summary.byUrgency.LOW}.
++          </p>
++        )}
++
++        {step === 'error' && <p className="text-sm text-critical">{errorMessage}</p>}
++      </div>
++    </div>
++  )
++}
++
++function Field({ label, children }: { label: string; children: ReactNode }) {
++  return (
++    <label className="block">
++      <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-mist">{label}</span>
++      {children}
++    </label>
++  )
++}
++
++function StepIndicator({ step }: { step: Step }) {
++  if (step === 'idle') return null
++  const labels: Record<Step, string> = {
++    idle: '',
++    signal: 'Recording demand signal…',
++    recalculating: 'Recalculating replenishment…',
++    done: 'Recommendation ready',
++    error: 'Failed',
++  }
++  const tone =
++    step === 'error' ? 'text-critical' : step === 'done' ? 'text-signal' : 'text-alert'
++  return (
++    <span className={`flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${tone}`}>
++      {(step === 'signal' || step === 'recalculating') && (
++        <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-current" />
++      )}
++      {labels[step]}
++    </span>
++  )
++}
++
++function axiosMessage(error: unknown): string {
++  if (
++    typeof error === 'object' &&
++    error !== null &&
++    'response' in error &&
++    typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
++  ) {
++    return (error as { response: { data: { error: string } } }).response.data.error
++  }
++  return 'Something went wrong reaching the P1 API — check the backend connection.'
++}
+diff --git a/frontend/src/pages/planner/ExpiryHeatmap.tsx b/frontend/src/pages/planner/ExpiryHeatmap.tsx
+new file mode 100644
+index 0000000..f8b317a
+--- /dev/null
++++ b/frontend/src/pages/planner/ExpiryHeatmap.tsx
+@@ -0,0 +1,199 @@
++import { useEffect, useMemo, useState } from 'react'
++
++import { p1Client } from '../../api/p1Client'
++import { RefreshButton, RiskBadge, RISK_CELL_STYLES, type ExpiryRisk } from '../../components/badges'
++import { useReferenceData } from '../../hooks/useReferenceData'
++
++interface Batch {
++  id: string
++  skuId: string
++  dcId: string
++  batchNo: string
++  quantity: number
++  expiryDate: string
++  receivedDate: string
++  daysUntilExpiry: number
++  expiryRisk: ExpiryRisk
++}
++
++type LoadState = 'loading' | 'ok' | 'error'
++
++const RISK_RANK: Record<ExpiryRisk, number> = { EXPIRED: 3, CRITICAL: 2, WARNING: 1, OK: 0 }
++
++export default function ExpiryHeatmap() {
++  const { skus, dcs, skuById, dcById } = useReferenceData()
++  const [batches, setBatches] = useState<Batch[]>([])
++  const [state, setState] = useState<LoadState>('loading')
++
++  const load = () => {
++    setState('loading')
++    p1Client
++      .get<{ data: { batches: Batch[] } }>('/inventory', { params: { detail: 'batches' } })
++      .then((response) => {
++        setBatches(response.data.data.batches)
++        setState('ok')
++      })
++      .catch(() => setState('error'))
++  }
++
++  useEffect(load, [])
++
++  // Cell = worst-case risk among a SKU × DC's batches, plus the count
++  // and the soonest expiry, so a glance shows what needs attention.
++  const grid = useMemo(() => {
++    const cells = new Map<
++      string,
++      { worst: ExpiryRisk; count: number; soonestDays: number }
++    >()
++
++    for (const batch of batches) {
++      const key = `${batch.skuId}:${batch.dcId}`
++      const existing = cells.get(key)
++      if (!existing || RISK_RANK[batch.expiryRisk] > RISK_RANK[existing.worst]) {
++        cells.set(key, {
++          worst: batch.expiryRisk,
++          count: (existing?.count ?? 0) + 1,
++          soonestDays: Math.min(existing?.soonestDays ?? Infinity, batch.daysUntilExpiry),
++        })
++      } else {
++        cells.set(key, {
++          ...existing,
++          count: existing.count + 1,
++          soonestDays: Math.min(existing.soonestDays, batch.daysUntilExpiry),
++        })
++      }
++    }
++    return cells
++  }, [batches])
++
++  const rowSkus = useMemo(() => {
++    const activeSkuIds = new Set(batches.map((b) => b.skuId))
++    return skus.filter((sku) => activeSkuIds.has(sku.id))
++  }, [skus, batches])
++
++  const colDcs = useMemo(() => {
++    const activeDcIds = new Set(batches.map((b) => b.dcId))
++    return dcs.filter((dc) => activeDcIds.has(dc.id))
++  }, [dcs, batches])
++
++  const mostUrgent = useMemo(
++    () =>
++      [...batches]
++        .filter((b) => b.expiryRisk === 'CRITICAL' || b.expiryRisk === 'EXPIRED')
++        .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
++        .slice(0, 8),
++    [batches],
++  )
++
++  return (
++    <div className="mx-auto flex max-w-6xl flex-col gap-5">
++      <div className="flex flex-wrap items-end justify-between gap-4">
++        <div>
++          <h2 className="font-display text-xl font-semibold tracking-tight text-paper">Expiry risk heatmap</h2>
++          <p className="mt-1 text-sm text-mist">Worst-case batch risk per SKU × distribution center.</p>
++        </div>
++        <div className="flex items-center gap-4">
++          <Legend />
++          <RefreshButton onClick={load} loading={state === 'loading'} />
++        </div>
++      </div>
++
++      {state === 'error' ? (
++        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-critical">
++          Couldn't reach the P1 API. Check the backend connection and refresh.
++        </p>
++      ) : state === 'loading' ? (
++        <div className="h-64 animate-pulse rounded-xl border border-line bg-panel" />
++      ) : rowSkus.length === 0 ? (
++        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-mist">No batches on hand yet.</p>
++      ) : (
++        <div className="overflow-x-auto rounded-xl border border-line bg-panel p-4">
++          <table className="w-full border-separate border-spacing-1.5 text-left text-xs">
++            <thead>
++              <tr>
++                <th className="px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-mist">SKU \ DC</th>
++                {colDcs.map((dc) => (
++                  <th key={dc.id} className="px-2 py-1 text-center font-mono text-[10px] uppercase tracking-wider text-mist">
++                    {dc.dcCode}
++                  </th>
++                ))}
++              </tr>
++            </thead>
++            <tbody>
++              {rowSkus.map((sku) => (
++                <tr key={sku.id}>
++                  <td className="whitespace-nowrap px-2 py-1 font-mono text-[11px] text-paper">{sku.skuCode}</td>
++                  {colDcs.map((dc) => {
++                    const cell = grid.get(`${sku.id}:${dc.id}`)
++                    return (
++                      <td key={dc.id} className="p-0">
++                        {cell ? (
++                          <div
++                            title={`${cell.count} batch(es) · soonest expiry in ${cell.soonestDays}d`}
++                            className={`flex h-14 w-20 flex-col items-center justify-center rounded-lg border font-mono transition-transform hover:scale-[1.04] ${RISK_CELL_STYLES[cell.worst]}`}
++                          >
++                            <span className="text-[10px] font-semibold uppercase tracking-wide">{cell.worst}</span>
++                            <span className="text-[10px] opacity-80">{cell.soonestDays}d · ×{cell.count}</span>
++                          </div>
++                        ) : (
++                          <div className={`flex h-14 w-20 items-center justify-center rounded-lg border ${RISK_CELL_STYLES.EMPTY}`}>
++                            <span className="text-[10px]">—</span>
++                          </div>
++                        )}
++                      </td>
++                    )
++                  })}
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      )}
++
++      {mostUrgent.length > 0 && (
++        <div className="rounded-xl border border-line bg-panel p-5">
++          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Most urgent batches</p>
++          <div className="space-y-2">
++            {mostUrgent.map((batch) => (
++              <div key={batch.id} className="flex items-center justify-between gap-4 rounded-lg border border-line/70 bg-ink/40 px-3.5 py-2.5">
++                <div className="min-w-0">
++                  <p className="truncate text-sm text-paper">
++                    <span className="font-mono text-xs">{skuById.get(batch.skuId)?.skuCode ?? batch.skuId}</span>
++                    <span className="mx-1.5 text-mist">·</span>
++                    <span className="font-mono text-xs">{dcById.get(batch.dcId)?.dcCode ?? batch.dcId}</span>
++                    <span className="mx-1.5 text-mist">·</span>
++                    batch {batch.batchNo}
++                  </p>
++                  <p className="mt-0.5 text-xs text-mist">
++                    {batch.quantity.toLocaleString()} units · expires {batch.expiryDate}
++                    {batch.daysUntilExpiry >= 0 ? ` (in ${batch.daysUntilExpiry}d)` : ` (${Math.abs(batch.daysUntilExpiry)}d ago)`}
++                  </p>
++                </div>
++                <RiskBadge risk={batch.expiryRisk} />
++              </div>
++            ))}
++          </div>
++        </div>
++      )}
++    </div>
++  )
++}
++
++function Legend() {
++  const items: { label: string; risk: ExpiryRisk }[] = [
++    { label: 'OK', risk: 'OK' },
++    { label: 'Warning', risk: 'WARNING' },
++    { label: 'Critical', risk: 'CRITICAL' },
++    { label: 'Expired', risk: 'EXPIRED' },
++  ]
++  return (
++    <div className="hidden items-center gap-2 md:flex">
++      {items.map((item) => (
++        <span key={item.risk} className="flex items-center gap-1.5 text-[11px] text-mist">
++          <span className={`h-2.5 w-2.5 rounded-sm border ${RISK_CELL_STYLES[item.risk]}`} />
++          {item.label}
++        </span>
++      ))}
++    </div>
++  )
++}
+diff --git a/frontend/src/pages/planner/InventoryView.tsx b/frontend/src/pages/planner/InventoryView.tsx
+new file mode 100644
+index 0000000..1036478
+--- /dev/null
++++ b/frontend/src/pages/planner/InventoryView.tsx
+@@ -0,0 +1,200 @@
++import { useEffect, useMemo, useState } from 'react'
++
++import { p1Client } from '../../api/p1Client'
++import { RefreshButton } from '../../components/badges'
++import { useReferenceData } from '../../hooks/useReferenceData'
++
++interface StockRow {
++  skuId: string
++  dcId: string
++  currentStock: number
++  batchCount: number
++}
++
++type SortField = 'sku' | 'dc' | 'currentStock' | 'batchCount'
++type SortDir = 'asc' | 'desc'
++type LoadState = 'loading' | 'ok' | 'error'
++
++export default function InventoryView() {
++  const { skus, dcs, skuById, dcById } = useReferenceData()
++
++  const [rows, setRows] = useState<StockRow[]>([])
++  const [state, setState] = useState<LoadState>('loading')
++  const [skuFilter, setSkuFilter] = useState('')
++  const [dcFilter, setDcFilter] = useState('')
++  const [sortField, setSortField] = useState<SortField>('sku')
++  const [sortDir, setSortDir] = useState<SortDir>('asc')
++
++  const load = () => {
++    setState('loading')
++    const params: Record<string, string> = {}
++    if (skuFilter) params.skuId = skuFilter
++    if (dcFilter) params.dcId = dcFilter
++
++    p1Client
++      .get<{ data: { stock: StockRow[] } }>('/inventory', { params })
++      .then((response) => {
++        setRows(response.data.data.stock)
++        setState('ok')
++      })
++      .catch(() => setState('error'))
++  }
++
++  // eslint-disable-next-line react-hooks/exhaustive-deps
++  useEffect(load, [skuFilter, dcFilter])
++
++  const toggleSort = (field: SortField) => {
++    if (field === sortField) {
++      setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'))
++    } else {
++      setSortField(field)
++      setSortDir('asc')
++    }
++  }
++
++  const sortedRows = useMemo(() => {
++    const withLabels = rows.map((row) => ({
++      ...row,
++      skuLabel: skuById.get(row.skuId)?.skuCode ?? row.skuId,
++      skuName: skuById.get(row.skuId)?.name ?? '—',
++      dcLabel: dcById.get(row.dcId)?.dcCode ?? row.dcId,
++      dcName: dcById.get(row.dcId)?.name ?? '—',
++    }))
++
++    const dir = sortDir === 'asc' ? 1 : -1
++    return withLabels.sort((a, b) => {
++      switch (sortField) {
++        case 'sku':
++          return a.skuLabel.localeCompare(b.skuLabel) * dir
++        case 'dc':
++          return a.dcLabel.localeCompare(b.dcLabel) * dir
++        case 'currentStock':
++          return (a.currentStock - b.currentStock) * dir
++        case 'batchCount':
++          return (a.batchCount - b.batchCount) * dir
++        default:
++          return 0
++      }
++    })
++  }, [rows, skuById, dcById, sortField, sortDir])
++
++  const totalUnits = rows.reduce((sum, row) => sum + row.currentStock, 0)
++
++  return (
++    <div className="mx-auto flex max-w-6xl flex-col gap-5">
++      <div className="flex flex-wrap items-end justify-between gap-4">
++        <div>
++          <h2 className="font-display text-xl font-semibold tracking-tight text-paper">
++            Current inventory
++          </h2>
++          <p className="mt-1 text-sm text-mist">
++            {state === 'ok' ? `${rows.length} SKU/DC positions · ${totalUnits.toLocaleString()} units on hand` : 'Loading current stock…'}
++          </p>
++        </div>
++        <RefreshButton onClick={load} loading={state === 'loading'} />
++      </div>
++
++      <div className="flex flex-wrap gap-3">
++        <select
++          value={skuFilter}
++          onChange={(e) => setSkuFilter(e.target.value)}
++          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++        >
++          <option value="">All SKUs</option>
++          {skus.map((sku) => (
++            <option key={sku.id} value={sku.id}>
++              {sku.skuCode} · {sku.name}
++            </option>
++          ))}
++        </select>
++        <select
++          value={dcFilter}
++          onChange={(e) => setDcFilter(e.target.value)}
++          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++        >
++          <option value="">All distribution centers</option>
++          {dcs.map((dc) => (
++            <option key={dc.id} value={dc.id}>
++              {dc.dcCode} · {dc.name}
++            </option>
++          ))}
++        </select>
++      </div>
++
++      <div className="overflow-hidden rounded-xl border border-line bg-panel">
++        {state === 'error' ? (
++          <p className="p-6 text-sm text-critical">Couldn't reach the P1 API. Check the backend connection and refresh.</p>
++        ) : state === 'ok' && sortedRows.length === 0 ? (
++          <p className="p-6 text-sm text-mist">No stock positions match these filters.</p>
++        ) : (
++          <table className="w-full text-left text-sm">
++            <thead>
++              <tr className="border-b border-line bg-panel2/60 font-mono text-[10px] uppercase tracking-wider text-mist">
++                <SortableHeader label="SKU" field="sku" active={sortField} dir={sortDir} onClick={toggleSort} />
++                <SortableHeader label="Distribution center" field="dc" active={sortField} dir={sortDir} onClick={toggleSort} />
++                <SortableHeader label="Current stock" field="currentStock" active={sortField} dir={sortDir} onClick={toggleSort} align="right" />
++                <SortableHeader label="Batches" field="batchCount" active={sortField} dir={sortDir} onClick={toggleSort} align="right" />
++              </tr>
++            </thead>
++            <tbody>
++              {state === 'loading'
++                ? Array.from({ length: 5 }).map((_, i) => (
++                    <tr key={i} className="border-b border-line/60 last:border-0">
++                      <td className="px-4 py-3" colSpan={4}>
++                        <div className="h-4 w-full animate-pulse rounded bg-panel2" />
++                      </td>
++                    </tr>
++                  ))
++                : sortedRows.map((row) => (
++                    <tr key={`${row.skuId}:${row.dcId}`} className="border-b border-line/60 last:border-0 hover:bg-panel2/40">
++                      <td className="px-4 py-3">
++                        <span className="font-mono text-xs text-paper">{row.skuLabel}</span>
++                        <span className="ml-2 text-mist">{row.skuName}</span>
++                      </td>
++                      <td className="px-4 py-3">
++                        <span className="font-mono text-xs text-paper">{row.dcLabel}</span>
++                        <span className="ml-2 text-mist">{row.dcName}</span>
++                      </td>
++                      <td className="px-4 py-3 text-right font-mono text-paper">
++                        {row.currentStock.toLocaleString()}
++                      </td>
++                      <td className="px-4 py-3 text-right font-mono text-mist">{row.batchCount}</td>
++                    </tr>
++                  ))}
++            </tbody>
++          </table>
++        )}
++      </div>
++    </div>
++  )
++}
++
++function SortableHeader({
++  label,
++  field,
++  active,
++  dir,
++  onClick,
++  align = 'left',
++}: {
++  label: string
++  field: SortField
++  active: SortField
++  dir: SortDir
++  onClick: (field: SortField) => void
++  align?: 'left' | 'right'
++}) {
++  const isActive = active === field
++  return (
++    <th className={`px-4 py-3 font-medium ${align === 'right' ? 'text-right' : 'text-left'}`}>
++      <button
++        type="button"
++        onClick={() => onClick(field)}
++        className={`inline-flex items-center gap-1 transition-colors hover:text-paper ${isActive ? 'text-signal' : ''}`}
++      >
++        {label}
++        {isActive && <span>{dir === 'asc' ? '↑' : '↓'}</span>}
++      </button>
++    </th>
++  )
++}
+diff --git a/frontend/src/pages/planner/PlannerHome.tsx b/frontend/src/pages/planner/PlannerHome.tsx
+new file mode 100644
+index 0000000..1a96fa3
+--- /dev/null
++++ b/frontend/src/pages/planner/PlannerHome.tsx
+@@ -0,0 +1,151 @@
++import { useEffect, useState } from 'react'
++import { Link } from 'react-router-dom'
++
++import { p1Client } from '../../api/p1Client'
++import { ChevronIcon, CrateIcon, HourglassIcon, PulseIcon, RouteIcon } from '../../components/icons'
++import { useAuthStub } from '../../hooks/useAuthStub'
++
++interface SkuSummary {
++  id: string
++  skuCode: string
++  name: string
++}
++
++type FetchState = 'loading' | 'ok' | 'error'
++
++const MODULES = [
++  {
++    to: '/planner/inventory',
++    icon: CrateIcon,
++    title: 'Inventory',
++    description: 'Stock on hand by SKU, DC, and batch — with expiry dates attached.',
++  },
++  {
++    to: '/planner/expiry-risk',
++    icon: HourglassIcon,
++    title: 'Expiry Risk',
++    description: 'Batches ranked by how much shelf life is left before write-off.',
++  },
++  {
++    to: '/planner/replenishment',
++    icon: RouteIcon,
++    title: 'Replenishment Recommendations',
++    description: 'SKUs past reorder point, with EOQ and FEFO-aware quantities.',
++  },
++  {
++    to: '/planner/demand-signals',
++    icon: PulseIcon,
++    title: 'Demand Signals',
++    description: 'Sensed demand vs. forecast, by region — flu-season spikes included.',
++  },
++] as const
++
++function greeting(hour: number) {
++  if (hour < 12) return 'Good morning'
++  if (hour < 17) return 'Good afternoon'
++  return 'Good evening'
++}
++
++export default function PlannerHome() {
++  const { user, loading: userLoading } = useAuthStub()
++  const [skus, setSkus] = useState<SkuSummary[]>([])
++  const [skuState, setSkuState] = useState<FetchState>('loading')
++
++  useEffect(() => {
++    let cancelled = false
++
++    p1Client
++      .get<{ data: SkuSummary[] }>('/skus')
++      .then((response) => {
++        if (cancelled) return
++        // Temporary — confirms p1Client reaches the live P1 backend.
++        // Remove once P9.2 lands real inventory views.
++        console.log('[PlannerHome] GET /api/skus →', response.data)
++        setSkus(response.data.data)
++        setSkuState('ok')
++      })
++      .catch(() => {
++        if (!cancelled) setSkuState('error')
++      })
++
++    return () => {
++      cancelled = true
++    }
++  }, [])
++
++  return (
++    <div className="mx-auto flex max-w-6xl flex-col gap-8">
++      {/* Greeting */}
++      <div className="animate-rise-in">
++        <h2 className="font-display text-2xl font-semibold tracking-tight text-paper md:text-3xl">
++          {greeting(new Date().getHours())}
++          {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
++        </h2>
++        <p className="mt-1.5 text-sm text-mist">
++          {userLoading ? 'Syncing your session…' : `Watching ${user?.dc} and the wider MedCare Pharma network.`}
++        </p>
++      </div>
++
++      {/* KPI strip */}
++      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
++        <KpiTile
++          label="SKUs tracked"
++          value={skuState === 'ok' ? String(skus.length) : skuState === 'error' ? 'Offline' : '···'}
++          tone={skuState === 'error' ? 'critical' : 'signal'}
++          caption={skuState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
++        />
++        <KpiTile label="Distribution centers" value="—" tone="mist" caption="Live in P9.2" />
++        <KpiTile label="Reorder alerts" value="—" tone="mist" caption="Live in P9.2" />
++        <KpiTile label="Expiry risk (7d)" value="—" tone="mist" caption="Live in P9.2" />
++      </div>
++
++      {/* Module cards */}
++      <div>
++        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Planning modules</p>
++        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
++          {MODULES.map(({ to, icon: Icon, title, description }) => (
++            <Link
++              key={to}
++              to={to}
++              className="group flex items-start gap-4 rounded-xl border border-line bg-panel p-5 transition-colors hover:border-signal/40 hover:bg-panel2"
++            >
++              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel2 text-signal transition-transform group-hover:scale-105">
++                <Icon className="h-5 w-5" />
++              </div>
++              <div className="min-w-0 flex-1">
++                <p className="font-display text-base font-semibold text-paper">{title}</p>
++                <p className="mt-1 text-sm leading-relaxed text-mist">{description}</p>
++              </div>
++              <ChevronIcon className="mt-1 h-4 w-4 shrink-0 text-mist transition-transform group-hover:translate-x-0.5 group-hover:text-signal" />
++            </Link>
++          ))}
++        </div>
++      </div>
++
++      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist/70">
++        Running on a temporary auth stub — Phase 23 swaps in Supabase Auth.
++      </p>
++    </div>
++  )
++}
++
++function KpiTile({
++  label,
++  value,
++  caption,
++  tone,
++}: {
++  label: string
++  value: string
++  caption: string
++  tone: 'signal' | 'critical' | 'mist'
++}) {
++  const toneClass = { signal: 'text-signal', critical: 'text-critical', mist: 'text-paper/40' }[tone]
++  return (
++    <div className="animate-rise-in rounded-xl border border-line bg-panel p-4">
++      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist">{label}</p>
++      <p className={`mt-2 font-display text-2xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
++      <p className="mt-1 text-[11px] text-mist/80">{caption}</p>
++    </div>
++  )
++}
+diff --git a/frontend/src/pages/planner/PlannerLayout.tsx b/frontend/src/pages/planner/PlannerLayout.tsx
+new file mode 100644
+index 0000000..6b1103c
+--- /dev/null
++++ b/frontend/src/pages/planner/PlannerLayout.tsx
+@@ -0,0 +1,154 @@
++import { useEffect, useMemo, useState } from 'react'
++import { Outlet, useLocation } from 'react-router-dom'
++
++import { p1Client } from '../../api/p1Client'
++import NavBar from '../../components/NavBar'
++import { useAuthStub } from '../../hooks/useAuthStub'
++import { useReferenceData } from '../../hooks/useReferenceData'
++
++const PAGE_TITLES: Record<string, string> = {
++  '/planner': 'Overview',
++  '/planner/inventory': 'Inventory',
++  '/planner/expiry-risk': 'Expiry Risk',
++  '/planner/replenishment': 'Replenishment Recommendations',
++  '/planner/demand-signals': 'Demand Signals',
++}
++
++// Fallback network activity for the manifest ticker, shown until the
++// live recommendations feed loads (or if it comes back empty). One
++// fetch on mount — no polling here, Phase 21 owns realtime refresh.
++const FALLBACK_FEED_ITEMS = [
++  { tag: 'FEFO', text: 'DC-KOL → DC-PTN · Batch #A231 sequenced', tone: 'signal' as const },
++  { tag: 'ALERT', text: 'ROP breached · SKU AZT-250 · urgency HIGH', tone: 'alert' as const },
++  { tag: 'GRN', text: 'GRN-00456 received · 1,200 units confirmed', tone: 'signal' as const },
++  { tag: 'EXPIRY', text: 'Batch #C118 · 92% shelf life consumed', tone: 'critical' as const },
++  { tag: 'DEMAND', text: 'Tier-2 flu-season spike detected · +58%', tone: 'alert' as const },
++  { tag: 'EOQ', text: 'Replenishment qty computed · SKU PCM-500', tone: 'signal' as const },
++]
++
++const toneClass: Record<string, string> = {
++  signal: 'text-signal border-signal/30 bg-signal/10',
++  alert: 'text-alert border-alert/30 bg-alert/10',
++  critical: 'text-critical border-critical/30 bg-critical/10',
++}
++
++interface RecommendationFeedRow {
++  skuId: string
++  dcId: string
++  recommendedQty: number
++  urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
++}
++
++const urgencyTone: Record<RecommendationFeedRow['urgency'], 'signal' | 'alert' | 'critical'> = {
++  LOW: 'signal',
++  MEDIUM: 'signal',
++  HIGH: 'alert',
++  CRITICAL: 'critical',
++}
++
++function ManifestTicker() {
++  const { skuById, dcById } = useReferenceData()
++  const [liveItems, setLiveItems] = useState<typeof FALLBACK_FEED_ITEMS | null>(null)
++
++  useEffect(() => {
++    let cancelled = false
++    p1Client
++      .get<{ data: RecommendationFeedRow[] }>('/replenishment/recommendations')
++      .then((response) => {
++        if (cancelled || response.data.data.length === 0) return
++        setLiveItems(
++          response.data.data.slice(0, 8).map((rec) => ({
++            tag: rec.urgency,
++            text: `${skuById.get(rec.skuId)?.skuCode ?? rec.skuId} → ${dcById.get(rec.dcId)?.dcCode ?? rec.dcId} · qty ${rec.recommendedQty.toLocaleString()}`,
++            tone: urgencyTone[rec.urgency],
++          })),
++        )
++      })
++      .catch(() => {
++        /* keep the fallback feed */
++      })
++    return () => {
++      cancelled = true
++    }
++    // Re-derive labels once reference data resolves; still a single fetch.
++  }, [skuById, dcById])
++
++  const items = liveItems ?? FALLBACK_FEED_ITEMS
++  const track = [...items, ...items]
++
++  return (
++    <div className="relative overflow-hidden border-b border-line bg-panel/60 py-2">
++      <div className="fade-edges flex w-max animate-ticker gap-3 pl-4">
++        {track.map((item, i) => (
++          <span
++            key={i}
++            className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1 font-mono text-[11px] ${toneClass[item.tone]}`}
++          >
++            <span className="font-semibold tracking-wide">{item.tag}</span>
++            <span className="text-mist">{item.text}</span>
++          </span>
++        ))}
++      </div>
++      <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 font-mono text-[9px] uppercase tracking-[0.2em] text-mist/70 md:block">
++        {liveItems ? 'Live · replenishment recommendations' : 'Preview feed · live once recommendations exist'}
++      </span>
++    </div>
++  )
++}
++
++function useClock() {
++  const [now, setNow] = useState(() => new Date())
++  useEffect(() => {
++    const id = setInterval(() => setNow(new Date()), 1000)
++    return () => clearInterval(id)
++  }, [])
++  return now
++}
++
++function TopBar() {
++  const location = useLocation()
++  const { user } = useAuthStub()
++  const now = useClock()
++
++  const title = PAGE_TITLES[location.pathname] ?? 'Planner'
++  const time = useMemo(
++    () => now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
++    [now],
++  )
++
++  return (
++    <header className="flex items-center justify-between gap-4 border-b border-line bg-ink px-5 py-3.5 md:px-8">
++      <div className="min-w-0">
++        <p className="truncate font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
++          MedCare Pharma / Planner
++        </p>
++        <h1 className="truncate font-display text-lg font-semibold tracking-tight text-paper">{title}</h1>
++      </div>
++
++      <div className="flex items-center gap-4 md:gap-6">
++        {user && (
++          <span className="hidden font-mono text-xs text-mist lg:inline">{user.dc}</span>
++        )}
++        <span className="flex items-center gap-1.5 font-mono text-xs text-mist">
++          <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-signal" />
++          {time}
++        </span>
++      </div>
++    </header>
++  )
++}
++
++export default function PlannerLayout() {
++  return (
++    <div className="flex h-screen bg-ink text-paper">
++      <NavBar />
++      <div className="flex min-w-0 flex-1 flex-col">
++        <TopBar />
++        <ManifestTicker />
++        <main className="bg-grid flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
++          <Outlet />
++        </main>
++      </div>
++    </div>
++  )
++}
+diff --git a/frontend/src/pages/planner/PlannerSectionPlaceholder.tsx b/frontend/src/pages/planner/PlannerSectionPlaceholder.tsx
+new file mode 100644
+index 0000000..a0865ab
+--- /dev/null
++++ b/frontend/src/pages/planner/PlannerSectionPlaceholder.tsx
+@@ -0,0 +1,41 @@
++import type { ComponentType } from 'react'
++
++interface PlannerSectionPlaceholderProps {
++  icon: ComponentType<{ className?: string }>
++  title: string
++  description: string
++  comingIn: string[]
++}
++
++export default function PlannerSectionPlaceholder({
++  icon: Icon,
++  title,
++  description,
++  comingIn,
++}: PlannerSectionPlaceholderProps) {
++  return (
++    <div className="animate-rise-in mx-auto flex max-w-2xl flex-col items-start gap-5 rounded-2xl border border-line bg-panel px-8 py-10">
++      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-panel2 text-signal">
++        <Icon className="h-6 w-6" />
++      </div>
++
++      <div>
++        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Module preview</p>
++        <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-paper">{title}</h2>
++        <p className="mt-2 max-w-prose text-sm leading-relaxed text-mist">{description}</p>
++      </div>
++
++      <div className="w-full rounded-xl border border-line bg-ink/60 p-4">
++        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Lands in P9.2</p>
++        <ul className="mt-2 space-y-1.5">
++          {comingIn.map((item) => (
++            <li key={item} className="flex items-start gap-2 text-sm text-paper/80">
++              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-signal" />
++              {item}
++            </li>
++          ))}
++        </ul>
++      </div>
++    </div>
++  )
++}
+diff --git a/frontend/src/pages/planner/RecommendationsView.tsx b/frontend/src/pages/planner/RecommendationsView.tsx
+new file mode 100644
+index 0000000..18acc58
+--- /dev/null
++++ b/frontend/src/pages/planner/RecommendationsView.tsx
+@@ -0,0 +1,165 @@
++import { useEffect, useState } from 'react'
++
++import { p1Client } from '../../api/p1Client'
++import { RefreshButton, UrgencyBadge, type Urgency } from '../../components/badges'
++import { useReferenceData } from '../../hooks/useReferenceData'
++import DemandSpikeSimulator from './DemandSpikeSimulator'
++
++interface Recommendation {
++  id: string
++  skuId: string
++  dcId: string
++  recommendedQty: number
++  reorderPoint: number
++  safetyStock: number
++  eoq: number
++  urgency: Urgency
++  reasonCode: string
++  aiRationale: string
++  status: 'NEW' | 'SENT_TO_PROCUREMENT' | 'ACKNOWLEDGED'
++  createdAt: string
++}
++
++type LoadState = 'loading' | 'ok' | 'error'
++
++const URGENCY_ORDER: Record<Urgency, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
++
++export default function RecommendationsView() {
++  const { skus, dcs, skuById, dcById } = useReferenceData()
++  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
++  const [state, setState] = useState<LoadState>('loading')
++  const [urgencyFilter, setUrgencyFilter] = useState<Urgency | ''>('')
++
++  const load = () => {
++    setState('loading')
++    const params = urgencyFilter ? { urgency: urgencyFilter } : {}
++    p1Client
++      .get<{ data: Recommendation[] }>('/replenishment/recommendations', { params })
++      .then((response) => {
++        setRecommendations(
++          [...response.data.data].sort((a, b) => URGENCY_ORDER[a.urgency] - URGENCY_ORDER[b.urgency]),
++        )
++        setState('ok')
++      })
++      .catch(() => setState('error'))
++  }
++
++  // eslint-disable-next-line react-hooks/exhaustive-deps
++  useEffect(load, [urgencyFilter])
++
++  return (
++    <div className="mx-auto flex max-w-6xl flex-col gap-5">
++      <div>
++        <h2 className="font-display text-xl font-semibold tracking-tight text-paper">
++          Replenishment recommendations
++        </h2>
++        <p className="mt-1 text-sm text-mist">
++          SKUs past their reorder point, with EOQ-based quantity and urgency — ready to hand off to procurement.
++        </p>
++      </div>
++
++      <DemandSpikeSimulator skus={skus} dcs={dcs} onRecommendationsUpdated={load} />
++
++      <div className="flex flex-wrap items-center justify-between gap-3">
++        <select
++          value={urgencyFilter}
++          onChange={(e) => setUrgencyFilter(e.target.value as Urgency | '')}
++          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
++        >
++          <option value="">All urgencies</option>
++          <option value="CRITICAL">Critical</option>
++          <option value="HIGH">High</option>
++          <option value="MEDIUM">Medium</option>
++          <option value="LOW">Low</option>
++        </select>
++        <RefreshButton onClick={load} loading={state === 'loading'} />
++      </div>
++
++      {state === 'error' ? (
++        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-critical">
++          Couldn't reach the P1 API. Check the backend connection and refresh.
++        </p>
++      ) : state === 'loading' ? (
++        <div className="space-y-3">
++          {Array.from({ length: 3 }).map((_, i) => (
++            <div key={i} className="h-24 animate-pulse rounded-xl border border-line bg-panel" />
++          ))}
++        </div>
++      ) : recommendations.length === 0 ? (
++        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-mist">
++          No open recommendations. Trigger a demand spike above, or check back after the next
++          recalculation.
++        </p>
++      ) : (
++        <div className="space-y-3">
++          {recommendations.map((rec) => (
++            <div
++              key={rec.id}
++              className="animate-rise-in rounded-xl border border-line bg-panel p-5 transition-colors hover:border-signal/30"
++            >
++              <div className="flex flex-wrap items-start justify-between gap-3">
++                <div>
++                  <p className="font-display text-base font-semibold text-paper">
++                    {skuById.get(rec.skuId)?.skuCode ?? rec.skuId}
++                    <span className="ml-2 font-body text-sm font-normal text-mist">
++                      {skuById.get(rec.skuId)?.name}
++                    </span>
++                  </p>
++                  <p className="mt-0.5 font-mono text-xs text-mist">
++                    {dcById.get(rec.dcId)?.dcCode ?? rec.dcId} · {dcById.get(rec.dcId)?.name} · {rec.reasonCode}
++                  </p>
++                </div>
++                <div className="flex items-center gap-2">
++                  <UrgencyBadge urgency={rec.urgency} />
++                  <StatusPill status={rec.status} />
++                </div>
++              </div>
++
++              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
++                <Stat label="Recommended qty" value={rec.recommendedQty.toLocaleString()} highlight />
++                <Stat label="Reorder point" value={rec.reorderPoint.toLocaleString()} />
++                <Stat label="Safety stock" value={rec.safetyStock.toLocaleString()} />
++                <Stat label="EOQ" value={rec.eoq.toLocaleString()} />
++              </div>
++
++              <div className="mt-4 rounded-lg border border-line/70 bg-ink/40 px-3.5 py-2.5">
++                <p className="font-mono text-[10px] uppercase tracking-wider text-mist">AI rationale</p>
++                <p className="mt-1 text-sm text-paper/90">
++                  {rec.aiRationale || (
++                    <span className="italic text-mist">Rationale generation lands in Phase 22.</span>
++                  )}
++                </p>
++              </div>
++
++              <p className="mt-3 text-right font-mono text-[10px] uppercase tracking-wider text-mist/70">
++                {new Date(rec.createdAt).toLocaleString()}
++              </p>
++            </div>
++          ))}
++        </div>
++      )}
++    </div>
++  )
++}
++
++function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
++  return (
++    <div>
++      <p className="font-mono text-[10px] uppercase tracking-wider text-mist">{label}</p>
++      <p className={`mt-0.5 font-mono text-sm ${highlight ? 'text-signal' : 'text-paper'}`}>{value}</p>
++    </div>
++  )
++}
++
++function StatusPill({ status }: { status: Recommendation['status'] }) {
++  const styles: Record<Recommendation['status'], string> = {
++    NEW: 'text-mist border-line bg-panel2',
++    SENT_TO_PROCUREMENT: 'text-signal border-signal/30 bg-signal/10',
++    ACKNOWLEDGED: 'text-paper border-line bg-panel2',
++  }
++  return (
++    <span className={`rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${styles[status]}`}>
++      {status.replace(/_/g, ' ')}
++    </span>
++  )
++}
+diff --git a/frontend/tailwind.config.js b/frontend/tailwind.config.js
+index 8c2c936..f935d91 100644
+--- a/frontend/tailwind.config.js
++++ b/frontend/tailwind.config.js
+@@ -2,7 +2,43 @@
+ export default {
+   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+   theme: {
+-    extend: {},
++    extend: {
++      colors: {
++        ink: '#0A0F1C',
++        panel: '#111A2C',
++        panel2: '#16223A',
++        line: '#22314D',
++        mist: '#8593AF',
++        paper: '#EEF1F7',
++        signal: '#2FE3C4',
++        alert: '#F2A93B',
++        critical: '#F0555C',
++      },
++      fontFamily: {
++        display: ['"Space Grotesk"', 'sans-serif'],
++        body: ['Inter', 'sans-serif'],
++        mono: ['"IBM Plex Mono"', 'monospace'],
++      },
++      keyframes: {
++        ticker: {
++          '0%': { transform: 'translateX(0)' },
++          '100%': { transform: 'translateX(-50%)' },
++        },
++        pulseDot: {
++          '0%, 100%': { opacity: 1, transform: 'scale(1)' },
++          '50%': { opacity: 0.4, transform: 'scale(0.85)' },
++        },
++        riseIn: {
++          '0%': { opacity: 0, transform: 'translateY(8px)' },
++          '100%': { opacity: 1, transform: 'translateY(0)' },
++        },
++      },
++      animation: {
++        ticker: 'ticker 32s linear infinite',
++        'pulse-dot': 'pulseDot 2s ease-in-out infinite',
++        'rise-in': 'riseIn 0.5s ease-out both',
++      },
++    },
+   },
+   plugins: [],
+ }
+\ No newline at end of file
