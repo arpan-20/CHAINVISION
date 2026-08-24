@@ -5,6 +5,7 @@ import { env } from './config/env'
 import './db/supabaseClient'
 import { errorHandler } from './middleware/errorHandler'
 import { demandRoutes } from './routes/demandRoutes'
+import { inventoryRoutes } from './routes/inventoryRoutes'
 
 // CHAINVISION — P1 backend (Demand Sensing & Replenishment Planning)
 // Bootstrap only. Business routes (skus, inventory, demand-signals,
@@ -22,6 +23,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/api', demandRoutes)
+app.use('/api', inventoryRoutes)
 
 app.use(errorHandler)
 
