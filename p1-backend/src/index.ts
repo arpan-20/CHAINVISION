@@ -4,6 +4,7 @@ import cors from 'cors'
 import { env } from './config/env'
 import './db/supabaseClient'
 import { errorHandler } from './middleware/errorHandler'
+import { demandRoutes } from './routes/demandRoutes'
 
 // CHAINVISION — P1 backend (Demand Sensing & Replenishment Planning)
 // Bootstrap only. Business routes (skus, inventory, demand-signals,
@@ -19,6 +20,8 @@ app.use(express.json())
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' })
 })
+
+app.use('/api', demandRoutes)
 
 app.use(errorHandler)
 
