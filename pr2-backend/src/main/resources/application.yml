@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: pr2-backend
+  profiles:
+    default: local
 
   # Datasource points at the Supabase-hosted Postgres `pr2` schema.
   # Real values are supplied via environment variables and filled in for
@@ -29,3 +31,4 @@ spring:
     properties:
       hibernate:
         default_schema: pr2
+        dialect: org.hibernate.dialect.PostgreSQLDialect
