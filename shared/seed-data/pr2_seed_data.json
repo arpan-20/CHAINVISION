@@ -1,0 +1,35 @@
+{
+  "asOfDate": "2026-08-24",
+  "suppliers": [
+    { "id": "20000000-0000-0000-0000-000000000001", "name": "Apex Generics", "price_index": 0.82, "avg_lead_time_days": 8, "otd_score": 61, "quality_score": 68, "capacity_units": 8000, "profile": "cheap but unreliable" },
+    { "id": "20000000-0000-0000-0000-000000000002", "name": "MedSure Life Sciences", "price_index": 1.18, "avg_lead_time_days": 9, "otd_score": 97, "quality_score": 98, "capacity_units": 24000, "profile": "expensive but high-performing" },
+    { "id": "20000000-0000-0000-0000-000000000003", "name": "Northstar Pharma", "price_index": 0.96, "avg_lead_time_days": 12, "otd_score": 89, "quality_score": 91, "capacity_units": 18000, "profile": "balanced" },
+    { "id": "20000000-0000-0000-0000-000000000004", "name": "Cureline Distributors", "price_index": 1.04, "avg_lead_time_days": 15, "otd_score": 94, "quality_score": 88, "capacity_units": 30000, "profile": "high capacity" },
+    { "id": "20000000-0000-0000-0000-000000000005", "name": "Reliable Remedies", "price_index": 1.09, "avg_lead_time_days": 11, "otd_score": 96, "quality_score": 94, "capacity_units": 12000, "profile": "premium" },
+    { "id": "20000000-0000-0000-0000-000000000006", "name": "Valley Medical Supply", "price_index": 0.9, "avg_lead_time_days": 18, "otd_score": 78, "quality_score": 82, "capacity_units": 15000, "profile": "regional value" },
+    { "id": "20000000-0000-0000-0000-000000000007", "name": "Eastern Health Partners", "price_index": 1.01, "avg_lead_time_days": 13, "otd_score": 86, "quality_score": 87, "capacity_units": 10000, "profile": "regional balanced" },
+    { "id": "20000000-0000-0000-0000-000000000008", "name": "Sterling Pharma Network", "price_index": 1.12, "avg_lead_time_days": 10, "otd_score": 92, "quality_score": 96, "capacity_units": 20000, "profile": "quality focused" }
+  ],
+  "purchase_requisitions": [
+    { "id": "21000000-0000-0000-0000-000000000001", "recommendation_id": null, "sku_code": "MED-104", "dc_code": "DC-PAT", "quantity": 1200, "urgency": "HIGH", "source": "MANUAL", "raw_nl_input": null, "status": "PO_RAISED" },
+    { "id": "21000000-0000-0000-0000-000000000002", "recommendation_id": null, "sku_code": "MED-107", "dc_code": "DC-GUW", "quantity": 900, "urgency": "MEDIUM", "source": "MANUAL", "raw_nl_input": null, "status": "PO_RAISED" },
+    { "id": "21000000-0000-0000-0000-000000000003", "recommendation_id": null, "sku_code": "MED-114", "dc_code": "DC-PAT", "quantity": 650, "urgency": "HIGH", "source": "MANUAL", "raw_nl_input": null, "status": "PO_RAISED" },
+    { "id": "21000000-0000-0000-0000-000000000004", "recommendation_id": null, "sku_code": "MED-101", "dc_code": "DC-GUW", "quantity": 500, "urgency": "MEDIUM", "source": "MANUAL", "raw_nl_input": null, "status": "CREATED" },
+    { "id": "21000000-0000-0000-0000-000000000005", "recommendation_id": null, "sku_code": "MED-108", "dc_code": "DC-PAT", "quantity": 400, "urgency": "MEDIUM", "source": "MANUAL", "raw_nl_input": null, "status": "CREATED" }
+  ],
+  "purchase_orders": [
+    { "id": "22000000-0000-0000-0000-000000000001", "requisition_id": "21000000-0000-0000-0000-000000000001", "supplier_id": "20000000-0000-0000-0000-000000000002", "quantity": 1200, "unit_price": 10.325, "total_amount": 12390, "status": "RECEIVED" },
+    { "id": "22000000-0000-0000-0000-000000000002", "requisition_id": "21000000-0000-0000-0000-000000000002", "supplier_id": "20000000-0000-0000-0000-000000000003", "quantity": 900, "unit_price": 0.715, "total_amount": 643.5, "status": "ISSUED" },
+    { "id": "22000000-0000-0000-0000-000000000003", "requisition_id": "21000000-0000-0000-0000-000000000003", "supplier_id": "20000000-0000-0000-0000-000000000005", "quantity": 650, "unit_price": 3.706, "total_amount": 2408.9, "status": "CLOSED" }
+  ],
+  "goods_receipts": [
+    { "id": "23000000-0000-0000-0000-000000000001", "po_id": "22000000-0000-0000-0000-000000000001", "received_qty": 1200, "batch_no": "GRN-MED104-001", "expiry_date": "2028-08-24", "received_at": "2026-08-20T10:00:00Z" },
+    { "id": "23000000-0000-0000-0000-000000000002", "po_id": "22000000-0000-0000-0000-000000000002", "received_qty": 900, "batch_no": "GRN-MED107-001", "expiry_date": "2028-03-15", "received_at": "2026-08-22T10:00:00Z" },
+    { "id": "23000000-0000-0000-0000-000000000003", "po_id": "22000000-0000-0000-0000-000000000003", "received_qty": 650, "batch_no": "GRN-MED114-001", "expiry_date": "2027-12-10", "received_at": "2026-07-15T10:00:00Z" }
+  ],
+  "invoiceFixtures": [
+    { "file": "invoice_matching.pdf", "invoice_number": "INV-MED104-001", "po_id": "22000000-0000-0000-0000-000000000001", "grn_id": "23000000-0000-0000-0000-000000000001", "sku_code": "MED-104", "sku_name": "Oseltamivir 75mg", "quantity": 1200, "unit_price": 10.325, "total": 12390, "expected_result": "MATCHED" },
+    { "file": "invoice_qty_mismatch.pdf", "invoice_number": "INV-MED107-002", "po_id": "22000000-0000-0000-0000-000000000002", "grn_id": "23000000-0000-0000-0000-000000000002", "sku_code": "MED-107", "sku_name": "Cetirizine 10mg", "quantity": 700, "unit_price": 0.715, "total": 500.5, "expected_result": "MISMATCHED: quantity" },
+    { "file": "invoice_price_mismatch.pdf", "invoice_number": "INV-MED114-002", "po_id": "22000000-0000-0000-0000-000000000003", "grn_id": "23000000-0000-0000-0000-000000000003", "sku_code": "MED-114", "sku_name": "Guaifenesin Syrup", "quantity": 650, "unit_price": 4.25, "total": 2762.5, "expected_result": "MISMATCHED: price" }
+  ]
+}

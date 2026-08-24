@@ -1,0 +1,44 @@
+{
+  "asOfDate": "2026-08-24",
+  "skus": [
+    { "sku_code": "MED-101", "name": "Amoxicillin 500mg", "category": "antibiotics", "unit_cost": 3.2, "lead_time_days": 10 },
+    { "sku_code": "MED-102", "name": "Azithromycin 250mg", "category": "antibiotics", "unit_cost": 4.8, "lead_time_days": 14 },
+    { "sku_code": "MED-103", "name": "Cefixime 200mg", "category": "antibiotics", "unit_cost": 5.4, "lead_time_days": 12 },
+    { "sku_code": "MED-104", "name": "Oseltamivir 75mg", "category": "cold/flu", "unit_cost": 8.75, "lead_time_days": 14 },
+    { "sku_code": "MED-105", "name": "Paracetamol 500mg", "category": "analgesics", "unit_cost": 0.9, "lead_time_days": 8 },
+    { "sku_code": "MED-106", "name": "Ibuprofen 400mg", "category": "analgesics", "unit_cost": 1.35, "lead_time_days": 9 },
+    { "sku_code": "MED-107", "name": "Cetirizine 10mg", "category": "cold/flu", "unit_cost": 0.65, "lead_time_days": 7 },
+    { "sku_code": "MED-108", "name": "Salbutamol Inhaler", "category": "cold/flu", "unit_cost": 6.25, "lead_time_days": 15 },
+    { "sku_code": "MED-109", "name": "Doxycycline 100mg", "category": "antibiotics", "unit_cost": 2.85, "lead_time_days": 11 },
+    { "sku_code": "MED-110", "name": "Clarithromycin 500mg", "category": "antibiotics", "unit_cost": 6.1, "lead_time_days": 16 },
+    { "sku_code": "MED-111", "name": "Diclofenac 50mg", "category": "analgesics", "unit_cost": 1.1, "lead_time_days": 10 },
+    { "sku_code": "MED-112", "name": "Naproxen 250mg", "category": "analgesics", "unit_cost": 1.55, "lead_time_days": 13 },
+    { "sku_code": "MED-113", "name": "Loratadine 10mg", "category": "cold/flu", "unit_cost": 0.8, "lead_time_days": 7 },
+    { "sku_code": "MED-114", "name": "Guaifenesin Syrup", "category": "cold/flu", "unit_cost": 3.4, "lead_time_days": 12 },
+    { "sku_code": "MED-115", "name": "Ciprofloxacin 500mg", "category": "antibiotics", "unit_cost": 3.9, "lead_time_days": 18 },
+    { "sku_code": "MED-116", "name": "Povidone Iodine", "category": "antibiotics", "unit_cost": 2.2, "lead_time_days": 21 },
+    { "sku_code": "MED-117", "name": "Aspirin 75mg", "category": "analgesics", "unit_cost": 0.55, "lead_time_days": 8 },
+    { "sku_code": "MED-118", "name": "Phenylephrine Tablets", "category": "cold/flu", "unit_cost": 1.25, "lead_time_days": 10 }
+  ],
+  "distribution_centers": [
+    { "dc_code": "DC-MUM", "name": "Mumbai Central DC", "region": "tier-1", "capacity_units": 120000 },
+    { "dc_code": "DC-DEL", "name": "Delhi Metro DC", "region": "tier-1", "capacity_units": 100000 },
+    { "dc_code": "DC-PAT", "name": "Patna Regional DC", "region": "tier-2", "capacity_units": 55000 },
+    { "dc_code": "DC-GUW", "name": "Guwahati Regional DC", "region": "tier-2", "capacity_units": 40000 }
+  ],
+  "lowStockScenarios": [
+    { "sku_code": "MED-104", "dc_code": "DC-PAT", "quantity": 180, "reason": "Tier-2 flu-season demand spike with stock below reorder-point equivalent" },
+    { "sku_code": "MED-107", "dc_code": "DC-GUW", "quantity": 220, "reason": "Tier-2 cold/flu demand with short lead-time cover" },
+    { "sku_code": "MED-114", "dc_code": "DC-PAT", "quantity": 140, "reason": "Near-expiry syrup stock and seasonal demand pressure" },
+    { "sku_code": "MED-101", "dc_code": "DC-GUW", "quantity": 260, "reason": "Antibiotic demand exceeds low regional safety stock" },
+    { "sku_code": "MED-108", "dc_code": "DC-PAT", "quantity": 160, "reason": "Tier-2 respiratory-care stockout risk" }
+  ],
+  "generation": {
+    "historyDays": 90,
+    "seasonalAdjustmentPct": 60,
+    "seasonalWindowDays": 14,
+    "batchesPerSkuDc": 2,
+    "nearExpiryDays": 18,
+    "warningExpiryDays": 62
+  }
+}
