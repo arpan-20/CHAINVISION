@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 import PlannerHome from './pages/planner/PlannerHome'
 import PlannerLayout from './pages/planner/PlannerLayout'
@@ -42,7 +42,8 @@ function App() {
           }
         />
       </Route>
-      <Route path="*" element={<Placeholder />} />
+      <Route path="/" element={<Navigate to="/planner" replace />} />
+      <Route path="*" element={<Navigate to="/planner" replace />} />
     </Routes>
   )
 }
