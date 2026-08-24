@@ -1,6 +1,11 @@
-import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+
+import { env } from './config/env'
+import './db/supabaseClient'
+import { errorHandler } from './middleware/errorHandler'
+import { demandRoutes } from './routes/demandRoutes'
+import { inventoryRoutes } from './routes/inventoryRoutes'
 
 // CHAINVISION — P1 backend (Demand Sensing & Replenishment Planning)
 // Bootstrap only. Business routes (skus, inventory, demand-signals,
@@ -17,8 +22,11 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' })
 })
 
-const PORT = process.env.P1_PORT ? Number(process.env.P1_PORT) : 4000
+app.use('/api', demandRoutes)
+app.use('/api', inventoryRoutes)
 
-app.listen(PORT, () => {
-  console.log(`[p1-backend] listening on port ${PORT}`)
+app.use(errorHandler)
+
+app.listen(env.p1Port, () => {
+  console.log(`[p1-backend] listening on port ${env.p1Port}`)
 })

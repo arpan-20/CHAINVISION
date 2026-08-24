@@ -2,7 +2,7 @@
   "java.import.maven.enabled": true,
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.project.sourcePaths": [
-    "pr2-backend/src/main/java"
+    "src/main/java"
   ],
-  "java.project.outputPath": "pr2-backend/target/classes"
+  "java.project.outputPath": "target/classes"
 }
