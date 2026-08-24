@@ -5,22 +5,15 @@ spring:
   application:
     name: pr2-backend
 
-  # Datasource points at the Supabase-hosted Postgres `pr2` schema.
-  # Real values are supplied via environment variables and filled in for
-  # real by Phase 2/4 (see 00_PROJECT_CONTEXT.md Section 14). No local
-  # Postgres container; Supabase is the DB host. The localhost fallbacks
-  # below exist only so this Phase 1 scaffold boots and /health responds
-  # before Phase 2/4 wires real Supabase credentials — they are not
-  # expected to yield a working connection on their own.
+  # Values point at Supabase-hosted Postgres. The URL must include
+  # currentSchema=pr2 (and sslmode=require for Supabase).
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      # Don't block/fail app startup if the DB isn't reachable yet — lets
-      # GET /health respond even before Phase 2/4 wires real credentials.
-      initialization-fail-timeout: -1
+      initialization-fail-timeout: 10000
 
   jpa:
     hibernate:

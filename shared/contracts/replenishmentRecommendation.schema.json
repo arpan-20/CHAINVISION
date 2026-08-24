@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chainvision.local/contracts/replenishmentRecommendation.schema.json",
+  "title": "ReplenishmentRecommendation",
+  "description": "P1 recommendation handoff consumed by the PR2 procurement service.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "recommendationId": { "type": "string" },
+    "skuId": { "type": "string" },
+    "skuName": { "type": "string" },
+    "dcId": { "type": "string" },
+    "recommendedQty": { "type": "number" },
+    "urgency": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "reason": { "type": "string" },
+    "aiRationale": { "type": "string" },
+    "expiryRiskContext": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "required": [
+    "recommendationId",
+    "skuId",
+    "skuName",
+    "dcId",
+    "recommendedQty",
+    "urgency",
+    "reason",
+    "aiRationale",
+    "expiryRiskContext",
+    "generatedAt"
+  ]
+}
