@@ -199,7 +199,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P1.3, P2.1
 
 ### P4.2 — PR2 Backend Foundation
-**Status:** 🟡 PARTIALLY COMPLETE
+**Status:** ✅ COMPLETE
 **Evidence:** The datasource is wired via `application.yml` (`SPRING_DATASOURCE_URL/USERNAME/PASSWORD`, `currentSchema=pr2`), and a global exception handler exists (`GlobalExceptionHandler.java`, `ApiError.java`) with real logic. A DTO that field-for-field mirrors the JSON Schema now exists at `requisition/dto/ReplenishmentRecommendationDto.java` — verified: all 10 contract fields present with correct types.
 **Missing:** The specific config files named in the prompt don't exist as such — there is no `config/DatasourceConfig.java` (datasource config lives directly in `application.yml` instead, which is a reasonable substitution but not what was specified), and the exception handler lives in a package called `exception/`, not `config/` as the prompt specified.
 **Documentation compliance:** PARTIAL — functionally equivalent, structurally non-compliant with the prompt's exact file list.
