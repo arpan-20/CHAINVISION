@@ -46,8 +46,8 @@ export function useReferenceData(): ReferenceData {
     ])
       .then(([skuRes, dcRes]) => {
         if (cancelled) return
-        setSkus(skuRes.data.data)
-        setDcs(dcRes.data.data)
+        setSkus(Array.isArray(skuRes.data?.data) ? skuRes.data.data : [])
+        setDcs(Array.isArray(dcRes.data?.data) ? dcRes.data.data : [])
       })
       .catch(() => {
         if (!cancelled) setError(true)

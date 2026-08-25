@@ -9,6 +9,7 @@ import {
 import { supabaseClient } from '../db/supabaseClient'
 import { listDemandSignals, type DemandSignal } from './demandService'
 import { listInventoryBatches, type InventoryBatch } from './inventoryService'
+import * as pr2ClientService from './pr2ClientService'
 
 export type RecommendationUrgency = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
@@ -303,6 +304,24 @@ const insertRecommendation = async (
   return data as RecommendationRow
 }
 
+const updateRecommendationStatus = async (
+  recommendationId: string,
+  status: 'SENT_TO_PROCUREMENT',
+): Promise<void> => {
+  const { error } = await supabaseClient
+    .schema('p1')
+    .from('replenishment_recommendations')
+    .update({ status })
+    .eq('id', recommendationId)
+
+  if (error) {
+    console.error(
+      `[recommendationService] Failed to update status to ${status} for ` +
+        `recommendationId=${recommendationId}: ${error.message}`,
+    )
+  }
+}
+
 const toContract = (
   row: RecommendationRow,
   skuName: string,
@@ -368,7 +387,21 @@ export const generateReplenishmentRecommendations = async (
 
     const { skuName, expiryRiskContext: context, ...rowInput } = candidate
     const row = await insertRecommendation(rowInput)
-    recommendations.push(toContract(row, skuName, context))
+    const contract = toContract(row, skuName, context)
+
+    // --- P1→PR2 handoff (Phase 20, P20.1) ---
+    // No urgency check needed here: buildRecommendationForCombo already
+    // returns null for LOW-urgency combos, so `row.urgency` is always
+    // MEDIUM/HIGH/CRITICAL by this point.
+    try {
+      await pr2ClientService.sendRecommendation(contract)
+      await updateRecommendationStatus(row.id, 'SENT_TO_PROCUREMENT')
+    } catch {
+      // failure already logged inside pr2ClientService; recommendation stays NEW
+    }
+    // --- end handoff ---
+
+    recommendations.push(contract)
   }
 
   return recommendations
