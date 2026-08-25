@@ -11,11 +11,12 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "axios": "^1.19.0",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.2",
     "multer": "^2.2.0",
-    "pdf-to-img": "^6.3.0",
+    "pdf-to-img": "^5.0.0",
     "tesseract.js": "^7.0.0",
     "zod": "^3.23.8"
   },

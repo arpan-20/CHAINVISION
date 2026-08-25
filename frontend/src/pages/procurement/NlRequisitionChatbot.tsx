@@ -110,6 +110,7 @@ export default function NlRequisitionChatbot({
         quantity: Number(quantity),
         urgency,
         rawNlInput: rawInputAtParse,
+        source: 'CHATBOT',
       })
       .then(() => {
         setState('created')

@@ -1,5 +1,6 @@
 package com.chainvision.pr2.dto;
 
+import com.chainvision.pr2.entity.RequisitionSource;
 import com.chainvision.pr2.entity.Urgency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,5 +13,11 @@ public record CreateRequisitionRequest(
         @NotBlank String dcCode,
         @NotNull @Positive Integer quantity,
         @NotNull Urgency urgency,
-        String rawNlInput) {
+        String rawNlInput,
+        RequisitionSource source) {
+
+        public CreateRequisitionRequest(
+                        String skuCode, String dcCode, Integer quantity, Urgency urgency, String rawNlInput) {
+                this(skuCode, dcCode, quantity, urgency, rawNlInput, null);
+        }
 }

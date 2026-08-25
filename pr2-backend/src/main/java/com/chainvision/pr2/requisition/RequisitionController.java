@@ -33,7 +33,14 @@ public class RequisitionController {
 
     @PostMapping
     public ResponseEntity<RequisitionResponse> create(@Valid @RequestBody CreateRequisitionRequest request) {
-        PurchaseRequisition created = requisitionService.createManualRequisition(request);
+        PurchaseRequisition created = request.source() == RequisitionSource.CHATBOT
+                ? requisitionService.createFromChatbotIntent(
+                        request.skuCode(),
+                        request.dcCode(),
+                        request.quantity(),
+                        request.urgency(),
+                        request.rawNlInput())
+                : requisitionService.createManualRequisition(request);
         return created(created);
     }
 
