@@ -1,6 +1,10 @@
-package com.chainvision.pr2.exception;
+package com.chainvision.pr2.config;
 
 import com.chainvision.pr2.ai.GeminiUnavailableException;
+import com.chainvision.pr2.exception.ApiError;
+import com.chainvision.pr2.exception.BusinessRuleViolationException;
+import com.chainvision.pr2.exception.InvalidStateException;
+import com.chainvision.pr2.exception.ResourceNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;

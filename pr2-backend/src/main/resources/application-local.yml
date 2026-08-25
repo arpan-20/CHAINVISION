@@ -1,6 +1,3 @@
-spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+# Local runs use the same Supabase datasource configuration as other profiles.
+# Supply SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, and
+# SPRING_DATASOURCE_PASSWORD through the environment.
