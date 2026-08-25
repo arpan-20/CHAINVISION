@@ -1,0 +1,35 @@
+# pr2-backend/local-dev — LOCAL DEVELOPMENT ONLY.
+#
+# The team's real database is Supabase-hosted Postgres (see
+# ../../Documentaion/PROMPTS.md "ARCHITECTURE NOTE — Supabase Adoption"),
+# which is why the root docker-compose.yml has no postgres service.
+#
+# This file spins up a throwaway local Postgres so the PR2 backend can be
+# built and tested against a real `pr2` schema before Supabase credentials
+# are available (or while working offline). Switching to the real Supabase
+# project later is just an env var change (SPRING_DATASOURCE_URL/USERNAME/
+# PASSWORD) — no code changes.
+#
+# Usage: docker compose -f local-dev/docker-compose.yml up -d
+
+services:
+  pr2-postgres:
+    image: postgres:16-alpine
+    container_name: pr2-local-postgres
+    environment:
+      POSTGRES_USER: pr2dev
+      POSTGRES_PASSWORD: pr2dev
+      POSTGRES_DB: pr2dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pr2_local_pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pr2dev -d pr2dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pr2_local_pgdata:
