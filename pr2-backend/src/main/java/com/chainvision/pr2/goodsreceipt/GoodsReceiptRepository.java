@@ -1,6 +1,5 @@
-package com.chainvision.pr2.repository;
+package com.chainvision.pr2.goodsreceipt;
 
-import com.chainvision.pr2.entity.GoodsReceipt;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

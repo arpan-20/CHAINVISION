@@ -1,13 +1,13 @@
-package com.chainvision.pr2.service;
+package com.chainvision.pr2.requisition;
 
-import com.chainvision.pr2.ai.IntentExtractionResult;
-import com.chainvision.pr2.ai.IntentExtractionService;
 import com.chainvision.pr2.dto.CreateRequisitionRequest;
-import com.chainvision.pr2.dto.ReplenishmentRecommendationRequest;
-import com.chainvision.pr2.entity.PurchaseRequisition;
 import com.chainvision.pr2.entity.RequisitionSource;
+import com.chainvision.pr2.entity.RequisitionStatus;
+import com.chainvision.pr2.entity.Urgency;
 import com.chainvision.pr2.exception.ResourceNotFoundException;
-import com.chainvision.pr2.repository.PurchaseRequisitionRepository;
+import com.chainvision.pr2.requisition.dto.IntentExtractionResult;
+import com.chainvision.pr2.requisition.dto.ReplenishmentRecommendationDto;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -41,15 +41,31 @@ public class RequisitionService {
     // The P1 -> PR2 handoff (Documentaion/00_PROJECT_CONTEXT.md Section 4 / Section 13.2
     // POST /api/requisitions/from-recommendation).
     @Transactional
-    public PurchaseRequisition createFromRecommendation(ReplenishmentRecommendationRequest recommendation) {
+    public PurchaseRequisition createFromRecommendation(ReplenishmentRecommendationDto recommendation) {
         PurchaseRequisition requisition = new PurchaseRequisition(
                 recommendation.recommendationId(),
                 recommendation.skuId(),
                 recommendation.dcId(),
-                recommendation.recommendedQty(),
+                recommendation.recommendedQty().setScale(0, RoundingMode.CEILING).intValueExact(),
                 recommendation.urgency(),
                 RequisitionSource.SYSTEM,
                 null);
+        return requisitionRepository.save(requisition);
+    }
+
+    // Phase 12 extension hook. This is the deterministic persistence hook for a
+    // human-confirmed chatbot suggestion; Gemini only pre-fills the values.
+    @Transactional
+    public PurchaseRequisition createFromChatbotIntent(
+            String skuCode, String dcCode, Integer quantity, Urgency urgency, String rawNlInput) {
+        PurchaseRequisition requisition = new PurchaseRequisition(
+                null,
+                skuCode,
+                dcCode,
+                quantity,
+                urgency,
+                RequisitionSource.CHATBOT,
+                rawNlInput);
         return requisitionRepository.save(requisition);
     }
 
@@ -59,7 +75,16 @@ public class RequisitionService {
         return intentExtractionService.extract(freeText);
     }
 
-    public List<PurchaseRequisition> listRequisitions() {
+    public List<PurchaseRequisition> listRequisitions(RequisitionStatus status, RequisitionSource source) {
+        if (status != null && source != null) {
+            return requisitionRepository.findByStatusAndSource(status, source);
+        }
+        if (status != null) {
+            return requisitionRepository.findByStatus(status);
+        }
+        if (source != null) {
+            return requisitionRepository.findBySource(source);
+        }
         return requisitionRepository.findAll();
     }
 

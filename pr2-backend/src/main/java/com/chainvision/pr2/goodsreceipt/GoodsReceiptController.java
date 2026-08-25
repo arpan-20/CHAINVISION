@@ -1,9 +1,7 @@
-package com.chainvision.pr2.controller;
+package com.chainvision.pr2.goodsreceipt;
 
 import com.chainvision.pr2.dto.CreateGoodsReceiptRequest;
 import com.chainvision.pr2.dto.GoodsReceiptResponse;
-import com.chainvision.pr2.entity.GoodsReceipt;
-import com.chainvision.pr2.service.GoodsReceiptService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;

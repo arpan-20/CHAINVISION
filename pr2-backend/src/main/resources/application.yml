@@ -25,3 +25,7 @@ spring:
       hibernate:
         default_schema: pr2
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-2.0-flash}

@@ -1,5 +1,8 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.requisition;
 
+import com.chainvision.pr2.entity.RequisitionSource;
+import com.chainvision.pr2.entity.RequisitionStatus;
+import com.chainvision.pr2.entity.Urgency;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

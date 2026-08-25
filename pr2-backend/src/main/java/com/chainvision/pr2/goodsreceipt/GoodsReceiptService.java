@@ -1,12 +1,10 @@
-package com.chainvision.pr2.service;
+package com.chainvision.pr2.goodsreceipt;
 
-import com.chainvision.pr2.entity.GoodsReceipt;
-import com.chainvision.pr2.entity.PurchaseOrder;
 import com.chainvision.pr2.entity.PurchaseOrderStatus;
 import com.chainvision.pr2.exception.InvalidStateException;
 import com.chainvision.pr2.exception.ResourceNotFoundException;
-import com.chainvision.pr2.repository.GoodsReceiptRepository;
-import com.chainvision.pr2.repository.PurchaseOrderRepository;
+import com.chainvision.pr2.purchaseorder.PurchaseOrder;
+import com.chainvision.pr2.purchaseorder.PurchaseOrderRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -29,9 +27,8 @@ public class GoodsReceiptService {
         this.purchaseOrderRepository = purchaseOrderRepository;
     }
 
-    // Simulates goods receipt against a PO (Documentaion/00_PROJECT_CONTEXT.md Section 3,
-    // "Receiving") and rolls the PO's status forward — PARTIALLY_RECEIVED if cumulative received
-    // quantity is still short of what was ordered, RECEIVED once it's met or exceeded.
+    // Simulated one-click receipt: persist the GRN, then set the PO status from cumulative
+    // received quantity. No AI or IoT/CV integration is involved in this demo flow.
     @Transactional
     public GoodsReceipt recordReceipt(UUID poId, Integer receivedQty, String batchNo, LocalDate expiryDate) {
         PurchaseOrder po = purchaseOrderRepository
@@ -43,7 +40,7 @@ public class GoodsReceiptService {
         }
 
         GoodsReceipt grn = new GoodsReceipt(poId, receivedQty, batchNo, expiryDate);
-        goodsReceiptRepository.save(grn);
+        GoodsReceipt saved = goodsReceiptRepository.save(grn);
 
         int totalReceived = goodsReceiptRepository.findByPoId(poId).stream()
                 .mapToInt(GoodsReceipt::getReceivedQty)
@@ -56,7 +53,7 @@ public class GoodsReceiptService {
         }
         purchaseOrderRepository.save(po);
 
-        return grn;
+        return saved;
     }
 
     public List<GoodsReceipt> listGoodsReceipts(UUID poId) {

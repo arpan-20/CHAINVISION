@@ -142,9 +142,10 @@ REQ_ID=$(echo "$REQ" | python3 -c "import sys,json; print(json.load(sys.stdin)['
 # 2. Preview deterministic supplier scoring (optional — PO creation runs this internally too)
 curl -s -X POST $BASE/api/suppliers/select/$REQ_ID
 
-# 3. Raise a PO (runs supplier selection for real, moves the requisition to PO_RAISED)
-PO=$(curl -s -X POST $BASE/api/purchase-orders/$REQ_ID -H "Content-Type: application/json" -d '{"unitPrice": 10.00}')
+# 3. Raise a PO (runs supplier selection for real, computes unit price, moves the requisition to PO_RAISED)
+PO=$(curl -s -X POST $BASE/api/purchase-orders/$REQ_ID)
 PO_ID=$(echo "$PO" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+PO_UNIT_PRICE=$(echo "$PO" | python3 -c "import sys,json; print(json.load(sys.stdin)['unitPrice'])")
 
 # 4. Record goods receipt (full quantity -> PO becomes RECEIVED)
 curl -s -X POST $BASE/api/goods-receipts -H "Content-Type: application/json" \
@@ -155,7 +156,7 @@ curl -s -X POST $BASE/api/goods-receipts -H "Content-Type: application/json" \
 INV=$(curl -s -X POST $BASE/api/invoices/upload \
   -F "file=@/path/to/any/pdf/or/image" \
   -F "poId=$PO_ID" -F "manualInvoiceNumber=INV-1001" \
-  -F "manualQuantity=500" -F "manualUnitPrice=10.00")
+  -F "manualQuantity=500" -F "manualUnitPrice=$PO_UNIT_PRICE")
 INV_ID=$(echo "$INV" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 
 # 6. Run the deterministic 3-way match — matches here, so payment auto-approves immediately
@@ -189,7 +190,7 @@ Matches `Documentaion/00_PROJECT_CONTEXT.md` Section 13.2 exactly.
 | Requisitions | `GET /api/requisitions`, `GET /api/requisitions/{id}` | |
 | Suppliers | `GET /api/suppliers` | |
 | Suppliers | `POST /api/suppliers/select/{requisitionId}` | read-only scoring preview, no side effects |
-| Purchase Orders | `POST /api/purchase-orders/{requisitionId}` | body `{"unitPrice": number}`; runs the real selection |
+| Purchase Orders | `POST /api/purchase-orders/{requisitionId}` | no body; runs supplier selection and computes unit price |
 | Purchase Orders | `GET /api/purchase-orders`, `GET /api/purchase-orders/{id}` | |
 | Goods Receipts | `POST /api/goods-receipts` | body `{"poId","receivedQty","batchNo","expiryDate"}` |
 | Goods Receipts | `GET /api/goods-receipts?poId=...` | `poId` optional |

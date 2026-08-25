@@ -1,12 +1,12 @@
-package com.chainvision.pr2.controller;
+package com.chainvision.pr2.requisition;
 
-import com.chainvision.pr2.ai.IntentExtractionResult;
 import com.chainvision.pr2.dto.CreateRequisitionRequest;
 import com.chainvision.pr2.dto.ParseIntentRequest;
-import com.chainvision.pr2.dto.ReplenishmentRecommendationRequest;
 import com.chainvision.pr2.dto.RequisitionResponse;
-import com.chainvision.pr2.entity.PurchaseRequisition;
-import com.chainvision.pr2.service.RequisitionService;
+import com.chainvision.pr2.entity.RequisitionSource;
+import com.chainvision.pr2.entity.RequisitionStatus;
+import com.chainvision.pr2.requisition.dto.IntentExtractionResult;
+import com.chainvision.pr2.requisition.dto.ReplenishmentRecommendationDto;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // See Documentaion/00_PROJECT_CONTEXT.md Section 13.2.
@@ -40,21 +41,23 @@ public class RequisitionController {
     // (Documentaion/00_PROJECT_CONTEXT.md Section 4).
     @PostMapping("/from-recommendation")
     public ResponseEntity<RequisitionResponse> createFromRecommendation(
-            @Valid @RequestBody ReplenishmentRecommendationRequest recommendation) {
+            @Valid @RequestBody ReplenishmentRecommendationDto recommendation) {
         PurchaseRequisition created = requisitionService.createFromRecommendation(recommendation);
         return created(created);
     }
 
-    // Proxies to Gemini for NL intent extraction only (Section 9.1) — returns a pre-filled
-    // suggestion, does not itself create a requisition.
+    // Section 9 hard rule: Gemini only pre-fills a suggestion here. A human/UI confirm
+    // step must call POST /api/requisitions before anything is persisted.
     @PostMapping("/parse-intent")
     public IntentExtractionResult parseIntent(@Valid @RequestBody ParseIntentRequest request) {
         return requisitionService.parseIntent(request.text());
     }
 
     @GetMapping
-    public List<RequisitionResponse> list() {
-        return requisitionService.listRequisitions().stream().map(RequisitionResponse::from).toList();
+    public List<RequisitionResponse> list(
+            @RequestParam(required = false) RequisitionStatus status,
+            @RequestParam(required = false) RequisitionSource source) {
+        return requisitionService.listRequisitions(status, source).stream().map(RequisitionResponse::from).toList();
     }
 
     @GetMapping("/{id}")

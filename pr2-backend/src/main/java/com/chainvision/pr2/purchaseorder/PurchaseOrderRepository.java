@@ -1,6 +1,5 @@
-package com.chainvision.pr2.repository;
+package com.chainvision.pr2.purchaseorder;
 
-import com.chainvision.pr2.entity.PurchaseOrder;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 

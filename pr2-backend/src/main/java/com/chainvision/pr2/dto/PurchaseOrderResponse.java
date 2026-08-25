@@ -1,7 +1,7 @@
 package com.chainvision.pr2.dto;
 
-import com.chainvision.pr2.entity.PurchaseOrder;
 import com.chainvision.pr2.entity.PurchaseOrderStatus;
+import com.chainvision.pr2.purchaseorder.PurchaseOrder;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;

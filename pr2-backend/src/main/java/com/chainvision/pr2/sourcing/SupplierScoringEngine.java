@@ -1,9 +1,7 @@
-package com.chainvision.pr2.service;
+package com.chainvision.pr2.sourcing;
 
 import com.chainvision.pr2.dto.SupplierScoreResult;
-import com.chainvision.pr2.entity.Supplier;
 import com.chainvision.pr2.exception.BusinessRuleViolationException;
-import com.chainvision.pr2.repository.SupplierRepository;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Comparator;
@@ -19,7 +17,7 @@ import org.springframework.stereotype.Service;
 // price 0.35 / lead-time 0.15 / OTD 0.25 / quality 0.25, reflecting the project brief's emphasis
 // on price and performance (Section 3, "price, lead time, capacity, and performance score").
 @Service
-public class SupplierScoringService {
+public class SupplierScoringEngine {
 
     private final SupplierRepository supplierRepository;
     private final BigDecimal priceWeight;
@@ -27,7 +25,7 @@ public class SupplierScoringService {
     private final BigDecimal otdWeight;
     private final BigDecimal qualityWeight;
 
-    public SupplierScoringService(
+    public SupplierScoringEngine(
             SupplierRepository supplierRepository,
             @Value("${pr2.supplier-scoring.weights.price:0.35}") BigDecimal priceWeight,
             @Value("${pr2.supplier-scoring.weights.lead-time:0.15}") BigDecimal leadTimeWeight,

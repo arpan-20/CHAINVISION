@@ -1,6 +1,6 @@
 package com.chainvision.pr2.dto;
 
-import com.chainvision.pr2.entity.GoodsReceipt;
+import com.chainvision.pr2.goodsreceipt.GoodsReceipt;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;

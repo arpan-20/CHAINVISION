@@ -1,9 +1,11 @@
 package com.chainvision.pr2.service;
 
 import com.chainvision.pr2.dto.SupplierScoreResult;
-import com.chainvision.pr2.entity.PurchaseRequisition;
-import com.chainvision.pr2.entity.Supplier;
-import com.chainvision.pr2.repository.SupplierRepository;
+import com.chainvision.pr2.requisition.PurchaseRequisition;
+import com.chainvision.pr2.requisition.RequisitionService;
+import com.chainvision.pr2.sourcing.Supplier;
+import com.chainvision.pr2.sourcing.SupplierRepository;
+import com.chainvision.pr2.sourcing.SupplierScoringEngine;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -12,15 +14,15 @@ import org.springframework.stereotype.Service;
 public class SupplierService {
 
     private final SupplierRepository supplierRepository;
-    private final SupplierScoringService supplierScoringService;
+    private final SupplierScoringEngine supplierScoringEngine;
     private final RequisitionService requisitionService;
 
     public SupplierService(
             SupplierRepository supplierRepository,
-            SupplierScoringService supplierScoringService,
+            SupplierScoringEngine supplierScoringEngine,
             RequisitionService requisitionService) {
         this.supplierRepository = supplierRepository;
-        this.supplierScoringService = supplierScoringService;
+        this.supplierScoringEngine = supplierScoringEngine;
         this.requisitionService = requisitionService;
     }
 
@@ -33,6 +35,6 @@ public class SupplierService {
     // raised (Documentaion/00_PROJECT_CONTEXT.md Section 3, "Sourcing & PO").
     public List<SupplierScoreResult> previewSelection(UUID requisitionId) {
         PurchaseRequisition requisition = requisitionService.getRequisition(requisitionId);
-        return supplierScoringService.rankEligibleSuppliers(requisition.getQuantity());
+        return supplierScoringEngine.rankEligibleSuppliers(requisition.getQuantity());
     }
 }

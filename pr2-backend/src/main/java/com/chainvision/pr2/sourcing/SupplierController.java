@@ -1,4 +1,4 @@
-package com.chainvision.pr2.controller;
+package com.chainvision.pr2.sourcing;
 
 import com.chainvision.pr2.dto.SupplierResponse;
 import com.chainvision.pr2.dto.SupplierScoreResult;

@@ -1,6 +1,5 @@
-package com.chainvision.pr2.repository;
+package com.chainvision.pr2.sourcing;
 
-import com.chainvision.pr2.entity.Supplier;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 

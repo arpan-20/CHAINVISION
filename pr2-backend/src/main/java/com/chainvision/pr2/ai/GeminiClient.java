@@ -43,6 +43,10 @@ public class GeminiClient {
         return call(Map.of("parts", List.of(Map.of("text", prompt))));
     }
 
+    public String generateJson(String prompt, String schemaHint) {
+        return generateJson(prompt + "\n\nReturn JSON matching this schema hint:\n" + schemaHint);
+    }
+
     // Sends a prompt alongside an inline document (PDF/image) for multimodal extraction.
     public String generateJsonFromDocument(String prompt, byte[] fileBytes, String mimeType) {
         String base64 = Base64.getEncoder().encodeToString(fileBytes);

@@ -1,10 +1,6 @@
-package com.chainvision.pr2.controller;
+package com.chainvision.pr2.purchaseorder;
 
-import com.chainvision.pr2.dto.CreatePurchaseOrderRequest;
 import com.chainvision.pr2.dto.PurchaseOrderResponse;
-import com.chainvision.pr2.entity.PurchaseOrder;
-import com.chainvision.pr2.service.PurchaseOrderService;
-import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -12,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,9 +23,8 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/{requisitionId}")
-    public ResponseEntity<PurchaseOrderResponse> create(
-            @PathVariable UUID requisitionId, @Valid @RequestBody CreatePurchaseOrderRequest request) {
-        PurchaseOrder po = purchaseOrderService.createFromRequisition(requisitionId, request.unitPrice());
+    public ResponseEntity<PurchaseOrderResponse> create(@PathVariable UUID requisitionId) {
+        PurchaseOrder po = purchaseOrderService.generateFromRequisition(requisitionId);
         PurchaseOrderResponse body = PurchaseOrderResponse.from(po);
         return ResponseEntity.created(URI.create("/api/purchase-orders/" + body.id())).body(body);
     }
