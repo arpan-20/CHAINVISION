@@ -7,6 +7,14 @@ import InventoryView from './pages/planner/InventoryView'
 import ExpiryHeatmap from './pages/planner/ExpiryHeatmap'
 import RecommendationsView from './pages/planner/RecommendationsView'
 import { PulseIcon } from './components/icons'
+import ProcurementHome from './pages/procurement/ProcurementHome'
+import ProcurementLayout from './pages/procurement/ProcurementLayout'
+import RequisitionsView from './pages/procurement/RequisitionsView'
+import PurchaseOrdersView from './pages/procurement/PurchaseOrdersView'
+import GoodsReceiptView from './pages/procurement/GoodsReceiptView'
+import InvoiceUploadView from './pages/procurement/InvoiceUploadView'
+import ExceptionQueueView from './pages/procurement/ExceptionQueueView'
+import P2pAnalyticsView from './pages/procurement/P2pAnalyticsView'
 
 function Placeholder() {
   return (
@@ -41,6 +49,15 @@ function App() {
             />
           }
         />
+      </Route>
+      <Route path="/procurement" element={<ProcurementLayout />}>
+        <Route index element={<ProcurementHome />} />
+        <Route path="requisitions" element={<RequisitionsView />} />
+        <Route path="purchase-orders" element={<PurchaseOrdersView />} />
+        <Route path="goods-receipt" element={<GoodsReceiptView />} />
+        <Route path="invoices" element={<InvoiceUploadView />} />
+        <Route path="exceptions" element={<ExceptionQueueView />} />
+        <Route path="analytics" element={<P2pAnalyticsView />} />
       </Route>
       <Route path="/" element={<Navigate to="/planner" replace />} />
       <Route path="*" element={<Navigate to="/planner" replace />} />
