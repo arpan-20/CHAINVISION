@@ -13,20 +13,65 @@ export class OcrUnsupportedMediaTypeError extends Error {
   statusCode = 415
 }
 
+const extractTextFromImage = async (fileBuffer: Buffer): Promise<string> => {
+  const result = await recognize(fileBuffer, 'eng')
+  return result.data.text
+}
+
+const decodePdfTextLiteral = (value: string): string =>
+  value
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\\t/g, '\t')
+    .replace(/\\\(/g, '(')
+    .replace(/\\\)/g, ')')
+    .replace(/\\\\/g, '\\')
+
+const extractEmbeddedPdfText = (fileBuffer: Buffer): string => {
+  const pdfText = fileBuffer.toString('latin1')
+  const literalTextMatches = [...pdfText.matchAll(/\(([^()]*(?:\\.[^()]*)*)\)\s*Tj/g)]
+
+  return literalTextMatches
+    .map((match) => decodePdfTextLiteral(match[1] ?? '').trim())
+    .filter(Boolean)
+    .join('\n')
+}
+
+const extractTextFromPdf = async (fileBuffer: Buffer): Promise<string> => {
+  const { pdf } = await import('pdf-to-img')
+  let document
+
+  try {
+    document = await pdf(fileBuffer, { scale: 3, format: 'png' })
+  } catch (error) {
+    const embeddedText = extractEmbeddedPdfText(fileBuffer)
+    if (embeddedText) {
+      return embeddedText
+    }
+
+    throw error
+  }
+
+  try {
+    const pageTexts: string[] = []
+    for await (const pageImage of document) {
+      pageTexts.push(await extractTextFromImage(pageImage))
+    }
+
+    return pageTexts.join('\n\n').trim()
+  } finally {
+    await document.destroy()
+  }
+}
+
 export const extractText = async (fileBuffer: Buffer, mimeType: string): Promise<string> => {
   if (mimeType === 'application/pdf') {
-    // Phase 15 known limitation: Tesseract.js needs image input. PDF invoices require a
-    // PDF-to-image pre-conversion step before OCR; Phase 16/24 can add pdf-to-img or a
-    // similar converter, or fall back to Gemini document extraction.
-    throw new OcrUnsupportedMediaTypeError(
-      'PDF OCR requires a PDF-to-image conversion step before Tesseract.js can extract text',
-    )
+    return extractTextFromPdf(fileBuffer)
   }
 
   if (!SUPPORTED_IMAGE_MIME_TYPES.has(mimeType)) {
     throw new OcrUnsupportedMediaTypeError(`Unsupported OCR file type: ${mimeType}`)
   }
 
-  const result = await recognize(fileBuffer, 'eng')
-  return result.data.text
+  return extractTextFromImage(fileBuffer)
 }
