@@ -1,9 +1,7 @@
-package com.chainvision.pr2.controller;
+package com.chainvision.pr2.invoice;
 
 import com.chainvision.pr2.dto.InvoiceResponse;
 import com.chainvision.pr2.dto.ThreeWayMatchResponse;
-import com.chainvision.pr2.entity.Invoice;
-import com.chainvision.pr2.service.InvoiceService;
 import com.chainvision.pr2.service.MatchingService;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-// See Documentaion/00_PROJECT_CONTEXT.md Section 13.2.
 @RestController
 @RequestMapping("/api/invoices")
 public class InvoiceController {
@@ -31,9 +28,6 @@ public class InvoiceController {
         this.matchingService = matchingService;
     }
 
-    // Multipart upload; triggers Gemini OCR extraction (Section 10) when GEMINI_API_KEY is
-    // configured. The manual* params are optional overrides/fallbacks — see InvoiceService and
-    // SETUP.md for why they exist (keeps this endpoint fully testable without a live API key).
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<InvoiceResponse> upload(
             @RequestParam MultipartFile file,
@@ -58,7 +52,6 @@ public class InvoiceController {
         return InvoiceResponse.from(invoiceService.getInvoice(id));
     }
 
-    // Runs the deterministic 3-way match (PO vs GRN vs invoice) — Section 3 ("Invoicing").
     @PostMapping("/{id}/match")
     public ThreeWayMatchResponse match(@PathVariable UUID id) {
         return ThreeWayMatchResponse.from(matchingService.runMatch(id));

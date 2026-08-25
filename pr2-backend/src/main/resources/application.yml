@@ -29,3 +29,9 @@ spring:
 gemini:
   api-key: ${GEMINI_API_KEY:}
   model: ${GEMINI_MODEL:gemini-2.0-flash}
+
+p1:
+  ocr-endpoint-url: ${P1_OCR_URL:http://localhost:4000/internal/ocr/extract}
+
+internal:
+  api-key: ${INTERNAL_API_KEY:}

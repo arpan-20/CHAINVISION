@@ -1,4 +1,4 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.invoice;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +12,7 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-// Mirrors pr2.invoices — see Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
+// Mirrors pr2.invoices, Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
 @Table(name = "invoices", schema = "pr2")
 public class Invoice {
@@ -23,26 +23,26 @@ public class Invoice {
     @Column(name = "po_id")
     private UUID poId;
 
-    @Column(name = "invoice_number")
+    @Column(name = "invoice_number", nullable = false)
     private String invoiceNumber;
 
-    @Column(name = "vendor_name_ocr")
+    @Column(name = "vendor_name_ocr", nullable = false)
     private String vendorNameOcr;
 
-    @Column(name = "quantity_ocr")
+    @Column(name = "quantity_ocr", nullable = false)
     private Integer quantityOcr;
 
-    @Column(name = "unit_price_ocr")
+    @Column(name = "unit_price_ocr", nullable = false)
     private BigDecimal unitPriceOcr;
 
-    @Column(name = "total_ocr")
+    @Column(name = "total_ocr", nullable = false)
     private BigDecimal totalOcr;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "raw_ocr_json")
+    @Column(name = "raw_ocr_json", nullable = false)
     private String rawOcrJson;
 
-    @Column(name = "uploaded_file_ref")
+    @Column(name = "uploaded_file_ref", nullable = false)
     private String uploadedFileRef;
 
     @Enumerated(EnumType.STRING)

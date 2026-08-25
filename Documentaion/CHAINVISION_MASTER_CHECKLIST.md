@@ -78,7 +78,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 16 — INVOICE PROCESSING
 
-- [⚠️] P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline
+- [✅] P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline
 
 ## PHASE 17 — 3-WAY MATCHING
 
@@ -292,15 +292,15 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 ### P15.1 — OCR Text Extraction Endpoint (P1/Node, Tesseract.js)
 **Status:** ✅ COMPLETE
 **Evidence:** `/p1-backend/src/services/ocrService.ts` wraps `tesseract.js` and exposes `extractText(fileBuffer, mimeType)`. It now supports images directly and PDFs via `pdf-to-img` page rendering before OCR, with a narrow embedded-text fallback for the hand-written seed PDFs that PDF.js cannot render because they lack a valid xref table. `/p1-backend/src/routes/internalOcrRoutes.ts` exposes `POST /internal/ocr/extract` as a multipart upload protected by `x-internal-key`. `p1-backend/package.json` / `package-lock.json` include `tesseract.js`, `pdf-to-img`, `multer`, and `@types/multer`. `p1-backend/src/index.ts` mounts the internal route, and `.env.example` now includes `INTERNAL_API_KEY`. `src/routes/internalOcrRoutes.test.ts` verifies 401 rejection without the key and successful authorized multipart raw-text response with OCR mocked. `src/services/ocrService.test.ts` verifies image OCR, PDF-to-image conversion, malformed seed-PDF fallback, and unsupported media handling. `curl` uploads against all three files in `shared/seed-data/sample_invoices/` returned raw text containing invoice numbers, quantities, unit prices, and totals.
-**Missing:** None for Phase 15. P16.1 still needs to be refactored so PR2 calls this P1 endpoint instead of doing direct Gemini document OCR.
+**Missing:** None for Phase 15. P16.1 now calls this P1 endpoint before Gemini structuring.
 **Documentation compliance:** YES
 **Dependencies:** P4.1
 
 ### P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline
-**Status:** ⚠️ NEEDS FIX
-**Evidence:** `entity/Invoice.java`, `repository/InvoiceRepository.java`, `controller/InvoiceController.java`, `service/InvoiceService.java`, and `ai/InvoiceOcrService.java` all exist, and there is a working invoice upload + structuring path. However, `ai/InvoiceOcrService.java` was read in full: it calls `geminiClient.generateJsonFromDocument(prompt, fileBytes, mimeType)` directly against the raw uploaded file — i.e., Gemini itself performs OCR-and-structuring in one call. P1 now exposes `/internal/ocr/extract`, but PR2 still has no `OcrClient.java` calling it and no `InvoiceStructuringService.java` operating on separately-extracted raw text.
-**Missing:** The two-stage pipeline (Tesseract raw text → Gemini structuring) the prompt and Architecture Note require. The current single-stage Gemini-vision approach may work functionally for the demo, but it (a) doesn't match the documented design, (b) reintroduces the exact free-tier Gemini rate-limit risk the Architecture Note's OCR-ordering decision was meant to avoid, and (c) should be flagged to the coordinator rather than silently accepted, per this audit's instructions not to invent compliance.
-**Documentation compliance:** NO
+**Status:** ✅ COMPLETE
+**Evidence:** Invoice code now lives in the requested `/pr2-backend/src/main/java/com/chainvision/pr2/invoice/` package: `Invoice.java`, `InvoiceRepository.java`, `OcrClient.java`, `InvoiceStructuringService.java`, `InvoiceService.java`, and `InvoiceController.java`. `OcrClient` calls P1's `POST /internal/ocr/extract` with the `x-internal-key` shared secret and forwards the original multipart file MIME type. `InvoiceStructuringService` calls Gemini through the text-only `GeminiClient.generateJson(...)` path and prompts for JSON-only field extraction from raw OCR text, explicitly banning totals computation and match decisions. `InvoiceService` stores the uploaded file, persists `PENDING_MATCH`, stores the full Gemini JSON response in `raw_ocr_json`, and persists a manual-review shell on OCR/Gemini failure rather than dropping the upload. `.env.example` and `application.yml` include `P1_OCR_URL` / `p1.ocr-endpoint-url` and `INTERNAL_API_KEY` / `internal.api-key`. Unit tests were added for success, OCR failure persistence, Gemini structuring parse success, and Gemini parse fallback.
+**Missing:** Runtime `curl`/database verification was not possible in this environment because the Maven wrapper still cannot start here; implementation and test files are present.
+**Documentation compliance:** YES
 **Dependencies:** P14.1, P15.1 (met — P1 OCR endpoint exists and accepts the sample PDFs)
 
 ### P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
@@ -390,9 +390,9 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 ### P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 **Status:** 🟡 PARTIALLY COMPLETE
 **Evidence:** `config/GlobalExceptionHandler.java` (well, `exception/GlobalExceptionHandler.java`) exists, along with a real exception hierarchy — `ResourceNotFoundException`, `BusinessRuleViolationException`, `InvalidStateException`, `ApiError.java` — suggesting a genuinely more mature error-handling layer than the Phase 4 skeleton alone would produce. `ai/GeminiUnavailableException.java` exists, suggesting Gemini failures are caught somewhere.
-**Missing:** No `ai/RateLimitAwareRetry.java` exists — Gemini calls do not appear to have retry-with-backoff logic. Not confirmed whether `OcrClient`-equivalent P1-unreachable handling exists; PR2 still doesn't call the P1 OCR endpoint yet (see P16.1).
+**Missing:** No `ai/RateLimitAwareRetry.java` exists — Gemini calls do not appear to have retry-with-backoff logic. P16.1 now persists a manual-review shell when the P1 OCR call fails, but broader retry/backoff behavior is still not implemented.
 **Documentation compliance:** PARTIAL
-**Dependencies:** P4.2 (met), P12.1 (met), P16.1 (done differently), P17.1 (met)
+**Dependencies:** P4.2 (met), P12.1 (met), P16.1 (met), P17.1 (met)
 
 ### P24.3 — Frontend Error Boundaries and Toast Notifications
 **Status:** ❌ NOT STARTED
@@ -463,41 +463,41 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 21  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1)
+**✅ Complete:** 22  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
-**🟡 Partial:** 4  (P4.2, P17.1, P18.1, P24.2; P16.1 is tracked separately as ⚠️ per its more serious architectural deviation)
+**🟡 Partial:** 4  (P4.2, P17.1, P18.1, P24.2)
 
 **❌ Not started:** 19  (P19.1, P19.2, P19.3, P20.1, P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
-**⚠️ Needs fix:** 1  (P16.1 — functionally present but architecturally non-compliant with the documented Tesseract-first OCR design)
+**⚠️ Needs fix:** 0
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 21 / 4 / 19 / 1 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 22 / 4 / 19 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~51% (21 fully done + partial credit for the 4 partial/needs-fix items ≈ 23–25 "effective" prompts out of 45)
+**Overall project completion:** ~53% (22 fully done + partial credit for the 4 partial items ≈ 24–25 "effective" prompts out of 45)
 
 **P1 completion:** ~85% (all core deterministic engines, APIs, and the Planner UI are done; only the AI rationale, PR2 handoff, auth, and error-hardening layers on the P1 side are missing)
 
-**PR2 completion:** ~66% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, payment approval — is largely implemented and appears functionally solid, but still has thin tests, uses a different OCR approach, and has zero authentication)
+**PR2 completion:** ~72% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, payment approval — is largely implemented and now follows the P1 OCR architecture, but still has thin tests and zero authentication)
 
 **Frontend completion:** ~35% (Planner dashboard is essentially done; Procurement dashboard does not exist at all; no auth, no realtime, no error boundaries anywhere in the frontend)
 
-**Backend completion:** ~65% (blended P1 + PR2)
+**Backend completion:** ~69% (blended P1 + PR2)
 
 **Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
 
 **AI/NLP completion:** ~55% (Gemini intent extraction and mismatch explanation exist and correctly respect the "AI never decides" rule; Gemini rationale generation for P1 recommendations does not exist at all)
 
-**OCR completion:** ~60% (the P1 Tesseract.js OCR endpoint now handles images and the seeded sample PDFs with internal-key protection; PR2 still needs to call this endpoint instead of direct Gemini document OCR)
+**OCR completion:** ~80% (the P1 Tesseract.js OCR endpoint handles images and seeded sample PDFs, and PR2 now calls it before Gemini text structuring; remaining work is broader retry/backoff and live environment verification)
 
 **Realtime completion:** 0%
 
 **Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
 
-**Testing completion:** ~33% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, and Phase 13 PO generation coverage but still lacks the broader Phase 25 review and e2e smoke test)
+**Testing completion:** ~35% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, and Phase 16 invoice service/structuring coverage but still lacks the broader Phase 25 review and e2e smoke test)
 
 **Deployment completion:** 0%
 
@@ -508,19 +508,19 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P15.1 — OCR Text Extraction Endpoint (P1.1 through P15.1 all have their real dependencies met and their own acceptance criteria substantively satisfied)
+P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline (P1.1 through P16.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
 
 **Current partial prompt:**
 P17.1 — Deterministic 3-Way Match Engine
 
 **Next prompt to execute:**
-Strictly by dependency order, the next *not-yet-closed* work is **P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline**, specifically refactoring PR2 to call the completed P1 OCR endpoint before Gemini structuring.
+Strictly by dependency order, the next *not-yet-closed* work is **P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook**, specifically isolating the pure engine/controller/test shape requested by the prompt.
 
 **Prompts completed out of total:**
-21 / 45 fully complete (4 additional partial plus 1 needs-fix)
+22 / 45 fully complete (4 additional partial)
 
 **Overall completion:**
-~51%
+~53%
 
 ---
 
@@ -528,11 +528,11 @@ Strictly by dependency order, the next *not-yet-closed* work is **P16.1 — Invo
 
 The team's own working tree has already raced ahead into PR2 domain logic (through roughly Phase 18) without closing out testing or the OCR architecture decision, and without touching P1→PR2 handoff, AI rationale, auth, or any of the PR2 frontend. That imbalance is the single biggest risk right now: **the demo's centerpiece integration (P1→PR2 handoff) and the entire Procurement UI don't exist yet**, while lower-priority polish (PR2 has more entities than the spec asked for) has consumed time. Recommended next five, in dependency-safe order:
 
-**1. P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline**
-- Why it's next: P15.1 is now complete, so the remaining OCR architecture gap is PR2's invoice pipeline still bypassing P1 and sending documents directly to Gemini.
-- Dependency status: ✅ Unblocked (P14.1 and P15.1 done)
-- Files it should touch: PR2 invoice OCR/client/service files, adding an `OcrClient` that calls `POST /internal/ocr/extract` and a structuring step that sends raw OCR text to Gemini.
-- What must be fixed first: Replace the direct Gemini document OCR path with the documented two-stage Tesseract raw text → Gemini structuring flow.
+**1. P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook**
+- Why it's next: P16.1 now follows the documented OCR architecture, so the next remaining PR2 gap is isolating and testing the deterministic matching engine.
+- Dependency status: ✅ Unblocked (P16.1 done)
+- Files it should touch: `ThreeWayMatchEngine.java`, `ThreeWayMatchController.java`, and focused tests for match/mismatch tolerance behavior.
+- What must be fixed first: Split the pure arithmetic logic out of `MatchingService` while preserving the existing endpoint behavior.
 
 **2. P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test**
 - Why it's next: This is the highest-severity gap in the whole project relative to the context doc's own stated priorities ("the centerpiece of Section 4"). Its dependencies are fully met, and every later phase (Realtime demo, Gemini rationale, the smoke test, the whole judged demo narrative) assumes it works.
@@ -578,7 +578,7 @@ The team's own working tree has already raced ahead into PR2 domain logic (throu
 [✅] P13.1
 [✅] P14.1
 [✅] P15.1
-[⚠️] P16.1
+[✅] P16.1
 [🟡] P17.1
 [🟡] P18.1
 [❌] P19.1

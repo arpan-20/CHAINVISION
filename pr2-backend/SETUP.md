@@ -151,8 +151,9 @@ PO_UNIT_PRICE=$(echo "$PO" | python3 -c "import sys,json; print(json.load(sys.st
 curl -s -X POST $BASE/api/goods-receipts -H "Content-Type: application/json" \
   -d "{\"poId\":\"$PO_ID\",\"receivedQty\":500,\"batchNo\":\"B100\",\"expiryDate\":\"2027-06-01\"}"
 
-# 5. Upload an invoice. Without GEMINI_API_KEY set, OCR is skipped and the manual* fields are
-#    used directly instead — see §8 for enabling real OCR.
+# 5. Upload an invoice. Requires the P1 OCR service at P1_OCR_URL and a matching
+#    INTERNAL_API_KEY. Gemini structures the raw OCR text only; manual* fields remain optional
+#    overrides/fallbacks for local demos.
 INV=$(curl -s -X POST $BASE/api/invoices/upload \
   -F "file=@/path/to/any/pdf/or/image" \
   -F "poId=$PO_ID" -F "manualInvoiceNumber=INV-1001" \
@@ -258,13 +259,13 @@ root `docker-compose.yml`.
 
 ## 8b. Enabling real AI features (Gemini)
 
-Three endpoints call Google Gemini (Documentaion/00_PROJECT_CONTEXT.md
-Section 5.7/9): `POST /api/requisitions/parse-intent`, invoice OCR inside
-`POST /api/invoices/upload`, and mismatch explanation text inside
-`POST /api/invoices/{id}/match`. None of them are required for the
-deterministic P2P flow to work — without a key, parse-intent returns a clear
-`503`, OCR falls back to whatever `manual*` fields you pass, and mismatch
-explanations fall back to the deterministic reason string.
+Three endpoints use AI/OCR helpers (Documentaion/00_PROJECT_CONTEXT.md
+Section 5.7/9): `POST /api/requisitions/parse-intent`, invoice upload via
+P1/Tesseract raw OCR plus Gemini text structuring, and mismatch explanation
+text inside `POST /api/invoices/{id}/match`. None of them make procurement
+decisions. Without Gemini, parse-intent returns a clear fallback response,
+invoice upload still persists a `PENDING_MATCH` manual-review shell, and
+mismatch explanations fall back to the deterministic reason string.
 
 To enable them, get a free key from
 [Google AI Studio](https://aistudio.google.com/apikey) and set:
@@ -272,6 +273,8 @@ To enable them, get a free key from
 ```bash
 export GEMINI_API_KEY="your-key"
 export GEMINI_MODEL="gemini-2.0-flash"   # default if unset
+export P1_OCR_URL="http://localhost:4000/internal/ocr/extract"
+export INTERNAL_API_KEY="same-value-as-p1"
 ./mvnw spring-boot:run
 ```
 
@@ -281,6 +284,8 @@ Other tunable behavior (all optional, all have sane defaults — see
 | Env var | Default | Controls |
 |---|---|---|
 | `PR2_UPLOAD_DIR` | `./uploads` | where uploaded invoice files are stored |
+| `P1_OCR_URL` | `http://localhost:4000/internal/ocr/extract` | P1 Tesseract OCR endpoint PR2 calls before Gemini structuring |
+| `INTERNAL_API_KEY` | empty | shared key sent to P1 as `x-internal-key` |
 | `PR2_QTY_TOLERANCE_PCT` | `2` | max % variance between invoice qty and goods received before it's a mismatch |
 | `PR2_PRICE_TOLERANCE_PCT` | `2` | max % variance between invoice unit price and PO unit price |
 | `PR2_SUPPLIER_WEIGHT_PRICE` / `_LEAD_TIME` / `_OTD` / `_QUALITY` | `0.35` / `0.15` / `0.25` / `0.25` | deterministic supplier-scoring weights, should sum to 1.0 |

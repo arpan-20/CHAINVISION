@@ -11,7 +11,7 @@ import org.springframework.web.client.RestClient;
 
 // Thin wrapper around the Google Gemini generateContent API (Documentaion/00_PROJECT_CONTEXT.md
 // Section 5.7). Used for exactly the AI-scoped responsibilities in Section 9: NL requisition
-// intent extraction, invoice OCR/document extraction, and mismatch explanation text — never for
+// intent extraction, invoice OCR-text structuring, and mismatch explanation text — never for
 // numeric/business decisions (Section 5.1's hard rule).
 @Component
 public class GeminiClient {
@@ -47,7 +47,8 @@ public class GeminiClient {
         return generateJson(prompt + "\n\nReturn JSON matching this schema hint:\n" + schemaHint);
     }
 
-    // Sends a prompt alongside an inline document (PDF/image) for multimodal extraction.
+    // Generic multimodal hook retained for future scoped uses; Phase 16 invoice processing uses
+    // P1/Tesseract raw OCR first, then the text-only generateJson(...) path for structuring.
     public String generateJsonFromDocument(String prompt, byte[] fileBytes, String mimeType) {
         String base64 = Base64.getEncoder().encodeToString(fileBytes);
         return call(Map.of(

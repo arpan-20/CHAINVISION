@@ -1,18 +1,18 @@
 package com.chainvision.pr2.service;
 
 import com.chainvision.pr2.ai.MismatchExplanationService;
-import com.chainvision.pr2.entity.Invoice;
 import com.chainvision.pr2.entity.MatchResult;
 import com.chainvision.pr2.entity.PaymentApproval;
 import com.chainvision.pr2.entity.PaymentStatus;
 import com.chainvision.pr2.entity.ThreeWayMatch;
 import com.chainvision.pr2.exception.BusinessRuleViolationException;
 import com.chainvision.pr2.exception.ResourceNotFoundException;
-import com.chainvision.pr2.repository.InvoiceRepository;
 import com.chainvision.pr2.repository.PaymentApprovalRepository;
 import com.chainvision.pr2.repository.ThreeWayMatchRepository;
 import com.chainvision.pr2.goodsreceipt.GoodsReceipt;
 import com.chainvision.pr2.goodsreceipt.GoodsReceiptRepository;
+import com.chainvision.pr2.invoice.Invoice;
+import com.chainvision.pr2.invoice.InvoiceRepository;
 import com.chainvision.pr2.purchaseorder.PurchaseOrder;
 import com.chainvision.pr2.purchaseorder.PurchaseOrderRepository;
 import java.math.BigDecimal;

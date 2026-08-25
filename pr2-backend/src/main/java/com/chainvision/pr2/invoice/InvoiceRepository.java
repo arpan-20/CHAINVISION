@@ -1,7 +1,5 @@
-package com.chainvision.pr2.repository;
+package com.chainvision.pr2.invoice;
 
-import com.chainvision.pr2.entity.Invoice;
-import com.chainvision.pr2.entity.InvoiceStatus;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.invoice;
 
 public enum InvoiceStatus {
     PENDING_MATCH,
