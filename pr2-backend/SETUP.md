@@ -160,9 +160,9 @@ INV=$(curl -s -X POST $BASE/api/invoices/upload \
   -F "manualQuantity=500" -F "manualUnitPrice=$PO_UNIT_PRICE")
 INV_ID=$(echo "$INV" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 
-# 6. Run the deterministic 3-way match — matches here, so payment auto-approves immediately
+# 6. Run the deterministic 3-way match — this phase updates the invoice to MATCHED/MISMATCHED
 curl -s -X POST $BASE/api/invoices/$INV_ID/match
-curl -s $BASE/api/invoices/$INV_ID   # status: APPROVED
+curl -s $BASE/api/invoices/$INV_ID   # status: MATCHED
 
 # 7. See it on the dashboard summary
 curl -s $BASE/api/analytics/p2p-summary
@@ -170,7 +170,7 @@ curl -s $BASE/api/analytics/p2p-summary
 
 To see the mismatch/exception path instead, upload with a `manualQuantity`
 that differs from the received quantity by more than the tolerance (default
-2%, see §8) — the invoice ends up in `EXCEPTION` status, shows up in
+2%, see §8) — the invoice ends up in `MISMATCHED` status, shows up in
 `GET /api/exceptions`, and `POST /api/exceptions/{id}/resolve` (body
 `{"action":"APPROVE"|"REJECT","resolvedBy":"..."}`) closes it out.
 
@@ -197,8 +197,8 @@ Matches `Documentaion/00_PROJECT_CONTEXT.md` Section 13.2 exactly.
 | Goods Receipts | `GET /api/goods-receipts?poId=...` | `poId` optional |
 | Invoices | `POST /api/invoices/upload` | multipart; `file` + optional `poId` + `manualInvoiceNumber`/`manualVendorName`/`manualQuantity`/`manualUnitPrice` |
 | Invoices | `GET /api/invoices`, `GET /api/invoices/{id}` | |
-| Invoices | `POST /api/invoices/{id}/match` | deterministic 3-way match; auto-approves payment on MATCHED |
-| Exceptions | `GET /api/exceptions` | invoices in EXCEPTION with no resolution yet |
+| Invoices | `POST /api/invoices/{id}/match` | deterministic 3-way match; Gemini phrases explanation only on MISMATCHED |
+| Exceptions | `GET /api/exceptions` | MISMATCHED/EXCEPTION invoices with no resolution yet |
 | Exceptions | `POST /api/exceptions/{id}/resolve` | body `{"action":"APPROVE"|"REJECT","resolvedBy"}` |
 | Analytics | `GET /api/analytics/p2p-summary` | touchless %, exception %, avg cycle time, in-flight counts |
 
@@ -313,7 +313,7 @@ pr2-backend/
     │   ├── entity/                 # JPA entities + enums
     │   ├── dto/                    # request/response DTOs, Bean Validation
     │   ├── exception/              # GlobalExceptionHandler + typed exceptions
-    │   └── ai/                     # GeminiClient + the 3 AI-scoped services (intent, OCR, mismatch explanation)
+    │   └── ai/                     # GeminiClient shared by AI-scoped services
     └── resources/application.yml
 ```
 

@@ -82,7 +82,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 17 — 3-WAY MATCHING
 
-- [🟡] P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
+- [✅] P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
 
 ## PHASE 18 — PAYMENT APPROVAL
 
@@ -304,16 +304,16 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P14.1, P15.1 (met — P1 OCR endpoint exists and accepts the sample PDFs)
 
 ### P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
-**Status:** 🟡 PARTIALLY COMPLETE
-**Evidence:** `entity/ThreeWayMatch.java`, `repository/ThreeWayMatchRepository.java`, and `service/MatchingService.java` (read in full) exist. `MatchingService.runMatch(...)` is genuinely deterministic and Gemini-independent: it computes quantity/price tolerance checks (`quantityTolerancePct`/`priceTolerancePct`, both defaulted to 2%, configurable), builds a plain mismatch reason string, and — critically — only calls `MismatchExplanationService.explain(...)` when the result is `MISMATCHED`, never on a match. This correctly implements Section 9's "AI only phrases, never decides" rule.
-**Missing:** There is no standalone `ThreeWayMatchEngine.java` pure class separated from the persistence/orchestration logic (it's fused into `MatchingService`), and there is no `ThreeWayMatchController.java` — the match trigger endpoint appears to live inside `InvoiceController.java` or elsewhere rather than its own controller (not independently confirmed which file owns `POST /api/invoices/{id}/match` in this pass). No unit test file exists for the matching logic at all — this is a meaningful gap since the prompt explicitly requires the engine be tested independent of Spring context.
-**Documentation compliance:** PARTIAL — logic is correct and well-commented, but not isolated/tested as specified.
+**Status:** ✅ COMPLETE
+**Evidence:** Matching code now lives in the requested invoice package: `ThreeWayMatch.java`, `ThreeWayMatchRepository.java`, `ThreeWayMatchEngine.java`, `MismatchExplanationService.java`, and `ThreeWayMatchController.java`. `ThreeWayMatchEngine` is a pure Java class with no Spring, persistence, or Gemini dependency; it compares invoice quantity against received quantity and invoice unit price against PO unit price using documented 2% tolerances. `ThreeWayMatchController` owns `POST /api/invoices/{id}/match`, with an optional `{ "poId": "..." }` body fallback when the invoice was not pre-linked. `MatchingService` now orchestrates loading invoice/PO/GRN, runs the engine, persists `ThreeWayMatch`, updates invoice status to `MATCHED` or `MISMATCHED`, and calls `MismatchExplanationService` only when the deterministic result is `MISMATCHED`. `ThreeWayMatchEngineTest` covers exact match, quantity mismatch, price mismatch, and both mismatch; `MatchingServiceTest` verifies Gemini explanation is not called on a clean match and is called only after a deterministic mismatch.
+**Missing:** Runtime `curl`/database verification was not possible in this environment because the Maven wrapper still cannot start here; implementation and test files are present.
+**Documentation compliance:** YES
 **Dependencies:** P16.1
 
 ### P18.1 — Payment Approval Logic + Exception Queue
 **Status:** 🟡 PARTIALLY COMPLETE
-**Evidence:** `entity/PaymentApproval.java`, `repository/PaymentApprovalRepository.java`, `controller/ExceptionController.java` (confirmed `GET /api/exceptions` and `POST /api/exceptions/{id}/resolve` both present via mapping scan) all exist. Reading `MatchingService.runMatch(...)` shows the `AUTO_APPROVED` path is actually implemented directly inside `MatchingService` (creates a `PaymentApproval` row and calls `invoice.markApproved()` on `MATCHED`), rather than in a separate `PaymentApprovalService.processMatchResult(...)` as specified — the MISMATCHED → `PENDING_REVIEW` + invoice `EXCEPTION` path was not fully re-confirmed in this pass but `service/ExceptionService.java` exists and likely owns the exception-queue read side.
-**Missing:** No standalone `PaymentApprovalService.java` exists as its own file — the logic lives inside `MatchingService`, which is a structural deviation (the prompt intentionally wanted this decoupled so `ThreeWayMatchController` only calls into it, keeping the diff additive). No test coverage confirmed.
+**Evidence:** `entity/PaymentApproval.java`, `repository/PaymentApprovalRepository.java`, and `controller/ExceptionController.java` exist. `ExceptionService` now treats both `MISMATCHED` and `EXCEPTION` invoices as active exception candidates and can resolve them into manual approval/rejection rows.
+**Missing:** No standalone `PaymentApprovalService.java` exists, and after the Phase 17 separation the `AUTO_APPROVED` path for a clean `MATCHED` result still needs to be implemented in the Phase 18 shape. No dedicated Phase 18 test coverage confirmed.
 **Documentation compliance:** PARTIAL
 **Dependencies:** P17.1
 
@@ -410,10 +410,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ### P25.2 — PR2 Unit Test Suite Review & Gap-Fill
 **Status:** ❌ NOT STARTED
-**Evidence:** `SupplierScoringEngineTest.java` now exists from P10.1, but the PR2 test-suite review itself has not been performed and there is still no `ThreeWayMatchEngineTest.java` from P17.1 to extend.
-**Missing:** The entire prompt, plus the prerequisite `ThreeWayMatchEngineTest.java` from P17.1.
+**Evidence:** `SupplierScoringEngineTest.java` exists from P10.1 and `ThreeWayMatchEngineTest.java` now exists from P17.1, but the PR2 test-suite review itself has not been performed.
+**Missing:** The gap-fill review itself and its broader coverage additions/artifact.
 **Documentation compliance:** NO
-**Dependencies:** P10.1 (met), P17.1 (partial — match test file still not created) — this remains blocked in practice until P17.1's test baseline exists.
+**Dependencies:** P10.1 (met), P17.1 (met)
 
 ### P25.3 — End-to-End Smoke Test Script (Full Demo Flow)
 **Status:** ❌ NOT STARTED
@@ -463,11 +463,11 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 22  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1)
+**✅ Complete:** 23  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
-**🟡 Partial:** 4  (P4.2, P17.1, P18.1, P24.2)
+**🟡 Partial:** 3  (P4.2, P18.1, P24.2)
 
 **❌ Not started:** 19  (P19.1, P19.2, P19.3, P20.1, P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
@@ -475,17 +475,17 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 22 / 4 / 19 / 0 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 23 / 3 / 19 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~53% (22 fully done + partial credit for the 4 partial items ≈ 24–25 "effective" prompts out of 45)
+**Overall project completion:** ~55% (23 fully done + partial credit for the 3 partial items ≈ 24–25 "effective" prompts out of 45)
 
 **P1 completion:** ~85% (all core deterministic engines, APIs, and the Planner UI are done; only the AI rationale, PR2 handoff, auth, and error-hardening layers on the P1 side are missing)
 
-**PR2 completion:** ~72% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, payment approval — is largely implemented and now follows the P1 OCR architecture, but still has thin tests and zero authentication)
+**PR2 completion:** ~75% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, and matching — is largely implemented and now follows the P1 OCR architecture, but payment approval still needs the Phase 18 service shape, and auth is still absent)
 
 **Frontend completion:** ~35% (Planner dashboard is essentially done; Procurement dashboard does not exist at all; no auth, no realtime, no error boundaries anywhere in the frontend)
 
-**Backend completion:** ~69% (blended P1 + PR2)
+**Backend completion:** ~71% (blended P1 + PR2)
 
 **Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
 
@@ -497,7 +497,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
 
-**Testing completion:** ~35% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, and Phase 16 invoice service/structuring coverage but still lacks the broader Phase 25 review and e2e smoke test)
+**Testing completion:** ~37% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, Phase 16 invoice service/structuring, and Phase 17 matching-engine coverage but still lacks the broader Phase 25 review and e2e smoke test)
 
 **Deployment completion:** 0%
 
@@ -508,19 +508,19 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline (P1.1 through P16.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
+P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook (P1.1 through P17.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
 
 **Current partial prompt:**
-P17.1 — Deterministic 3-Way Match Engine
+P18.1 — Payment Approval Logic + Exception Queue
 
 **Next prompt to execute:**
-Strictly by dependency order, the next *not-yet-closed* work is **P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook**, specifically isolating the pure engine/controller/test shape requested by the prompt.
+Strictly by dependency order, the next *not-yet-closed* work is **P18.1 — Payment Approval Logic + Exception Queue**, specifically adding the standalone payment approval service and clean auto-approval path.
 
 **Prompts completed out of total:**
-22 / 45 fully complete (4 additional partial)
+23 / 45 fully complete (3 additional partial)
 
 **Overall completion:**
-~53%
+~55%
 
 ---
 
@@ -528,11 +528,11 @@ Strictly by dependency order, the next *not-yet-closed* work is **P17.1 — Dete
 
 The team's own working tree has already raced ahead into PR2 domain logic (through roughly Phase 18) without closing out testing or the OCR architecture decision, and without touching P1→PR2 handoff, AI rationale, auth, or any of the PR2 frontend. That imbalance is the single biggest risk right now: **the demo's centerpiece integration (P1→PR2 handoff) and the entire Procurement UI don't exist yet**, while lower-priority polish (PR2 has more entities than the spec asked for) has consumed time. Recommended next five, in dependency-safe order:
 
-**1. P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook**
-- Why it's next: P16.1 now follows the documented OCR architecture, so the next remaining PR2 gap is isolating and testing the deterministic matching engine.
-- Dependency status: ✅ Unblocked (P16.1 done)
-- Files it should touch: `ThreeWayMatchEngine.java`, `ThreeWayMatchController.java`, and focused tests for match/mismatch tolerance behavior.
-- What must be fixed first: Split the pure arithmetic logic out of `MatchingService` while preserving the existing endpoint behavior.
+**1. P18.1 — Payment Approval Logic + Exception Queue**
+- Why it's next: P17.1 now produces clean `MATCHED`/`MISMATCHED` outcomes, so Phase 18 can consume those deterministic results and decide auto-approval vs exception routing.
+- Dependency status: ✅ Unblocked (P17.1 done)
+- Files it should touch: `PaymentApprovalService.java`, exception queue service/controller tests, and the match orchestration handoff into payment approval.
+- What must be fixed first: Move approval behavior into a dedicated Phase 18 service instead of hiding it in matching logic.
 
 **2. P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test**
 - Why it's next: This is the highest-severity gap in the whole project relative to the context doc's own stated priorities ("the centerpiece of Section 4"). Its dependencies are fully met, and every later phase (Realtime demo, Gemini rationale, the smoke test, the whole judged demo narrative) assumes it works.
@@ -579,7 +579,7 @@ The team's own working tree has already raced ahead into PR2 domain logic (throu
 [✅] P14.1
 [✅] P15.1
 [✅] P16.1
-[🟡] P17.1
+[✅] P17.1
 [🟡] P18.1
 [❌] P19.1
 [❌] P19.2

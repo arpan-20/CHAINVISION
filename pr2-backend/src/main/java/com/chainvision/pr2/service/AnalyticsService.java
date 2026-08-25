@@ -1,17 +1,17 @@
 package com.chainvision.pr2.service;
 
 import com.chainvision.pr2.dto.AnalyticsSummaryResponse;
-import com.chainvision.pr2.entity.MatchResult;
 import com.chainvision.pr2.entity.PaymentApproval;
 import com.chainvision.pr2.entity.PaymentStatus;
 import com.chainvision.pr2.entity.PurchaseOrderStatus;
 import com.chainvision.pr2.entity.RequisitionStatus;
-import com.chainvision.pr2.entity.ThreeWayMatch;
-import com.chainvision.pr2.repository.PaymentApprovalRepository;
-import com.chainvision.pr2.repository.ThreeWayMatchRepository;
 import com.chainvision.pr2.invoice.Invoice;
 import com.chainvision.pr2.invoice.InvoiceRepository;
 import com.chainvision.pr2.invoice.InvoiceStatus;
+import com.chainvision.pr2.invoice.MatchResult;
+import com.chainvision.pr2.invoice.ThreeWayMatch;
+import com.chainvision.pr2.invoice.ThreeWayMatchRepository;
+import com.chainvision.pr2.repository.PaymentApprovalRepository;
 import com.chainvision.pr2.purchaseorder.PurchaseOrder;
 import com.chainvision.pr2.purchaseorder.PurchaseOrderRepository;
 import com.chainvision.pr2.requisition.PurchaseRequisition;

@@ -5,7 +5,7 @@ import com.chainvision.pr2.dto.InvoiceResponse;
 import com.chainvision.pr2.dto.PaymentApprovalResponse;
 import com.chainvision.pr2.dto.ResolveExceptionRequest;
 import com.chainvision.pr2.dto.ThreeWayMatchResponse;
-import com.chainvision.pr2.entity.ThreeWayMatch;
+import com.chainvision.pr2.invoice.ThreeWayMatch;
 import com.chainvision.pr2.service.ExceptionService;
 import jakarta.validation.Valid;
 import java.util.List;

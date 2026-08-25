@@ -1,8 +1,6 @@
 package com.chainvision.pr2.invoice;
 
 import com.chainvision.pr2.dto.InvoiceResponse;
-import com.chainvision.pr2.dto.ThreeWayMatchResponse;
-import com.chainvision.pr2.service.MatchingService;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
@@ -21,11 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
-    private final MatchingService matchingService;
 
-    public InvoiceController(InvoiceService invoiceService, MatchingService matchingService) {
+    public InvoiceController(InvoiceService invoiceService) {
         this.invoiceService = invoiceService;
-        this.matchingService = matchingService;
     }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
@@ -50,10 +46,5 @@ public class InvoiceController {
     @GetMapping("/{id}")
     public InvoiceResponse getById(@PathVariable UUID id) {
         return InvoiceResponse.from(invoiceService.getInvoice(id));
-    }
-
-    @PostMapping("/{id}/match")
-    public ThreeWayMatchResponse match(@PathVariable UUID id) {
-        return ThreeWayMatchResponse.from(matchingService.runMatch(id));
     }
 }

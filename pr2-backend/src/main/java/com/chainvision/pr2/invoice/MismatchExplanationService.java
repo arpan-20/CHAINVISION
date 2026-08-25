@@ -1,16 +1,14 @@
-package com.chainvision.pr2.ai;
+package com.chainvision.pr2.invoice;
 
+import com.chainvision.pr2.ai.GeminiClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-// Generates the plain-English exception-queue explanation described in
-// Documentaion/00_PROJECT_CONTEXT.md Section 9.2. Gemini is only ever given the *already computed*
-// deterministic mismatch details and asked to describe them — never to decide the match result
-// itself. Falls back to a canned template if Gemini isn't configured or the call fails, so the
-// 3-way match endpoint keeps working end-to-end without an API key (Section 5.7).
+// Gemini is explanation-only. It receives the already-computed mismatch fields/values and never
+// sees PO/GRN/invoice objects or decides match status.
 @Service
 public class MismatchExplanationService {
 
@@ -30,9 +28,10 @@ public class MismatchExplanationService {
         }
         String prompt =
                 """
-                Given this already-computed procurement 3-way match mismatch, phrase a one-sentence \
-                plain-English explanation for a procurement officer's exception queue. Do not change \
-                any numbers. Respond with JSON only: {"explanation": string}
+                Given this already-computed procurement 3-way match mismatch, phrase a one-sentence
+                plain-English explanation for a procurement officer's exception queue. Do not change
+                any numbers and do not decide whether the match passes or fails.
+                Respond with JSON only: {"explanation": string}
 
                 Mismatch details: %s
                 """

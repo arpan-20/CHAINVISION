@@ -82,12 +82,20 @@ public class Invoice {
         this.status = InvoiceStatus.MATCHED;
     }
 
+    public void markMismatched() {
+        this.status = InvoiceStatus.MISMATCHED;
+    }
+
     public void markException() {
         this.status = InvoiceStatus.EXCEPTION;
     }
 
     public void markApproved() {
         this.status = InvoiceStatus.APPROVED;
+    }
+
+    public void linkToPo(UUID poId) {
+        this.poId = poId;
     }
 
     public UUID getId() {

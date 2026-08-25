@@ -1,4 +1,4 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.invoice;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-// Mirrors pr2.three_way_matches — see Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
+// Mirrors pr2.three_way_matches, Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
 @Table(name = "three_way_matches", schema = "pr2")
 public class ThreeWayMatch {

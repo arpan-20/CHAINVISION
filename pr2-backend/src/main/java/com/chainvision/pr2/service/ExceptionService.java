@@ -2,15 +2,15 @@ package com.chainvision.pr2.service;
 
 import com.chainvision.pr2.entity.PaymentApproval;
 import com.chainvision.pr2.entity.PaymentStatus;
-import com.chainvision.pr2.entity.ThreeWayMatch;
 import com.chainvision.pr2.exception.InvalidStateException;
 import com.chainvision.pr2.exception.ResourceNotFoundException;
-import com.chainvision.pr2.repository.PaymentApprovalRepository;
-import com.chainvision.pr2.repository.ThreeWayMatchRepository;
 import com.chainvision.pr2.dto.ResolutionAction;
 import com.chainvision.pr2.invoice.Invoice;
 import com.chainvision.pr2.invoice.InvoiceRepository;
 import com.chainvision.pr2.invoice.InvoiceStatus;
+import com.chainvision.pr2.invoice.ThreeWayMatch;
+import com.chainvision.pr2.invoice.ThreeWayMatchRepository;
+import com.chainvision.pr2.repository.PaymentApprovalRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,10 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 // The exception queue (Documentaion/00_PROJECT_CONTEXT.md Section 3, "On mismatch → route to
 // Exception Queue for human review"). There's no separate `exceptions` table in the schema
-// (Section 7.2) — an "exception" is simply an invoice in EXCEPTION status that doesn't yet have a
-// resolving PaymentApproval. Resolving one (approve/reject) records that decision, which is what
-// removes it from the active list — see MatchingService for how an invoice gets into EXCEPTION
-// in the first place.
+// (Section 7.2) — an active exception is a MISMATCHED/EXCEPTION invoice that doesn't yet have a
+// resolving PaymentApproval.
 @Service
 public class ExceptionService {
 
@@ -39,8 +37,15 @@ public class ExceptionService {
         this.threeWayMatchRepository = threeWayMatchRepository;
     }
 
+    private List<Invoice> activeExceptionCandidates() {
+        List<Invoice> exceptionInvoices = invoiceRepository.findByStatus(InvoiceStatus.EXCEPTION);
+        List<Invoice> mismatchedInvoices = invoiceRepository.findByStatus(InvoiceStatus.MISMATCHED);
+        return java.util.stream.Stream.concat(exceptionInvoices.stream(), mismatchedInvoices.stream())
+                .toList();
+    }
+
     public List<Invoice> listActiveExceptions() {
-        return invoiceRepository.findByStatus(InvoiceStatus.EXCEPTION).stream()
+        return activeExceptionCandidates().stream()
                 .filter(invoice -> paymentApprovalRepository.findByInvoiceId(invoice.getId()).isEmpty())
                 .toList();
     }
@@ -55,7 +60,7 @@ public class ExceptionService {
                 .findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
 
-        if (invoice.getStatus() != InvoiceStatus.EXCEPTION) {
+        if (invoice.getStatus() != InvoiceStatus.EXCEPTION && invoice.getStatus() != InvoiceStatus.MISMATCHED) {
             throw new InvalidStateException("Invoice " + invoiceId + " is " + invoice.getStatus() + ", not an open exception");
         }
         if (!paymentApprovalRepository.findByInvoiceId(invoiceId).isEmpty()) {

@@ -1,6 +1,5 @@
-package com.chainvision.pr2.repository;
+package com.chainvision.pr2.invoice;
 
-import com.chainvision.pr2.entity.ThreeWayMatch;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

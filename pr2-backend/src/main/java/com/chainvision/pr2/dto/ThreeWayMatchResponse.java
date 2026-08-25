@@ -1,7 +1,7 @@
 package com.chainvision.pr2.dto;
 
-import com.chainvision.pr2.entity.MatchResult;
-import com.chainvision.pr2.entity.ThreeWayMatch;
+import com.chainvision.pr2.invoice.MatchResult;
+import com.chainvision.pr2.invoice.ThreeWayMatch;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
