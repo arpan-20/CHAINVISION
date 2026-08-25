@@ -5,6 +5,7 @@ export interface AppEnv {
   supabaseServiceRoleKey: string
   p1Port: number
   pr2BaseUrl: string
+  internalApiKey: string
 }
 
 const required = (name: string): string => {
@@ -32,4 +33,5 @@ export const env: AppEnv = {
   supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
   p1Port: parsePort(required('P1_PORT')),
   pr2BaseUrl: required('PR2_BASE_URL'),
+  internalApiKey: required('INTERNAL_API_KEY'),
 }

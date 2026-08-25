@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler'
 import { dcRoutes } from './routes/dcRoutes'
 import { demandRoutes } from './routes/demandRoutes'
 import { inventoryRoutes } from './routes/inventoryRoutes'
+import { internalOcrRoutes } from './routes/internalOcrRoutes'
 import { replenishmentRoutes } from './routes/replenishmentRoutes'
 import { skuRoutes } from './routes/skuRoutes'
 
@@ -30,6 +31,7 @@ app.use('/api', skuRoutes)
 app.use('/api', dcRoutes)
 app.use('/api', inventoryRoutes)
 app.use('/api', replenishmentRoutes)
+app.use(internalOcrRoutes)
 
 app.use(errorHandler)
 
