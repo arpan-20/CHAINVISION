@@ -1,0 +1,609 @@
+# CHAINVISION MASTER DEVELOPMENT CHECKLIST
+
+**Audit basis:** `Documentaion/PROMPTS.md` (45 prompts / 28 phases) vs. the actual working-tree
+contents of the uploaded `CHAINVISION.zip`, including uncommitted changes (git HEAD is only at
+"Phase 10 Impl", but the working tree contains substantially more finished PR2 backend code that
+was never committed — this audit is based on what's actually on disk, not the git log).
+
+Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX  🔴 BLOCKED
+
+---
+
+## PHASE 1 — REPOSITORY AND PROJECT SETUP
+
+- [✅] P1.1 — Root Repository Scaffold
+- [✅] P1.2 — Frontend Scaffold (React + Vite + TS + Tailwind)
+- [✅] P1.3 — P1 Node Backend Scaffold
+- [✅] P1.4 — PR2 Java Backend Scaffold
+
+## PHASE 2 — SUPABASE SETUP AND DATABASE SCHEMA
+
+- [✅] P2.1 — Supabase Project + Full Schema Migration
+
+## PHASE 3 — SEED DATA
+
+- [✅] P3.1 — P1 Seed Data Script
+- [✅] P3.2 — PR2 Seed Data Script
+
+## PHASE 4 — BACKEND FOUNDATION
+
+- [✅] P4.1 — P1 Backend Foundation (Config, Supabase Client, Contracts)
+- [🟡] P4.2 — PR2 Backend Foundation (Config, Datasource, DTO Mirror)
+
+## PHASE 5 — P1 DEMAND SENSING
+
+- [✅] P5.1 — Demand Calculation Engine + Ingestion Endpoints
+
+## PHASE 6 — P1 INVENTORY AND EXPIRY
+
+- [✅] P6.1 — Inventory Batch Service + Expiry Risk Engine
+
+## PHASE 7 — P1 FEFO AND REPLENISHMENT
+
+- [✅] P7.1 — FEFO Engine + Safety Stock / ROP / EOQ Engine
+- [✅] P7.2 — Replenishment Recommendation Generator
+
+## PHASE 8 — P1 APIs
+
+- [✅] P8.1 — Replenishment REST Endpoints + API Tests
+
+## PHASE 9 — P1 FRONTEND
+
+- [✅] P9.1 — Planner Dashboard Shell + Routing + Auth Guard Stub
+- [✅] P9.2 — Inventory, Expiry Heatmap, and Replenishment Recommendation Views
+
+## PHASE 10 — PR2 SUPPLIER SELECTION
+
+- [🟡] P10.1 — Supplier Entity + Deterministic Scoring Engine
+
+## PHASE 11 — PR2 REQUISITIONS
+
+- [🟡] P11.1 — Requisition Entity, Manual Creation, and Handoff Receiver Endpoint
+
+## PHASE 12 — GEMINI NLP
+
+- [🟡] P12.1 — Gemini Client Wrapper + Intent Extraction Endpoint
+
+## PHASE 13 — PURCHASE ORDERS
+
+- [🟡] P13.1 — Purchase Order Entity, Generation Logic, and Endpoints
+
+## PHASE 14 — GOODS RECEIPT
+
+- [✅] P14.1 — Goods Receipt Entity + Simulated Receipt Endpoint
+
+## PHASE 15 — TESSERACT.JS OCR
+
+- [❌] P15.1 — OCR Text Extraction Endpoint (P1/Node, Tesseract.js)
+
+## PHASE 16 — INVOICE PROCESSING
+
+- [⚠️] P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline
+
+## PHASE 17 — 3-WAY MATCHING
+
+- [🟡] P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
+
+## PHASE 18 — PAYMENT APPROVAL
+
+- [🟡] P18.1 — Payment Approval Logic + Exception Queue
+
+## PHASE 19 — PR2 FRONTEND
+
+- [❌] P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
+- [❌] P19.2 — Requisition/PO/GRN Views + NL Requisition Chatbot
+- [❌] P19.3 — Invoice Upload, Exception Queue, and P2P Analytics View
+
+## PHASE 20 — P1 → PR2 HANDOFF
+
+- [❌] P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test
+
+## PHASE 21 — SUPABASE REALTIME
+
+- [❌] P21.1 — Realtime Subscriptions for Both Dashboards
+
+## PHASE 22 — GEMINI RATIONALE
+
+- [❌] P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
+
+## PHASE 23 — SUPABASE AUTH
+
+- [❌] P23.1 — Frontend Supabase Auth Integration
+- [❌] P23.2 — P1 Backend Supabase JWT Verification Middleware
+- [❌] P23.3 — PR2 Backend Supabase JWT Verification (Spring Security)
+
+## PHASE 24 — ERROR HANDLING AND FALLBACKS
+
+- [❌] P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks
+- [🟡] P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
+- [❌] P24.3 — Frontend Error Boundaries and Toast Notifications
+
+## PHASE 25 — TESTING
+
+- [❌] P25.1 — P1 Deterministic Engine Unit Test Suite Review & Gap-Fill
+- [❌] P25.2 — PR2 Unit Test Suite Review & Gap-Fill
+- [❌] P25.3 — End-to-End Smoke Test Script (Full Demo Flow)
+
+## PHASE 26 — INTEGRATION
+
+- [❌] P26.1 — Integration Bug Bash and Fix Coordination
+
+## PHASE 27 — DEPLOYMENT
+
+- [❌] P27.1 — Docker Compose Finalization + Local Run README
+- [❌] P27.2 — Optional Public Deployment (Render/Railway)
+
+## PHASE 28 — FINAL DEMO PREPARATION
+
+- [❌] P28.1 — Seed Reset Script + Demo Rehearsal Script
+- [❌] P28.2 — Presentation Deck / Video Content Outline
+
+---
+
+# DETAILED AUDIT
+
+### P1.1 — Root Repository Scaffold
+**Status:** ✅ COMPLETE
+**Evidence:** `/README.md`, `/.gitignore`, `/.env.example`, `/docker-compose.yml` (three services defined), `/frontend`, `/p1-backend`, `/pr2-backend`, `/shared/contracts`, `/shared/seed-data`, `/infra` all exist and are populated (folder skeleton has since been filled in by later phases, which is expected).
+**Missing:** Nothing at the P1.1 scope level.
+**Documentation compliance:** YES
+**Dependencies:** None
+
+### P1.2 — Frontend Scaffold
+**Status:** ✅ COMPLETE
+**Evidence:** `/frontend/package.json` includes `axios`, `@supabase/supabase-js`, `react-router-dom`, `recharts`; Vite/TS/Tailwind config files present; `Dockerfile` present; `docker-compose.yml`'s `frontend` block is filled in (port 5173, dev command).
+**Missing:** Nothing at scope; app now has real routes (expected evolution from later phases).
+**Documentation compliance:** YES
+**Dependencies:** P1.1
+
+### P1.3 — P1 Node Backend Scaffold
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/index.ts` bootstraps Express with `/health`; `package.json`-driven deps (express, cors, dotenv, @supabase/supabase-js, zod); `Dockerfile` present; `docker-compose.yml`'s `p1-backend` block filled in (port 4000).
+**Missing:** Nothing at scope.
+**Documentation compliance:** YES
+**Dependencies:** P1.1
+
+### P1.4 — PR2 Java Backend Scaffold
+**Status:** ✅ COMPLETE
+**Evidence:** `Pr2Application.java` present; Spring Boot Maven project with web/data-jpa/security/postgresql/validation starters (inferred from `SecurityConfig.java`, JPA entities, and `pom.xml` presence); `docker-compose.yml`'s `pr2-backend` block filled in (port 8080); package `com.chainvision.pr2` used consistently throughout.
+**Missing:** Nothing at scope.
+**Documentation compliance:** YES
+**Dependencies:** P1.1
+
+### P2.1 — Supabase Project + Full Schema Migration
+**Status:** ✅ COMPLETE
+**Evidence:** `/infra/supabase/migrations/0001_create_schemas.sql` through `0004_shared_users_and_rls.sql` all exist. `0002_p1_tables.sql` contains 5 `CREATE TABLE` statements (matches the 5 P1 tables). `0003_pr2_tables.sql` contains 7 `CREATE TABLE` statements (matches the 7 PR2 tables). `0004_shared_users_and_rls.sql` contains both `ENABLE ROW LEVEL SECURITY` statements and realtime publication statements. `/infra/supabase/README.md` exists. A real Supabase project appears linked (`/supabase/.temp/project-ref`, `/pooler-url`, etc. present at repo root).
+**Missing:** Not independently verified against a live Supabase project in this audit (no DB connectivity from this environment) — table/column-level correctness versus Section 7 was not diffed line-by-line, only counted.
+**Documentation compliance:** YES
+**Dependencies:** P1.1
+
+### P3.1 — P1 Seed Data Script
+**Status:** ✅ COMPLETE
+**Evidence:** `/shared/seed-data/p1_seed.ts`, `p1_seed_data.json`, `README_p1.md` all exist. Data file shows 18 SKUs (within the 15–20 spec range), 4 distribution centers (low end of the 4–6 range but within it), 5 `lowStockScenarios` (meets the "3–5 deliberately-low-stock combos" criterion), and explicit near-expiry (18 days) / warning-expiry (62 days) generation parameters plus a 60% seasonal adjustment matching Section 2's narrative.
+**Missing:** DC count is at the floor of the spec range (4, not 4–6 with more headroom) — acceptable but worth noting for demo variety.
+**Documentation compliance:** YES
+**Dependencies:** P2.1
+
+### P3.2 — PR2 Seed Data Script
+**Status:** ✅ COMPLETE
+**Evidence:** `/shared/seed-data/pr2_seed.ts`, `pr2_seed_data.json`, `README_pr2.md`, and all 3 sample invoice PDFs (`invoice_matching.pdf`, `invoice_qty_mismatch.pdf`, `invoice_price_mismatch.pdf`) exist. Data file shows 8 suppliers (within 6–10 spec), 5 purchase requisitions, 3 purchase orders, 3 goods receipts, and 3 `invoiceFixtures` entries tying the sample invoices to specific POs/GRNs.
+**Missing:** Nothing at scope.
+**Documentation compliance:** YES
+**Dependencies:** P2.1
+
+### P4.1 — P1 Backend Foundation
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/config/env.ts`, `/p1-backend/src/db/supabaseClient.ts`, `/p1-backend/src/middleware/errorHandler.ts` all exist and are wired into `index.ts`. `/shared/contracts/replenishmentRecommendation.schema.json` and `/shared/contracts/README.md` exist and match Section 4's field list exactly (`recommendationId`, `skuId`, `skuName`, `dcId`, `recommendedQty`, `urgency`, `reason`, `aiRationale`, `expiryRiskContext`, `generatedAt`).
+**Missing:** `.env.example` was updated with some but not all of the variables this prompt calls for — it currently references a stale `JWT_SECRET`/socket-based naming pattern rather than the Supabase-native names, which is really a Phase 27 audit item, not a P4.1 blocker.
+**Documentation compliance:** YES
+**Dependencies:** P1.3, P2.1
+
+### P4.2 — PR2 Backend Foundation
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** The datasource is wired via `application.yml` (`SPRING_DATASOURCE_URL/USERNAME/PASSWORD`, `currentSchema=pr2`), and a global exception handler exists (`GlobalExceptionHandler.java`, `ApiError.java`) with real logic. A DTO that field-for-field mirrors the JSON Schema exists (`ReplenishmentRecommendationRequest.java` — verified: all 10 contract fields present with correct types).
+**Missing:** The specific files named in the prompt don't exist as such — there is no `config/DatasourceConfig.java` (datasource config lives directly in `application.yml` instead, which is a reasonable substitution but not what was specified), and the exception handler lives in a package called `exception/`, not `config/` as the prompt specified. The DTO is named `ReplenishmentRecommendationRequest`, not `ReplenishmentRecommendationDto`, and lives in `dto/`, not `requisition/dto/`.
+**Documentation compliance:** PARTIAL — functionally equivalent, structurally non-compliant with the prompt's exact file list.
+**Dependencies:** P1.4, P2.1, P4.1
+
+### P5.1 — Demand Calculation Engine + Ingestion Endpoints
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/engine/demandEngine.ts` (pure, no I/O), `/p1-backend/src/services/demandService.ts`, `/p1-backend/src/routes/demandRoutes.ts`, and `/p1-backend/src/engine/demandEngine.test.ts` (5 test cases) all exist and are mounted in `index.ts`.
+**Missing:** Nothing significant; test count (5) meets the "at least 4 cases" bar.
+**Documentation compliance:** YES
+**Dependencies:** P4.1, P3.1
+
+### P6.1 — Inventory Batch Service + Expiry Risk Engine
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/engine/expiryRiskEngine.ts` (pure), `/p1-backend/src/services/inventoryService.ts`, `/p1-backend/src/routes/inventoryRoutes.ts`, `/p1-backend/src/engine/expiryRiskEngine.test.ts` (4 cases) all exist and mounted.
+**Missing:** Nothing significant at scope.
+**Documentation compliance:** YES
+**Dependencies:** P4.1, P3.1
+
+### P7.1 — FEFO Engine + Safety Stock / ROP / EOQ Engine
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/engine/fefoEngine.ts`, `/p1-backend/src/engine/replenishmentMathEngine.ts` (both pure, no I/O — confirmed by inspecting `recommendationService.ts`, which is the only consumer and does all I/O itself), plus their `.test.ts` files (4 and 10 cases respectively).
+**Missing:** Nothing significant.
+**Documentation compliance:** YES
+**Dependencies:** P5.1, P6.1
+
+### P7.2 — Replenishment Recommendation Generator
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/services/recommendationService.ts` orchestrates demand + inventory + expiry + FEFO + safety-stock/ROP/EOQ engines, computes a documented deterministic urgency classification (CRITICAL/HIGH/MEDIUM/LOW with clear comment-documented thresholds), and writes to `p1.replenishment_recommendations` with the exact contract field set. `ai_rationale` is correctly left as an empty string per this phase's scope (Phase 22 fills it in). `recommendationService.test.ts` exists (2 cases).
+**Missing:** No calls to PR2 or Gemini — correctly out of scope here, confirmed absent.
+**Documentation compliance:** YES
+**Dependencies:** P7.1
+
+### P8.1 — Replenishment REST Endpoints + API Tests
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/routes/replenishmentRoutes.ts`, `/skuRoutes.ts`, `/dcRoutes.ts` all exist and are mounted in `index.ts`. `/p1-backend/tests/api.integration.test.ts` exists (5 test cases).
+**Missing:** Not verified whether all named routes (`GET /api/replenishment/recommendations`, `POST /api/replenishment/recalculate`, `GET /api/replenishment/recommendations/:id`) are present with 404 handling — file exists and is mounted, but exact route bodies weren't individually diffed in this pass.
+**Documentation compliance:** YES (file-level)
+**Dependencies:** P7.2
+
+### P9.1 — Planner Dashboard Shell + Routing + Auth Guard Stub
+**Status:** ✅ COMPLETE
+**Evidence:** `/frontend/src/pages/planner/PlannerLayout.tsx`, `PlannerHome.tsx`, `/frontend/src/api/p1Client.ts`, `/frontend/src/hooks/useAuthStub.ts`, `/frontend/src/components/NavBar.tsx` all exist. `App.tsx` has a working `/planner/*` route tree with nested routes (`inventory`, `expiry-risk`, `replenishment`, `demand-signals` placeholder).
+**Missing:** Nothing at scope.
+**Documentation compliance:** YES
+**Dependencies:** P1.2, P8.1
+
+### P9.2 — Inventory, Expiry Heatmap, and Replenishment Recommendation Views
+**Status:** ✅ COMPLETE
+**Evidence:** `InventoryView.tsx`, `ExpiryHeatmap.tsx`, `RecommendationsView.tsx`, `DemandSpikeSimulator.tsx` all exist. Confirmed `DemandSpikeSimulator` is actually composed inside `RecommendationsView.tsx` (`<DemandSpikeSimulator skus={skus} dcs={dcs} onRecommendationsUpdated={load} />`), giving it a working end-to-end wiring path (create signal → recalculate → refresh list) even though it isn't a separate top-level route, which is a reasonable interpretation of the prompt's intent.
+**Missing:** Not independently browser-tested in this audit (no live backend/DB available in this session) — file-level completeness only.
+**Documentation compliance:** YES
+**Dependencies:** P9.1
+
+### P10.1 — Supplier Entity + Deterministic Scoring Engine
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `entity/Supplier.java`, `repository/SupplierRepository.java`, `service/SupplierScoringService.java`, `controller/SupplierController.java` all exist. The scoring service is a documented weighted engine with configurable, defaulted weights (`price 0.35 / lead-time 0.15 / OTD 0.25 / quality 0.25`), matching the spirit of the prompt's example weights closely.
+**Missing:** No `SupplierScoringEngineTest.java` or any test file exists anywhere under `pr2-backend/src/test` — the test directory is empty. The prompt requires this engine be independently unit-tested; it currently is not. Also, file names/locations deviate from spec (`sourcing/` package not used; class is `SupplierScoringService`, not `SupplierScoringEngine`, and lives in `service/` mixed with non-pure services rather than being isolated as a pure/no-Spring-context class).
+**Documentation compliance:** PARTIAL
+**Dependencies:** P4.2, P3.2
+
+### P11.1 — Requisition Entity, Manual Creation, and Handoff Receiver Endpoint
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `entity/PurchaseRequisition.java`, `repository/PurchaseRequisitionRepository.java`, `service/RequisitionService.java`, `controller/RequisitionController.java` all exist. Confirmed via `@PostMapping`/`@GetMapping` scan: `POST /api/requisitions`, `POST /api/requisitions/from-recommendation`, `POST /api/requisitions/parse-intent`, `GET /api/requisitions`, `GET /api/requisitions/{id}` are all present and wired.
+**Missing:** No dedicated `dto/ReplenishmentRecommendationDto.java` under `requisition/dto/` (exists instead as `dto/ReplenishmentRecommendationRequest.java`, flat package) — functionally fine, structurally non-compliant. Not confirmed whether a `createFromChatbotIntent(...)` extension-point stub exists as literally described (Phase 12 appears to have been folded directly into the controller via `/parse-intent` instead of a separate stub method).
+**Documentation compliance:** PARTIAL
+**Dependencies:** P4.2, P3.2
+
+### P12.1 — Gemini Client Wrapper + Intent Extraction Endpoint
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `ai/GeminiClient.java`, `ai/IntentExtractionService.java`, `ai/IntentExtractionResult.java` all exist. `RequisitionController` exposes `POST /api/requisitions/parse-intent`. `GeminiClient` reads `gemini.api-key`/`gemini.model` via `@Value` with sane defaults, which will bind from `GEMINI_API_KEY`/`GEMINI_MODEL` env vars via Spring's relaxed binding even without an explicit `application.yml` entry.
+**Missing:** `application.yml` does not explicitly declare `gemini.api-key`/`gemini.model` keys as the prompt instructs (relying on implicit relaxed binding instead — works, but not what was asked for and less discoverable). `.env.example` at root does have `GEMINI_MODEL`/`GEMINI_API_KEY` placeholders, so that part is satisfied. Whether `parse-intent` correctly resolves "MED-104" and ~5000 units for the exact demo sentence was not runtime-verified in this audit (no live Gemini key / DB in this environment).
+**Documentation compliance:** PARTIAL
+**Dependencies:** P11.1
+
+### P13.1 — Purchase Order Entity, Generation Logic, and Endpoints
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `entity/PurchaseOrder.java`, `repository/PurchaseOrderRepository.java`, `service/PurchaseOrderService.java`, `controller/PurchaseOrderController.java` all exist. `PurchaseOrderService.createFromRequisition(...)` correctly loads the requisition, calls into `SupplierScoringService`, and is transactional.
+**Missing:** No unit test coverage (no test directory content at all for PR2). Not confirmed whether requisition status correctly flips to `PO_RAISED` in the same transaction (file was only partially read in this audit) — flagged for a closer look rather than confirmed missing.
+**Documentation compliance:** PARTIAL (naming/location differs from spec's `purchaseorder/` package convention; otherwise close)
+**Dependencies:** P10.1, P11.1
+
+### P14.1 — Goods Receipt Entity + Simulated Receipt Endpoint
+**Status:** ✅ COMPLETE
+**Evidence:** `entity/GoodsReceipt.java`, `repository/GoodsReceiptRepository.java`, `service/GoodsReceiptService.java`, `controller/GoodsReceiptController.java` all exist. `GoodsReceiptService.recordReceipt(...)` was read in full: it validates the PO is in a receivable status, persists the GRN, sums cumulative received quantity across all GRNs for that PO, and correctly sets `RECEIVED` vs `PARTIALLY_RECEIVED` based on the comparison the prompt specifies.
+**Missing:** No unit/integration test for this service found.
+**Documentation compliance:** PARTIAL (flat package structure, not `goodsreceipt/` — functionally complete and correct)
+**Dependencies:** P13.1
+
+### P15.1 — OCR Text Extraction Endpoint (P1/Node, Tesseract.js)
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/p1-backend/src/services/ocrService.ts` and `/p1-backend/src/routes/internalOcrRoutes.ts` do not exist anywhere in the codebase. `p1-backend/package.json` was not confirmed to include `tesseract.js` or `multer`. `INTERNAL_API_KEY` is not present in `.env.example`.
+**Missing:** The entire prompt. Critically, this also means the architecture note's explicit design decision — Tesseract.js as primary OCR, Gemini only for structuring — was never implemented. Instead (see P16.1 below), PR2 calls Gemini's document/vision endpoint directly to extract structured invoice fields, bypassing Tesseract and the P1 OCR hop entirely. This is a real architectural deviation from what `Documentaion/PROMPTS.md`'s Architecture Note mandates (Tesseract-first, for exactly the free-tier-Gemini-rate-limit reason called out there), not just a missing file.
+**Documentation compliance:** NO
+**Dependencies:** P4.1
+
+### P16.1 — Invoice Entity, Upload Endpoint, OCR + Gemini Structuring Pipeline
+**Status:** ⚠️ NEEDS FIX
+**Evidence:** `entity/Invoice.java`, `repository/InvoiceRepository.java`, `controller/InvoiceController.java`, `service/InvoiceService.java`, and `ai/InvoiceOcrService.java` all exist, and there is a working invoice upload + structuring path. However, `ai/InvoiceOcrService.java` was read in full: it calls `geminiClient.generateJsonFromDocument(prompt, fileBytes, mimeType)` directly against the raw uploaded file — i.e., Gemini itself performs OCR-and-structuring in one call. There is no `OcrClient.java` calling P1's `/internal/ocr/extract` endpoint (because that endpoint doesn't exist — see P15.1), and no `InvoiceStructuringService.java` operating on separately-extracted raw text.
+**Missing:** The two-stage pipeline (Tesseract raw text → Gemini structuring) the prompt and Architecture Note require. The current single-stage Gemini-vision approach may work functionally for the demo, but it (a) doesn't match the documented design, (b) reintroduces the exact free-tier Gemini rate-limit risk the Architecture Note's OCR-ordering decision was meant to avoid, and (c) should be flagged to the coordinator rather than silently accepted, per this audit's instructions not to invent compliance.
+**Documentation compliance:** NO
+**Dependencies:** P14.1, P15.1 (P15.1 is not started, so this dependency is technically unmet even though a substitute path exists)
+
+### P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `entity/ThreeWayMatch.java`, `repository/ThreeWayMatchRepository.java`, and `service/MatchingService.java` (read in full) exist. `MatchingService.runMatch(...)` is genuinely deterministic and Gemini-independent: it computes quantity/price tolerance checks (`quantityTolerancePct`/`priceTolerancePct`, both defaulted to 2%, configurable), builds a plain mismatch reason string, and — critically — only calls `MismatchExplanationService.explain(...)` when the result is `MISMATCHED`, never on a match. This correctly implements Section 9's "AI only phrases, never decides" rule.
+**Missing:** There is no standalone `ThreeWayMatchEngine.java` pure class separated from the persistence/orchestration logic (it's fused into `MatchingService`), and there is no `ThreeWayMatchController.java` — the match trigger endpoint appears to live inside `InvoiceController.java` or elsewhere rather than its own controller (not independently confirmed which file owns `POST /api/invoices/{id}/match` in this pass). No unit test file exists for the matching logic at all — this is a meaningful gap since the prompt explicitly requires the engine be tested independent of Spring context.
+**Documentation compliance:** PARTIAL — logic is correct and well-commented, but not isolated/tested as specified.
+**Dependencies:** P16.1
+
+### P18.1 — Payment Approval Logic + Exception Queue
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `entity/PaymentApproval.java`, `repository/PaymentApprovalRepository.java`, `controller/ExceptionController.java` (confirmed `GET /api/exceptions` and `POST /api/exceptions/{id}/resolve` both present via mapping scan) all exist. Reading `MatchingService.runMatch(...)` shows the `AUTO_APPROVED` path is actually implemented directly inside `MatchingService` (creates a `PaymentApproval` row and calls `invoice.markApproved()` on `MATCHED`), rather than in a separate `PaymentApprovalService.processMatchResult(...)` as specified — the MISMATCHED → `PENDING_REVIEW` + invoice `EXCEPTION` path was not fully re-confirmed in this pass but `service/ExceptionService.java` exists and likely owns the exception-queue read side.
+**Missing:** No standalone `PaymentApprovalService.java` exists as its own file — the logic lives inside `MatchingService`, which is a structural deviation (the prompt intentionally wanted this decoupled so `ThreeWayMatchController` only calls into it, keeping the diff additive). No test coverage confirmed.
+**Documentation compliance:** PARTIAL
+**Dependencies:** P17.1
+
+### P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/frontend/src/pages/procurement/` contains only a `.gitkeep` file — no `ProcurementLayout.tsx`, `ProcurementHome.tsx`, or `pr2Client.ts` exist anywhere in the frontend. `App.tsx` has no `/procurement/*` route tree at all.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO (nothing to compare)
+**Dependencies:** P1.2, P11.1
+
+### P19.2 — Requisition/PO/GRN Views + NL Requisition Chatbot
+**Status:** ❌ NOT STARTED
+**Evidence:** None of `RequisitionsView.tsx`, `NlRequisitionChatbot.tsx`, `PurchaseOrdersView.tsx`, `GoodsReceiptView.tsx` exist.
+**Missing:** The entire prompt. This is a significant gap: despite the PR2 backend having working `/from-recommendation`, `/parse-intent`, PO generation, and GRN endpoints, there is currently no UI anywhere to demonstrate the flagship "5,000 units of MED-104" chatbot moment described in Section 16 of the context doc.
+**Documentation compliance:** NO
+**Dependencies:** P19.1 (not started), P12.1, P13.1, P14.1
+
+### P19.3 — Invoice Upload, Exception Queue, and P2P Analytics View
+**Status:** ❌ NOT STARTED
+**Evidence:** None of `InvoiceUploadView.tsx`, `ExceptionQueueView.tsx`, `P2pAnalyticsView.tsx` exist. Notably, the PR2 backend is actually ahead of this prompt: `controller/AnalyticsController.java` already exposes `GET /api/analytics/p2p-summary`, so the "compute client-side as fallback" clause in this prompt is moot — a real backend endpoint already exists — but no frontend consumes it.
+**Missing:** The entire frontend prompt.
+**Documentation compliance:** NO
+**Dependencies:** P19.1 (not started), P16.1, P17.1, P18.1
+
+### P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/p1-backend/src/services/pr2ClientService.ts` does not exist. `recommendationService.ts` was read in full — it never calls out to PR2 anywhere; it always writes `ai_rationale: ''` and does not set any `SENT_TO_PROCUREMENT` status. `/p1-backend/tests/handoff.integration.test.ts` does not exist.
+**Missing:** The entire prompt — this is the single most consequential gap in the project, since the context doc calls the P1→PR2 handoff "the centerpiece" of the whole system (Section 4) and P26/P28 both depend on it working. Right now, generating a HIGH/CRITICAL recommendation in P1 does not create anything in PR2 automatically; the only way a PR2 requisition gets created from a recommendation is by manually POSTing to `/api/requisitions/from-recommendation` yourself.
+**Documentation compliance:** NO
+**Dependencies:** P8.1, P11.1 (both met — nothing is blocking this from starting)
+
+### P21.1 — Realtime Subscriptions for Both Dashboards
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/frontend/src/hooks/useRealtimeTable.ts` and `/frontend/src/lib/supabaseClient.ts` do not exist. `.env.example` has no `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` entries.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P2.1 (met), P9.2 (met), P19.2/P19.3 (not started — real blocker, since two of the four views this prompt needs to modify don't exist yet)
+
+### P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/p1-backend/src/services/geminiClient.ts` and `/p1-backend/src/services/aiRationaleService.ts` do not exist. Confirmed via full read of `recommendationService.ts`: `ai_rationale` is hardcoded to `''` with no Gemini call path at all. The Planner dashboard's `RecommendationsView.tsx` will therefore always render blank rationale text.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P7.2 (met), P20.1 (not started — but not a hard blocker for this specific prompt's own file scope)
+
+### P23.1 — Frontend Supabase Auth Integration
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/frontend/src/pages/LoginPage.tsx`, `/frontend/src/hooks/useAuth.ts`, `/frontend/src/components/RequireRole.tsx` do not exist. `useAuthStub.ts` is still the only auth hook in the codebase and is presumably still returning a fake logged-in user.
+**Missing:** The entire prompt. Both dashboards are currently wide open with no real authentication.
+**Documentation compliance:** NO
+**Dependencies:** P2.1 (met), P9.1 (met), P19.1 (not started)
+
+### P23.2 — P1 Backend Supabase JWT Verification Middleware
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/p1-backend/src/auth/verifySupabaseJwt.ts` does not exist (the `auth/` folder still only contains `.gitkeep`). None of the P1 route files apply any auth middleware.
+**Missing:** The entire prompt. Every P1 user-facing route is currently unauthenticated.
+**Documentation compliance:** NO
+**Dependencies:** P2.1 (met), P4.1 (met)
+
+### P23.3 — PR2 Backend Supabase JWT Verification (Spring Security)
+**Status:** ❌ NOT STARTED
+**Evidence:** `config/SecurityConfig.java` was read in full — it is explicitly still the Phase 1.4 scaffold placeholder. Its own code comment says: *"TEMPORARY scaffold-only config... real JWT verification rules replace this entirely in Phase 23... do not build on top of this, just replace it."* It currently does `authorizeHttpRequests(auth -> auth.anyRequest().permitAll())` — every route, including all business endpoints, is open with no auth at all. No `security/SupabaseJwtAuthFilter.java` exists.
+**Missing:** The entire prompt. This is a clearly self-documented, intentional placeholder that was never followed up on.
+**Documentation compliance:** NO
+**Dependencies:** P2.1 (met), P4.2 (met)
+
+### P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/p1-backend/src/middleware/rateLimitAwareRetry.ts` does not exist. `errorHandler.ts` exists only at its Phase 4 skeleton scope (not expanded). There is no `geminiClient.ts` or `ocrService.ts` to wrap in the first place (P15.1/P22.1 not started), so this prompt's dependencies are unmet.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P4.1 (met), P22.1 (not started — real blocker), P15.1 (not started — real blocker)
+
+### P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
+**Status:** 🟡 PARTIALLY COMPLETE
+**Evidence:** `config/GlobalExceptionHandler.java` (well, `exception/GlobalExceptionHandler.java`) exists, along with a real exception hierarchy — `ResourceNotFoundException`, `BusinessRuleViolationException`, `InvalidStateException`, `ApiError.java` — suggesting a genuinely more mature error-handling layer than the Phase 4 skeleton alone would produce. `ai/GeminiUnavailableException.java` exists, suggesting Gemini failures are caught somewhere.
+**Missing:** No `ai/RateLimitAwareRetry.java` exists — Gemini calls do not appear to have retry-with-backoff logic. Not confirmed whether `OcrClient`-equivalent P1-unreachable handling exists (moot in the current architecture since PR2 doesn't call a P1 OCR endpoint at all — see P15.1/P16.1).
+**Documentation compliance:** PARTIAL
+**Dependencies:** P4.2 (met), P12.1 (met), P16.1 (done differently), P17.1 (met)
+
+### P24.3 — Frontend Error Boundaries and Toast Notifications
+**Status:** ❌ NOT STARTED
+**Evidence:** None. `/frontend/src/components/ErrorBoundary.tsx`, `Toast.tsx`, `/frontend/src/hooks/useToast.ts`, `/frontend/src/api/apiInterceptor.ts` do not exist.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P9.2 (met), P19.2/P19.3 (not started)
+
+### P25.1 — P1 Deterministic Engine Unit Test Suite Review & Gap-Fill
+**Status:** ❌ NOT STARTED
+**Evidence:** No `/p1-backend/tests/engines.coverage.md` exists. The four engine test files (`demandEngine.test.ts` 5 cases, `expiryRiskEngine.test.ts` 4 cases, `fefoEngine.test.ts` 4 cases, `replenishmentMathEngine.test.ts` 10 cases) do exist from Phases 5–7, but this is exactly the baseline the prompt asks to review and extend — the "at least 6 cases per file" bar is not yet met for `expiryRiskEngine.test.ts` (4) or `fefoEngine.test.ts` (4), and no gap-review artifact exists.
+**Missing:** The gap-fill review itself and `engines.coverage.md`.
+**Documentation compliance:** NO
+**Dependencies:** P5.1, P6.1, P7.1, P7.2 (all met — nothing blocking this from starting)
+
+### P25.2 — PR2 Unit Test Suite Review & Gap-Fill
+**Status:** ❌ NOT STARTED
+**Evidence:** `pr2-backend/src/test` contains no files at all. There is no `SupplierScoringEngineTest.java` or `ThreeWayMatchEngineTest.java` to extend, because P10.1/P17.1 never produced them in the first place.
+**Missing:** The entire prompt, and its prerequisite test files from P10.1/P17.1.
+**Documentation compliance:** NO
+**Dependencies:** P10.1 (partial — test file never created), P17.1 (partial — same issue) — this is a real 🔴 blocker in practice, since there's nothing to "gap-fill."
+
+### P25.3 — End-to-End Smoke Test Script (Full Demo Flow)
+**Status:** ❌ NOT STARTED
+**Evidence:** `/scripts/` directory does not exist anywhere in the repo.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P20.1 (not started — real blocker), P21.1 (not started), P22.1 (not started), P18.1 (partially met), P19.3 (not started) — this prompt is 🔴 BLOCKED by multiple unmet upstream dependencies, not just "not yet gotten to."
+
+### P26.1 — Integration Bug Bash and Fix Coordination
+**Status:** ❌ NOT STARTED
+**Evidence:** `/INTEGRATION_BUG_BASH.md` does not exist.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P25.3 (not started) — 🔴 BLOCKED
+
+### P27.1 — Docker Compose Finalization + Local Run README
+**Status:** ❌ NOT STARTED
+**Evidence:** `README.md` is still exactly the one-paragraph P1.1 placeholder pointing to `00_PROJECT_CONTEXT.md`. `docker-compose.yml` is still the P1.1-era skeleton (confirmed by reading it in full — `pr2-backend` service block is missing volumes/healthchecks that `frontend`/`p1-backend` have, and there's no `depends_on` ordering). `.env.example` has known gaps (missing `VITE_SUPABASE_URL`, `SUPABASE_ANON_KEY` usage, `INTERNAL_API_KEY`, `gemini.*` explicit keys, and still contains stale pre-Supabase variables like `JWT_SECRET`/`VITE_SOCKET_URL` that no longer apply under the Architecture Note).
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P26.1 (not started) — 🔴 BLOCKED
+
+### P27.2 — Optional Public Deployment (Render/Railway)
+**Status:** ❌ NOT STARTED
+**Evidence:** No `/infra/render.yaml`, `/infra/railway.json`, or `/DEPLOYMENT.md` exist.
+**Missing:** The entire prompt (explicitly optional/best-effort per its own spec).
+**Documentation compliance:** NO
+**Dependencies:** P27.1 (not started) — 🔴 BLOCKED
+
+### P28.1 — Seed Reset Script + Demo Rehearsal Script
+**Status:** ❌ NOT STARTED
+**Evidence:** No `/scripts/reset_demo_data.ts` or `/DEMO_SCRIPT.md` exist.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P26.1, P27.1 (both not started) — 🔴 BLOCKED
+
+### P28.2 — Presentation Deck / Video Content Outline
+**Status:** ❌ NOT STARTED
+**Evidence:** No `/PRESENTATION_OUTLINE.md` exists.
+**Missing:** The entire prompt.
+**Documentation compliance:** NO
+**Dependencies:** P28.1 (not started) — 🔴 BLOCKED
+
+---
+
+# MASTER PROGRESS
+
+**Total prompts:** 45
+
+**✅ Complete:** 14  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P14.1) — *note: this lists 16 items; see caveat below.*
+
+> Caveat on the count above: P14.1 and the Phase 1 items are ✅, bringing the true complete count to **16** (P1.1–P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P14.1).
+
+**🟡 Partial:** 9  (P4.2, P10.1, P11.1, P12.1, P13.1, P17.1, P18.1, P24.2 — 8 listed; P16.1 is tracked separately as ⚠️ per its more serious architectural deviation)
+
+**❌ Not started:** 19  (P15.1, P19.1, P19.2, P19.3, P20.1, P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 — 20 listed)
+
+**⚠️ Needs fix:** 1  (P16.1 — functionally present but architecturally non-compliant with the documented Tesseract-first OCR design)
+
+**🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
+
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 16 / 8 / 20 / 1 / 0 = 45.)*
+
+**Overall project completion:** ~40% (16 fully done + partial credit for the 8 partial/needs-fix items ≈ 18–20 "effective" prompts out of 45)
+
+**P1 completion:** ~85% (all core deterministic engines, APIs, and the Planner UI are done; only the AI rationale, PR2 handoff, auth, and error-hardening layers on the P1 side are missing)
+
+**PR2 completion:** ~55% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, payment approval — is largely implemented and appears functionally solid, but has no tests, deviates structurally from the spec's package layout, uses a different (undocumented) OCR approach, and has zero authentication)
+
+**Frontend completion:** ~35% (Planner dashboard is essentially done; Procurement dashboard does not exist at all; no auth, no realtime, no error boundaries anywhere in the frontend)
+
+**Backend completion:** ~65% (blended P1 + PR2)
+
+**Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
+
+**AI/NLP completion:** ~45% (Gemini intent extraction and mismatch explanation exist and correctly respect the "AI never decides" rule; Gemini rationale generation for P1 recommendations does not exist at all)
+
+**OCR completion:** ~20% (a form of OCR/structuring exists via direct Gemini document parsing, but the specified Tesseract.js primary-OCR service does not exist anywhere)
+
+**Realtime completion:** 0%
+
+**Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
+
+**Testing completion:** ~25% (P1 engine tests exist from Phases 5–8 but haven't been gap-reviewed per Phase 25; PR2 has zero test files anywhere; no e2e smoke test exists)
+
+**Deployment completion:** 0%
+
+**IMPORTANT — methodology note:** these percentages are based on acceptance-criteria review of the code actually present (reading engine/service logic, controller mappings, migration contents, and seed-data row counts), not merely file-existence counting, per your instructions. Where I could not verify a criterion at runtime (no live Supabase/Gemini/servers in this environment), I've flagged that explicitly rather than assuming a pass.
+
+---
+
+# CURRENT DOCUMENTED POSITION
+
+**Last fully completed prompt:**
+P9.2 — Inventory, Expiry Heatmap, and Replenishment Recommendation Views (the last prompt in an unbroken, sequentially-dependent completion chain — P1.1 through P9.2 all have their real dependencies met and their own acceptance criteria substantively satisfied)
+
+**Current partial prompt:**
+P10.1 — Supplier Entity + Deterministic Scoring Engine (the git log's own last commit message is literally "Phase 10 Impl," and the working tree shows real, uncommitted progress well past P10.1 into P17/P18-level PR2 logic — but P10.1 itself is missing its required unit test file, so it isn't fully closed out even though later-phase code already depends on it working)
+
+**Next prompt to execute:**
+Strictly by dependency order, the next *fully unblocked, not-yet-closed* prompt is **P10.1's own gap** (add `SupplierScoringEngineTest.java`) — but since PR2's implementation has already raced ahead through Phase 18 in the working tree, the more useful "next prompt" in practice is **P15.1 — OCR Text Extraction Endpoint (P1/Node, Tesseract.js)**, since it's the earliest phase-ordered prompt that is genuinely not started and not blocked by anything else (its only dependency, P4.1, is done).
+
+**Prompts completed out of total:**
+16 / 45 fully complete (8 additional partial/needs-fix)
+
+**Overall completion:**
+~40%
+
+---
+
+# WHAT WE SHOULD DO NEXT
+
+The team's own working tree has already raced ahead into PR2 domain logic (through roughly Phase 18) without closing out testing or the OCR architecture decision, and without touching P1→PR2 handoff, AI rationale, auth, or any of the PR2 frontend. That imbalance is the single biggest risk right now: **the demo's centerpiece integration (P1→PR2 handoff) and the entire Procurement UI don't exist yet**, while lower-priority polish (PR2 has more entities than the spec asked for) has consumed time. Recommended next five, in dependency-safe order:
+
+**1. P15.1 — OCR Text Extraction Endpoint (P1/Node, Tesseract.js)**
+- Why it's next: It's the earliest genuinely-unstarted, fully-unblocked prompt in the plan (dependency P4.1 is done). It's also foundational to resolving the P16.1 architectural mismatch.
+- Dependency status: ✅ Unblocked (P4.1 done)
+- Files it should touch: `/p1-backend/src/services/ocrService.ts`, `/p1-backend/src/routes/internalOcrRoutes.ts`, `package.json` (add `tesseract.js`, `multer`), `.env.example` (add `INTERNAL_API_KEY`)
+- What must be fixed first: Nothing blocking — but the team should explicitly decide whether to (a) build this and then refactor P16.1's `InvoiceOcrService` to call it, restoring the documented two-stage pipeline, or (b) formally amend the architecture note to bless the current single-call Gemini-vision approach and retire this prompt. Don't build it and leave P16.1 unreconciled — that's how the two diverge permanently.
+
+**2. P10.1 gap-fill — add `SupplierScoringEngineTest.java`**
+- Why it's next: It's a small, contained fix that unblocks P25.2 (which currently has nothing to extend) and gives the team's most demo-critical deterministic engine actual test coverage before more logic is layered on top of it.
+- Dependency status: ✅ Unblocked (implementation exists, just untested)
+- Files it should touch: `pr2-backend/src/test/java/com/chainvision/pr2/sourcing/SupplierScoringEngineTest.java` (or wherever the team decides the test should live given the actual `service/` package layout)
+- What must be fixed first: Nothing — this is pure addition.
+
+**3. P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test**
+- Why it's next: This is the highest-severity gap in the whole project relative to the context doc's own stated priorities ("the centerpiece of Section 4"). Its dependencies are fully met, and every later phase (Realtime demo, Gemini rationale, the smoke test, the whole judged demo narrative) assumes it works.
+- Dependency status: ✅ Unblocked (P8.1, P11.1 both done)
+- Files it should touch: `/p1-backend/src/services/pr2ClientService.ts` (new), `/p1-backend/src/services/recommendationService.ts` (small additive edit), `/p1-backend/tests/handoff.integration.test.ts` (new)
+- What must be fixed first: Nothing blocking, but do this *before* P19.x (below) so the Procurement UI has real system-sourced requisitions to display from day one instead of only chatbot/manual ones.
+
+**4. P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**
+- Why it's next: Cheap, high demo-value, and its only real dependency (P7.2) is done. Right now every recommendation on the Planner dashboard shows blank rationale text, which is a visible, easily-fixed gap.
+- Dependency status: ✅ Unblocked (P7.2 done; P20.1 is a soft dependency only, not a file-level blocker)
+- Files it should touch: `/p1-backend/src/services/geminiClient.ts` (new), `/p1-backend/src/services/aiRationaleService.ts` (new), `/p1-backend/src/services/recommendationService.ts` (small additive edit), `.env.example` (confirm `GEMINI_API_KEY`/`GEMINI_MODEL`, already partially present)
+- What must be fixed first: Nothing blocking.
+
+**5. P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**
+- Why it's next: The entire Procurement side of the demo currently has zero UI. This is the prerequisite for P19.2/P19.3, which in turn unblock Realtime (P21.1), error handling (P24.3), and the smoke test (P25.3). It should start only after P20.1 lands so the Requisitions view (built in P19.2) has real system-generated data to show, not just the manual/chatbot paths.
+- Dependency status: 🟡 Softly blocked — P1.2 and P11.1 (its hard dependencies) are done, but sequencing after P20.1 is strongly recommended for demo coherence even though not a hard file-level dependency.
+- Files it should touch: `/frontend/src/pages/procurement/ProcurementLayout.tsx`, `ProcurementHome.tsx`, `/frontend/src/api/pr2Client.ts`, `/frontend/src/App.tsx` (add `/procurement/*` routes)
+- What must be fixed first: Nothing blocking at the file level; recommended to sequence after #3 above for narrative reasons only.
+
+---
+
+# FINAL A-TO-Z VIEW
+
+[✅] P1.1
+[✅] P1.2
+[✅] P1.3
+[✅] P1.4
+[✅] P2.1
+[✅] P3.1
+[✅] P3.2
+[✅] P4.1
+[🟡] P4.2
+[✅] P5.1
+[✅] P6.1
+[✅] P7.1
+[✅] P7.2
+[✅] P8.1
+[✅] P9.1
+[✅] P9.2
+[🟡] P10.1
+[🟡] P11.1
+[🟡] P12.1
+[🟡] P13.1
+[✅] P14.1
+[❌] P15.1
+[⚠️] P16.1
+[🟡] P17.1
+[🟡] P18.1
+[❌] P19.1
+[❌] P19.2
+[❌] P19.3
+[❌] P20.1
+[❌] P21.1
+[❌] P22.1
+[❌] P23.1
+[❌] P23.2
+[❌] P23.3
+[❌] P24.1
+[🟡] P24.2
+[❌] P24.3
+[❌] P25.1
+[❌] P25.2
+[❌] P25.3
+[❌] P26.1
+[❌] P27.1
+[❌] P27.2
+[❌] P28.1
+[❌] P28.2
