@@ -86,7 +86,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 18 — PAYMENT APPROVAL
 
-- [🟡] P18.1 — Payment Approval Logic + Exception Queue
+- [✅] P18.1 — Payment Approval Logic + Exception Queue
 
 ## PHASE 19 — PR2 FRONTEND
 
@@ -311,10 +311,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P16.1
 
 ### P18.1 — Payment Approval Logic + Exception Queue
-**Status:** 🟡 PARTIALLY COMPLETE
-**Evidence:** `entity/PaymentApproval.java`, `repository/PaymentApprovalRepository.java`, and `controller/ExceptionController.java` exist. `ExceptionService` now treats both `MISMATCHED` and `EXCEPTION` invoices as active exception candidates and can resolve them into manual approval/rejection rows.
-**Missing:** No standalone `PaymentApprovalService.java` exists, and after the Phase 17 separation the `AUTO_APPROVED` path for a clean `MATCHED` result still needs to be implemented in the Phase 18 shape. No dedicated Phase 18 test coverage confirmed.
-**Documentation compliance:** PARTIAL
+**Status:** ✅ COMPLETE
+**Evidence:** Payment approval code now lives in the requested `/pr2-backend/src/main/java/com/chainvision/pr2/payment/` package: `PaymentApproval.java`, `PaymentApprovalRepository.java`, `PaymentApprovalService.java`, and `PaymentApprovalController.java`. `PaymentApprovalService.processMatchResult(...)` creates `AUTO_APPROVED` rows for `MATCHED`, creates `PENDING_REVIEW` rows and flips invoices to `EXCEPTION` for `MISMATCHED`, and `ThreeWayMatchController` calls it immediately after persisting the match result. `GET /api/exceptions` now returns exception queue rows composed from the invoice, pending payment approval, latest match, and `aiExplanation`. `POST /api/exceptions/{id}/resolve` accepts `{ "decision": "APPROVE" | "REJECT", "approvedBy": "..." }` and updates the pending approval to `APPROVED_MANUAL` or `REJECTED`. `PaymentApprovalServiceTest` covers auto-approval, pending-review routing, exception queue payloads, manual approval, and rejection.
+**Missing:** Runtime `curl`/database verification was not possible in this environment because the Maven wrapper still cannot start here; implementation and test files are present.
+**Documentation compliance:** YES
 **Dependencies:** P17.1
 
 ### P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
@@ -420,7 +420,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Evidence:** `/scripts/` directory does not exist anywhere in the repo.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P20.1 (not started — real blocker), P21.1 (not started), P22.1 (not started), P18.1 (partially met), P19.3 (not started) — this prompt is 🔴 BLOCKED by multiple unmet upstream dependencies, not just "not yet gotten to."
+**Dependencies:** P20.1 (not started — real blocker), P21.1 (not started), P22.1 (not started), P18.1 (met), P19.3 (not started) — this prompt is 🔴 BLOCKED by multiple unmet upstream dependencies, not just "not yet gotten to."
 
 ### P26.1 — Integration Bug Bash and Fix Coordination
 **Status:** ❌ NOT STARTED
@@ -463,11 +463,11 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 23  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1)
+**✅ Complete:** 24  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
-**🟡 Partial:** 3  (P4.2, P18.1, P24.2)
+**🟡 Partial:** 2  (P4.2, P24.2)
 
 **❌ Not started:** 19  (P19.1, P19.2, P19.3, P20.1, P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
@@ -475,17 +475,17 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 23 / 3 / 19 / 0 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 24 / 2 / 19 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~55% (23 fully done + partial credit for the 3 partial items ≈ 24–25 "effective" prompts out of 45)
+**Overall project completion:** ~57% (24 fully done + partial credit for the 2 partial items ≈ 25 "effective" prompts out of 45)
 
 **P1 completion:** ~85% (all core deterministic engines, APIs, and the Planner UI are done; only the AI rationale, PR2 handoff, auth, and error-hardening layers on the P1 side are missing)
 
-**PR2 completion:** ~75% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, and matching — is largely implemented and now follows the P1 OCR architecture, but payment approval still needs the Phase 18 service shape, and auth is still absent)
+**PR2 completion:** ~82% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, and payment approval — is implemented and follows the P1 OCR architecture, but auth is still absent)
 
 **Frontend completion:** ~35% (Planner dashboard is essentially done; Procurement dashboard does not exist at all; no auth, no realtime, no error boundaries anywhere in the frontend)
 
-**Backend completion:** ~71% (blended P1 + PR2)
+**Backend completion:** ~75% (blended P1 + PR2)
 
 **Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
 
@@ -497,7 +497,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
 
-**Testing completion:** ~37% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, Phase 16 invoice service/structuring, and Phase 17 matching-engine coverage but still lacks the broader Phase 25 review and e2e smoke test)
+**Testing completion:** ~39% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, Phase 16 invoice service/structuring, Phase 17 matching, and Phase 18 payment approval coverage but still lacks the broader Phase 25 review and e2e smoke test)
 
 **Deployment completion:** 0%
 
@@ -508,19 +508,19 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P17.1 — Deterministic 3-Way Match Engine + Mismatch Explanation Hook (P1.1 through P17.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
+P18.1 — Payment Approval Logic + Exception Queue (P1.1 through P18.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
 
 **Current partial prompt:**
-P18.1 — Payment Approval Logic + Exception Queue
+P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 
 **Next prompt to execute:**
-Strictly by dependency order, the next *not-yet-closed* work is **P18.1 — Payment Approval Logic + Exception Queue**, specifically adding the standalone payment approval service and clean auto-approval path.
+Strictly by dependency order, the next not-started frontend work is **P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**.
 
 **Prompts completed out of total:**
-23 / 45 fully complete (3 additional partial)
+24 / 45 fully complete (2 additional partial)
 
 **Overall completion:**
-~55%
+~57%
 
 ---
 
@@ -528,11 +528,11 @@ Strictly by dependency order, the next *not-yet-closed* work is **P18.1 — Paym
 
 The team's own working tree has already raced ahead into PR2 domain logic (through roughly Phase 18) without closing out testing or the OCR architecture decision, and without touching P1→PR2 handoff, AI rationale, auth, or any of the PR2 frontend. That imbalance is the single biggest risk right now: **the demo's centerpiece integration (P1→PR2 handoff) and the entire Procurement UI don't exist yet**, while lower-priority polish (PR2 has more entities than the spec asked for) has consumed time. Recommended next five, in dependency-safe order:
 
-**1. P18.1 — Payment Approval Logic + Exception Queue**
-- Why it's next: P17.1 now produces clean `MATCHED`/`MISMATCHED` outcomes, so Phase 18 can consume those deterministic results and decide auto-approval vs exception routing.
-- Dependency status: ✅ Unblocked (P17.1 done)
-- Files it should touch: `PaymentApprovalService.java`, exception queue service/controller tests, and the match orchestration handoff into payment approval.
-- What must be fixed first: Move approval behavior into a dedicated Phase 18 service instead of hiding it in matching logic.
+**1. P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**
+- Why it's next: The PR2 backend flow is now implemented through payment approval, so the next dependency-safe gap is the Procurement dashboard shell.
+- Dependency status: ✅ Unblocked (P1.2 and P11.1 done)
+- Files it should touch: `/frontend/src/pages/procurement/ProcurementLayout.tsx`, `/frontend/src/pages/procurement/ProcurementHome.tsx`, `/frontend/src/services/pr2Client.ts`, and the frontend route tree.
+- What must be fixed first: Nothing blocking at backend file level; the frontend PR2 surface simply does not exist yet.
 
 **2. P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test**
 - Why it's next: This is the highest-severity gap in the whole project relative to the context doc's own stated priorities ("the centerpiece of Section 4"). Its dependencies are fully met, and every later phase (Realtime demo, Gemini rationale, the smoke test, the whole judged demo narrative) assumes it works.
@@ -580,7 +580,7 @@ The team's own working tree has already raced ahead into PR2 domain logic (throu
 [✅] P15.1
 [✅] P16.1
 [✅] P17.1
-[🟡] P18.1
+[✅] P18.1
 [❌] P19.1
 [❌] P19.2
 [❌] P19.3

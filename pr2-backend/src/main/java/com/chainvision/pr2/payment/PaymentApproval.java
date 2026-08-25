@@ -1,4 +1,4 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.payment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-// Mirrors pr2.payment_approvals — see Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
+// Mirrors pr2.payment_approvals, Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
 @Table(name = "payment_approvals", schema = "pr2")
 public class PaymentApproval {
@@ -38,6 +38,12 @@ public class PaymentApproval {
         this.id = UUID.randomUUID();
         this.invoiceId = invoiceId;
         this.status = status;
+        this.approvedBy = approvedBy;
+        this.approvedAt = approvedAt;
+    }
+
+    public void resolve(PaymentStatus resolvedStatus, String approvedBy, OffsetDateTime approvedAt) {
+        this.status = resolvedStatus;
         this.approvedBy = approvedBy;
         this.approvedAt = approvedAt;
     }

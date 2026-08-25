@@ -172,7 +172,7 @@ To see the mismatch/exception path instead, upload with a `manualQuantity`
 that differs from the received quantity by more than the tolerance (default
 2%, see §8) — the invoice ends up in `MISMATCHED` status, shows up in
 `GET /api/exceptions`, and `POST /api/exceptions/{id}/resolve` (body
-`{"action":"APPROVE"|"REJECT","resolvedBy":"..."}`) closes it out.
+`{"decision":"APPROVE"|"REJECT","approvedBy":"..."}`) closes it out.
 
 Or import `pr2-backend/postman/CHAINVISION-PR2.postman_collection.json`
 (see §7) into Postman — it has every endpoint below, organized by domain,
@@ -199,7 +199,7 @@ Matches `Documentaion/00_PROJECT_CONTEXT.md` Section 13.2 exactly.
 | Invoices | `GET /api/invoices`, `GET /api/invoices/{id}` | |
 | Invoices | `POST /api/invoices/{id}/match` | deterministic 3-way match; Gemini phrases explanation only on MISMATCHED |
 | Exceptions | `GET /api/exceptions` | MISMATCHED/EXCEPTION invoices with no resolution yet |
-| Exceptions | `POST /api/exceptions/{id}/resolve` | body `{"action":"APPROVE"|"REJECT","resolvedBy"}` |
+| Exceptions | `POST /api/exceptions/{id}/resolve` | body `{"decision":"APPROVE"|"REJECT","approvedBy":"..."}` |
 | Analytics | `GET /api/analytics/p2p-summary` | touchless %, exception %, avg cycle time, in-flight counts |
 
 ---

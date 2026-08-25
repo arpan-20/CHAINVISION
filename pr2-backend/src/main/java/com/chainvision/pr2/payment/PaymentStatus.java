@@ -1,4 +1,4 @@
-package com.chainvision.pr2.entity;
+package com.chainvision.pr2.payment;
 
 public enum PaymentStatus {
     AUTO_APPROVED,

@@ -1,7 +1,7 @@
 package com.chainvision.pr2.dto;
 
-import com.chainvision.pr2.entity.PaymentApproval;
-import com.chainvision.pr2.entity.PaymentStatus;
+import com.chainvision.pr2.payment.PaymentApproval;
+import com.chainvision.pr2.payment.PaymentStatus;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
