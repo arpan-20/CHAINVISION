@@ -1,4 +1,12 @@
 {
+  "name": "chainvision",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test:p1": "cd p1-backend && npm test",
+    "test:pr2": "cd pr2-backend && ./mvnw.cmd test",
+    "e2e": "tsx scripts/e2e_smoke_test.ts"
+  },
   "dependencies": {
     "axios": "^1.19.0"
   },

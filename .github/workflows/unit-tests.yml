@@ -1,0 +1,45 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+
+# Deterministic, self-contained unit suites — no external services required.
+# These must stay GREEN: they cover the core business logic the hackathon judges
+# (demand sensing, expiry, FEFO, ROP/EOQ, supplier scoring, 3-way match).
+jobs:
+  p1-tests:
+    name: P1 backend (Node/Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: p1-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: p1-backend/package-lock.json
+      - run: npm ci || npm install
+      - run: npm test
+
+  pr2-tests:
+    name: PR2 backend (Java/Maven)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pr2-backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Run PR2 unit tests
+        # Only the deterministic engine tests (SupplierScoringEngine, ThreeWayMatchEngine)
+        # plus other unit suites; no DB/Supabase connection needed.
+        run: ./mvnw -B test -Dtest='SupplierScoringEngineTest,ThreeWayMatchEngineTest,RequisitionServiceTest,GoodsReceiptServiceTest,PaymentApprovalServiceTest,MatchingServiceTest'

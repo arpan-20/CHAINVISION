@@ -1,0 +1,41 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 356 >>
+stream
+BT
+/F1 24 Tf
+72 720 Td
+(INVOICE) Tj
+/F1 14 Tf
+0 -42 Td
+(Invoice Number: INV-MED107-002) Tj
+0 -26 Td
+(PO Number: PO-MED107-001) Tj
+0 -26 Td
+(Vendor: Northstar Pharma) Tj
+0 -26 Td
+(SKU: MED-107 Cetirizine 10mg) Tj
+0 -26 Td
+(Quantity: 700) Tj
+0 -26 Td
+(Unit Price: 0.715) Tj
+0 -26 Td
+(Total: 500.50) Tj
+0 -40 Td
+(Quantity mismatch sample - expected 900.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+%%EOF

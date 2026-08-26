@@ -1,0 +1,34 @@
+name: E2E Smoke Test
+
+on:
+  workflow_dispatch: # manual only — needs live Supabase + Gemini, so never auto-blocks CI
+  # Uncomment to run on PRs once you have a Supabase project wired as secrets:
+  # pull_request:
+
+# Full 10-step demo flow against a LIVE running system (see scripts/e2e_smoke_test.ts).
+# Runs as a manual trigger because it requires real infra (Supabase URL/keys, running
+# backends) and a working Gemini model. On the Gemini-retired environment, the AI-dependent
+# steps (4, 8) degrade to WARN and the check still passes — only true FAILURES fail it.
+
+jobs:
+  e2e:
+    name: End-to-end smoke flow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install tsx
+        run: npm install -g tsx
+
+      - name: Run E2E smoke test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          P1_BASE_URL: ${{ secrets.P1_BASE_URL || 'http://localhost:4000' }}
+          PR2_BASE_URL: ${{ secrets.PR2_BASE_URL || 'http://localhost:8080' }}
+        run: npx tsx scripts/e2e_smoke_test.ts
