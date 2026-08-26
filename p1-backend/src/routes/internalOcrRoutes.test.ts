@@ -45,8 +45,10 @@ describe('internal OCR routes', () => {
     process.env.INTERNAL_API_KEY = 'test-internal-key'
 
     const { internalOcrRoutes } = await import('./internalOcrRoutes.js')
+    const { errorHandler } = await import('../middleware/errorHandler.js')
     const app = express()
     app.use(internalOcrRoutes)
+    app.use(errorHandler)
     server = http.createServer(app)
     await new Promise<void>((resolve) => server.listen(0, resolve))
 
@@ -88,5 +90,26 @@ describe('internal OCR routes', () => {
     expect(response.status).toBe(200)
     expect(response.body).toEqual({ rawText: 'invoice INV-1001 qty 500 total 5000' })
     expect(extractText).toHaveBeenCalledWith(expect.any(Buffer), 'image/png')
+  })
+
+  it('returns a structured upstream error when OCR processing fails', async () => {
+    extractText.mockRejectedValue(
+      Object.assign(new Error('OCR extraction failed: corrupt image'), {
+        statusCode: 502,
+        code: 'OCR_FAILED',
+      }),
+    )
+
+    const response = await requestMultipart(baseUrl, '/internal/ocr/extract', {
+      internalKey: 'test-internal-key',
+    })
+
+    expect(response.status).toBe(502)
+    expect(response.body).toEqual({
+      error: {
+        code: 'OCR_FAILED',
+        message: 'OCR extraction failed: corrupt image',
+      },
+    })
   })
 })

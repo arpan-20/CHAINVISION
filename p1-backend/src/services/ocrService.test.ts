@@ -88,4 +88,16 @@ describe('ocrService', () => {
       statusCode: 415,
     })
   })
+
+  it('wraps Tesseract failures in a typed OCR processing error', async () => {
+    recognize.mockRejectedValue(new Error('corrupt image'))
+
+    const { extractText } = await import('./ocrService.js')
+
+    await expect(extractText(Buffer.from('broken-image'), 'image/png')).rejects.toMatchObject({
+      statusCode: 502,
+      code: 'OCR_FAILED',
+      message: 'OCR extraction failed: corrupt image',
+    })
+  })
 })

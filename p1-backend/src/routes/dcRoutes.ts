@@ -1,5 +1,6 @@
 import { Router } from 'express'
 
+import { verifySupabaseJwt } from '../auth/verifySupabaseJwt'
 import { supabaseClient } from '../db/supabaseClient'
 
 interface DistributionCenterRow {
@@ -19,6 +20,8 @@ const toDistributionCenter = (row: DistributionCenterRow) => ({
 })
 
 export const dcRoutes = Router()
+
+dcRoutes.use(verifySupabaseJwt)
 
 dcRoutes.get('/distribution-centers', async (_req, res, next) => {
   try {

@@ -1,5 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import RequireRole from './components/RequireRole'
+import { useAuth } from './hooks/useAuth'
+import type { AuthRole } from './hooks/useAuth'
 import PlannerHome from './pages/planner/PlannerHome'
 import PlannerLayout from './pages/planner/PlannerLayout'
 import InventoryView from './pages/planner/InventoryView'
@@ -14,6 +17,7 @@ import GoodsReceiptView from './pages/procurement/GoodsReceiptView'
 import InvoiceUploadView from './pages/procurement/InvoiceUploadView'
 import ExceptionQueueView from './pages/procurement/ExceptionQueueView'
 import P2pAnalyticsView from './pages/procurement/P2pAnalyticsView'
+import LoginPage from './pages/LoginPage'
 
 function Placeholder() {
   return (
@@ -25,17 +29,55 @@ function Placeholder() {
   )
 }
 
+const homeForRole = (role: AuthRole | null) => {
+  if (role === 'PROCUREMENT_OFFICER') return '/procurement'
+  return '/planner'
+}
+
+function HomeRedirect() {
+  const { user, role, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-ink px-6 text-paper">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-mist">Checking session...</p>
+      </main>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <Navigate to={homeForRole(role)} replace />
+}
+
 function App() {
   return (
     <Routes>
-      <Route path="/planner" element={<PlannerLayout />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/planner"
+        element={
+          <RequireRole roles={['PLANNER', 'ADMIN']}>
+            <PlannerLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<PlannerHome />} />
         <Route path="inventory" element={<InventoryView />} />
         <Route path="expiry-risk" element={<ExpiryHeatmap />} />
         <Route path="replenishment" element={<RecommendationsView />} />
         <Route path="demand-signals" element={<DemandSignalsView />} />
       </Route>
-      <Route path="/procurement" element={<ProcurementLayout />}>
+      <Route
+        path="/procurement"
+        element={
+          <RequireRole roles={['PROCUREMENT_OFFICER', 'ADMIN']}>
+            <ProcurementLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<ProcurementHome />} />
         <Route path="requisitions" element={<RequisitionsView />} />
         <Route path="purchase-orders" element={<PurchaseOrdersView />} />
@@ -44,8 +86,8 @@ function App() {
         <Route path="exceptions" element={<ExceptionQueueView />} />
         <Route path="analytics" element={<P2pAnalyticsView />} />
       </Route>
-      <Route path="/" element={<Navigate to="/planner" replace />} />
-      <Route path="*" element={<Navigate to="/planner" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   )
 }

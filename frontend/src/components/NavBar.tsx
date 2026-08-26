@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 
-import { useAuthStub } from '../hooks/useAuthStub'
+import { useAuth } from '../hooks/useAuth'
 import {
   CrateIcon,
   HourglassIcon,
@@ -19,11 +19,10 @@ const NAV_ITEMS = [
 ] as const
 
 export default function NavBar() {
-  const { user, role, loading } = useAuthStub()
+  const { user, role, loading, signOut } = useAuth()
 
   return (
     <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line bg-panel md:w-64">
-      {/* Brand */}
       <div className="flex items-center gap-3 border-b border-line px-4 py-5 md:px-6">
         <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel2 text-signal">
           <NetworkMark className="h-5 w-5" />
@@ -35,7 +34,6 @@ export default function NavBar() {
         </div>
       </div>
 
-      {/* Nav links */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4 md:px-3">
         {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink
@@ -45,9 +43,7 @@ export default function NavBar() {
             className={({ isActive }) =>
               [
                 'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-panel2 text-paper'
-                  : 'text-mist hover:bg-panel2/60 hover:text-paper',
+                isActive ? 'bg-panel2 text-paper' : 'text-mist hover:bg-panel2/60 hover:text-paper',
               ].join(' ')
             }
           >
@@ -72,24 +68,25 @@ export default function NavBar() {
         ))}
       </nav>
 
-      {/* Auth-stub user card */}
       <div className="border-t border-line p-3 md:p-4">
         <div className="flex items-center gap-3 rounded-lg bg-panel2 px-3 py-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-xs text-signal">
-            {loading ? '···' : user?.initials}
+            {loading ? '...' : user?.initials}
           </div>
           <div className="hidden min-w-0 md:block">
-            <p className="truncate text-xs font-medium text-paper">
-              {loading ? 'Loading session…' : user?.name}
-            </p>
+            <p className="truncate text-xs font-medium text-paper">{loading ? 'Loading session...' : user?.name}</p>
             <p className="truncate font-mono text-[10px] uppercase tracking-wider text-mist">
-              {loading ? '—' : role}
+              {loading ? '-' : role}
             </p>
           </div>
         </div>
-        <p className="mt-2 hidden font-mono text-[9px] uppercase tracking-[0.2em] text-alert/80 md:block">
-          Demo session
-        </p>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-2 hidden w-full rounded-md border border-line px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-mist transition-colors hover:border-signal/40 hover:text-signal md:block"
+        >
+          Sign out
+        </button>
       </div>
     </aside>
   )
