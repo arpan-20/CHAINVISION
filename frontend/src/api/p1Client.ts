@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { attachApiInterceptor } from './apiInterceptor'
 
 const baseURL = import.meta.env.VITE_P1_API_BASE
 
@@ -28,5 +29,9 @@ p1Client.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// --- Toast-on-error (Phase 24.3) ---
+attachApiInterceptor(p1Client)
+// --- end toast-on-error ---
 
 export default p1Client
