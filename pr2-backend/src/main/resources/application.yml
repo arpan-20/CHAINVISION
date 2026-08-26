@@ -37,3 +37,10 @@ p1:
 
 internal:
   api-key: ${INTERNAL_API_KEY:}
+
+# Supabase exposes signing keys at ${SUPABASE_URL}/auth/v1/.well-known/jwks.json.
+# Spring resolves this issuer's OpenID metadata and JWKS, then verifies issuer,
+# signature, expiry and not-before claims for every user-facing API request.
+supabase:
+  issuer-uri: ${SUPABASE_ISSUER_URI:${SUPABASE_URL}/auth/v1}
+  jwk-set-uri: ${SUPABASE_JWK_SET_URI:${SUPABASE_URL}/auth/v1/.well-known/jwks.json}

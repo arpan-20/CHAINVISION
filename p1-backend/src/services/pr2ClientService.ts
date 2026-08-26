@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from 'axios'
+import { env } from '../config/env'
 import type { ReplenishmentRecommendationContract } from './recommendationService'
 
 const PR2_BASE_URL = process.env.PR2_BASE_URL ?? 'http://pr2-backend:8080'
@@ -13,7 +14,11 @@ const postRecommendation = async (
   recommendation: ReplenishmentRecommendationContract,
 ): Promise<void> => {
   await axios.post(HANDOFF_ENDPOINT, recommendation, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      // PR2 accepts this service-to-service handoff via the shared internal key.
+      'x-internal-key': env.internalApiKey,
+    },
     timeout: REQUEST_TIMEOUT_MS,
   })
 }
