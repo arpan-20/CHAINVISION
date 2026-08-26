@@ -36,18 +36,25 @@ public class OcrClient {
         fileHeaders.setContentType(MediaType.parseMediaType(safeContentType(contentType)));
         body.add("file", new HttpEntity<>(new NamedByteArrayResource(fileBytes, safeFilename(filename)), fileHeaders));
 
-        OcrResponse response = restClient.post()
-                .uri(ocrEndpointUrl)
-                .header("x-internal-key", internalApiKey)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(body)
-                .retrieve()
-                .body(OcrResponse.class);
+        try {
+            OcrResponse response = restClient.post()
+                    .uri(ocrEndpointUrl)
+                    .header("x-internal-key", internalApiKey)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(body)
+                    .retrieve()
+                    .body(OcrResponse.class);
 
-        if (response == null || response.rawText() == null || response.rawText().isBlank()) {
-            throw new OcrClientException("P1 OCR endpoint returned no rawText");
+            if (response == null || response.rawText() == null || response.rawText().isBlank()) {
+                throw new OcrClientException("P1 OCR endpoint returned no rawText");
+            }
+            return response.rawText();
+        } catch (OcrClientException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new OcrClientException(
+                    "P1 OCR service is unavailable; the invoice requires manual review", e);
         }
-        return response.rawText();
     }
 
     private static String safeFilename(String filename) {
