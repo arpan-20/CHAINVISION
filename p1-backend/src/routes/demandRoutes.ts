@@ -1,9 +1,12 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
+import { verifySupabaseJwt } from '../auth/verifySupabaseJwt'
 import { createDemandSignal, listDemandSignals } from '../services/demandService'
 
 export const demandRoutes = Router()
+
+demandRoutes.use(verifySupabaseJwt)
 
 const createDemandSignalSchema = z.object({
   skuId: z.string().min(1),

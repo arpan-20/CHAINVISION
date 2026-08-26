@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
+import { verifySupabaseJwt } from '../auth/verifySupabaseJwt'
 import { supabaseClient } from '../db/supabaseClient'
 import {
   generateReplenishmentRecommendations,
@@ -80,6 +81,8 @@ const summarizeByUrgency = (
   )
 
 export const replenishmentRoutes = Router()
+
+replenishmentRoutes.use(verifySupabaseJwt)
 
 replenishmentRoutes.get('/replenishment/recommendations', async (req, res, next) => {
   try {

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 
+import { verifySupabaseJwt } from '../auth/verifySupabaseJwt'
 import { supabaseClient } from '../db/supabaseClient'
 
 interface SkuRow {
@@ -21,6 +22,8 @@ const toSku = (row: SkuRow) => ({
 })
 
 export const skuRoutes = Router()
+
+skuRoutes.use(verifySupabaseJwt)
 
 skuRoutes.get('/skus', async (_req, res, next) => {
   try {

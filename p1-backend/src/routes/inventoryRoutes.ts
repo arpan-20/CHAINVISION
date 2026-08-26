@@ -1,9 +1,12 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
+import { verifySupabaseJwt } from '../auth/verifySupabaseJwt'
 import { getInventorySummary, getInventoryWithBatchRisk } from '../services/inventoryService'
 
 export const inventoryRoutes = Router()
+
+inventoryRoutes.use(verifySupabaseJwt)
 
 const listInventorySchema = z.object({
   skuId: z.string().min(1).optional(),
