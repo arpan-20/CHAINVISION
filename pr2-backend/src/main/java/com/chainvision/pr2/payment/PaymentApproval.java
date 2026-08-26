@@ -8,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 // Mirrors pr2.payment_approvals, Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
@@ -21,6 +23,7 @@ public class PaymentApproval {
     private UUID invoiceId;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private PaymentStatus status;
 

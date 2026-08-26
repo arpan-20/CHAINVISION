@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 // Mirrors pr2.purchase_requisitions — see Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
@@ -37,6 +39,7 @@ public class PurchaseRequisition {
     private Urgency urgency;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private RequisitionSource source;
 
@@ -44,6 +47,7 @@ public class PurchaseRequisition {
     private String rawNlInput;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private RequisitionStatus status;
 

@@ -10,6 +10,8 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 // Mirrors pr2.purchase_orders — see Documentaion/00_PROJECT_CONTEXT.md Section 7.2.
 @Entity
@@ -35,6 +37,7 @@ public class PurchaseOrder {
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private PurchaseOrderStatus status;
 

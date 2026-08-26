@@ -46,6 +46,7 @@ public class Invoice {
     private String uploadedFileRef;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private InvoiceStatus status;
 

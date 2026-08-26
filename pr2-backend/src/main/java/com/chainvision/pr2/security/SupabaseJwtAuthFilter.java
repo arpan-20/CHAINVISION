@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,6 +26,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SupabaseJwtAuthFilter extends OncePerRequestFilter {
 
     private static final String INTERNAL_RECOMMENDATION_PATH = "/api/requisitions/from-recommendation";
+    private static final Logger logger = LoggerFactory.getLogger(SupabaseJwtAuthFilter.class);
 
     private final JwtDecoder jwtDecoder;
     private final JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
@@ -62,6 +65,7 @@ public class SupabaseJwtAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
         } catch (JwtException exception) {
+            logger.warn("Supabase JWT validation failed: {}", exception.getMessage());
             SecurityContextHolder.clearContext();
             unauthorized(response, "Invalid or expired Supabase access token");
         }
