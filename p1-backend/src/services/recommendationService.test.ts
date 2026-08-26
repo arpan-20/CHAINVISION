@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   listDemandSignals: vi.fn(),
   listInventoryBatches: vi.fn(),
+  generateRationale: vi.fn(),
   sendRecommendation: vi.fn(),
   insertedRows: [] as Array<Record<string, unknown>>,
   skuRows: [] as Array<{ id: string; name: string; lead_time_days: number }>,
@@ -14,6 +15,10 @@ vi.mock('./demandService', () => ({
 
 vi.mock('./inventoryService', () => ({
   listInventoryBatches: mocks.listInventoryBatches,
+}))
+
+vi.mock('./aiRationaleService', () => ({
+  generateRationale: mocks.generateRationale,
 }))
 
 vi.mock('./pr2ClientService', () => ({
@@ -77,6 +82,7 @@ describe('generateReplenishmentRecommendations', () => {
       { id: 'sku-medium', name: 'Guaifenesin Syrup', lead_time_days: 14 },
       { id: 'sku-ok', name: 'Aspirin 75mg', lead_time_days: 8 },
     ]
+    mocks.generateRationale.mockResolvedValue('Mock rationale from computed recommendation values.')
     mocks.sendRecommendation.mockResolvedValue(undefined)
   })
 
@@ -170,9 +176,14 @@ describe('generateReplenishmentRecommendations', () => {
     ])
     expect(mocks.insertedRows).toHaveLength(3)
     expect(mocks.insertedRows.map((row) => row.status)).toEqual(['NEW', 'NEW', 'NEW'])
+    expect(mocks.insertedRows.map((row) => row.ai_rationale)).toEqual([
+      'Mock rationale from computed recommendation values.',
+      'Mock rationale from computed recommendation values.',
+      'Mock rationale from computed recommendation values.',
+    ])
   })
 
-  it('returns the exact Phase 4 contract shape with blank AI rationale', async () => {
+  it('returns the exact Phase 4 contract shape with generated AI rationale', async () => {
     mocks.listDemandSignals.mockResolvedValue([
       {
         id: 'demand-1',
@@ -224,7 +235,7 @@ describe('generateReplenishmentRecommendations', () => {
       recommendedQty: expect.any(Number),
       urgency: 'CRITICAL',
       reason: 'STOCKOUT_RISK',
-      aiRationale: '',
+      aiRationale: 'Mock rationale from computed recommendation values.',
       expiryRiskContext: 'expired=0; critical=1; warning=0; ok=0; firstFefoBatch=CRIT-A',
       generatedAt: '2026-08-24T09:00:00.000Z',
     })

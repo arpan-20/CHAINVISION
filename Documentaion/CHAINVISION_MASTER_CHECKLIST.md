@@ -104,7 +104,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 22 — GEMINI RATIONALE
 
-- [❌] P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
+- [✅] P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
 
 ## PHASE 23 — SUPABASE AUTH
 
@@ -353,10 +353,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P2.1 (met), P9.2 (met), P19.2/P19.3 (met)
 
 ### P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/p1-backend/src/services/geminiClient.ts` and `/p1-backend/src/services/aiRationaleService.ts` do not exist. Confirmed via full read of `recommendationService.ts`: `ai_rationale` is hardcoded to `''` with no Gemini call path at all. The Planner dashboard's `RecommendationsView.tsx` will therefore always render blank rationale text.
-**Missing:** The entire prompt.
-**Documentation compliance:** NO
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/services/geminiClient.ts` exists as a thin text-generation wrapper around Gemini `generateContent`, reading `GEMINI_API_KEY` and `GEMINI_MODEL` from env without making them required for backend boot. `/p1-backend/src/services/aiRationaleService.ts` builds prompts only from already-computed recommendation values and returns a deterministic fallback if Gemini is missing, rate-limited, or otherwise fails. `recommendationService.ts` now calls `generateRationale(...)` before inserting the row and persists a non-empty `ai_rationale`; the P1→PR2 handoff contract then carries that rationale to PR2.
+**Missing:** Live Gemini/API-key verification was not possible in this audit environment; success and failure paths are covered by unit tests with a mocked Gemini client.
+**Documentation compliance:** YES
 **Dependencies:** P7.2 (met), P20.1 (met)
 
 ### P23.1 — Frontend Supabase Auth Integration
@@ -382,10 +382,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ### P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks
 **Status:** ❌ NOT STARTED
-**Evidence:** None. `/p1-backend/src/middleware/rateLimitAwareRetry.ts` does not exist. `errorHandler.ts` exists only at its Phase 4 skeleton scope (not expanded). `ocrService.ts` now exists from P15.1, but there is still no `geminiClient.ts` because P22.1 is not started.
+**Evidence:** None. `/p1-backend/src/middleware/rateLimitAwareRetry.ts` does not exist. `errorHandler.ts` exists only at its Phase 4 skeleton scope (not expanded). `ocrService.ts` exists from P15.1, and `geminiClient.ts` exists from P22.1, but retry/backoff and broader typed upstream error mapping are not implemented yet.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P4.1 (met), P22.1 (not started — real blocker), P15.1 (met)
+**Dependencies:** P4.1 (met), P22.1 (met), P15.1 (met)
 
 ### P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 **Status:** 🟡 PARTIALLY COMPLETE
@@ -420,7 +420,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Evidence:** `/scripts/` directory does not exist anywhere in the repo.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P20.1 (met), P21.1 (met), P22.1 (not started), P18.1 (met), P19.3 (met) — this prompt is 🔴 BLOCKED by the remaining rationale dependency.
+**Dependencies:** P20.1 (met), P21.1 (met), P22.1 (met), P18.1 (met), P19.3 (met)
 
 ### P26.1 — Integration Bug Bash and Fix Coordination
 **Status:** ❌ NOT STARTED
@@ -463,23 +463,23 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 29  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1, P19.1, P19.2, P19.3, P20.1, P21.1)
+**✅ Complete:** 30  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1, P19.1, P19.2, P19.3, P20.1, P21.1, P22.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
 **🟡 Partial:** 2  (P4.2, P24.2)
 
-**❌ Not started:** 14  (P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
+**❌ Not started:** 13  (P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
 **⚠️ Needs fix:** 0
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 29 / 2 / 14 / 0 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 30 / 2 / 13 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~68% (29 fully done + partial credit for the 2 partial items ≈ 30.5 "effective" prompts out of 45)
+**Overall project completion:** ~70% (30 fully done + partial credit for the 2 partial items ≈ 31.5 "effective" prompts out of 45)
 
-**P1 completion:** ~90% (all core deterministic engines, APIs, the Planner UI, and P1→PR2 handoff are done; only the AI rationale, auth, and error-hardening layers on the P1 side are missing)
+**P1 completion:** ~95% (all core deterministic engines, APIs, the Planner UI, P1→PR2 handoff, and P1-side rationale are done; only auth and error-hardening layers on the P1 side are missing)
 
 **PR2 completion:** ~82% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, and payment approval — is implemented and follows the P1 OCR architecture, but auth is still absent)
 
@@ -489,7 +489,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
 
-**AI/NLP completion:** ~55% (Gemini intent extraction and mismatch explanation exist and correctly respect the "AI never decides" rule; Gemini rationale generation for P1 recommendations does not exist at all)
+**AI/NLP completion:** ~80% (Gemini intent extraction, P1 rationale generation, and PR2 mismatch explanation exist and correctly respect the "AI never decides" rule; remaining AI work is resilience/retry hardening)
 
 **OCR completion:** ~80% (the P1 Tesseract.js OCR endpoint handles images and seeded sample PDFs, and PR2 now calls it before Gemini text structuring; remaining work is broader retry/backoff and live environment verification)
 
@@ -508,34 +508,37 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P21.1 — Realtime Subscriptions for Both Dashboards (P1.1 through P21.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2/browser/database verification remains environment-dependent)
+P22.1 — Rationale Generation Wired Into P1 Recommendation Flow (P1.1 through P22.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live Gemini/PR2/browser/database verification remains environment-dependent)
 
 **Current partial prompt:**
 P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 
 **Next prompt to execute:**
-Strictly by dependency order, the next not-started work is **P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**.
+Strictly by dependency order, the next not-started work is **P23.1–P23.3 — Supabase Auth**. P24.1 and P25.3 are also now unblocked.
 
 **Prompts completed out of total:**
-29 / 45 fully complete (2 additional partial)
+30 / 45 fully complete (2 additional partial)
 
 **Overall completion:**
-~68%
+~70%
 
 ---
 
 # WHAT WE SHOULD DO NEXT
 
-The project is now through Phase 21 at implementation level. The remaining risk has shifted from "missing Procurement UI / missing handoff" to rationale, auth, hardening, and broader test coverage. Recommended next items in dependency-safe order:
+The project is now through Phase 22 at implementation level. The remaining risk has shifted from "missing Procurement UI / missing handoff / missing rationale" to auth, hardening, and broader test coverage. Recommended next items in dependency-safe order:
 
-**1. P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**
-- Why it's next: P20.1 is now complete, so P22.1 is fully unblocked. The Planner dashboard still shows blank `aiRationale` values.
-- Dependency status: ✅ Unblocked (P7.2 and P20.1 done)
-- Files it should touch: `/p1-backend/src/services/geminiClient.ts`, `/p1-backend/src/services/aiRationaleService.ts`, `/p1-backend/src/services/recommendationService.ts`.
-
-**2. P23.x — Supabase Auth**
+**1. P23.x — Supabase Auth**
 - Why it's next: Both dashboards and both backends are still effectively open. Auth can now land against real Planner and Procurement routes.
 - Dependency status: ✅ Unblocked for P23.1/P23.2/P23.3.
+
+**2. P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks**
+- Why it's next: P22.1 created the P1 Gemini client, so the retry/backoff wrapper can now be added around it.
+- Dependency status: ✅ Unblocked (P4.1, P22.1, P15.1 done)
+
+**3. P25.3 — End-to-End Smoke Test Script**
+- Why it's next: Its explicit dependencies are now met, so it can become the integration guard before Phase 26.
+- Dependency status: ✅ Unblocked (P20.1, P21.1, P22.1, P18.1, P19.3 done)
 
 ---
 
@@ -571,7 +574,7 @@ The project is now through Phase 21 at implementation level. The remaining risk 
 [✅] P19.3
 [✅] P20.1
 [✅] P21.1
-[❌] P22.1
+[✅] P22.1
 [❌] P23.1
 [❌] P23.2
 [❌] P23.3
