@@ -63,6 +63,12 @@ const mockData = vi.hoisted(() => ({
   ],
 }))
 
+const TEST_USER = {
+  id: '99999999-a1a1-4a1a-8a1a-aaaaaaaaaaaa',
+  email: 'planner@test.local',
+  role: 'PLANNER' as const,
+}
+
 const generateReplenishmentRecommendations = vi.hoisted(() => vi.fn())
 
 class MockSupabaseQuery {
@@ -129,6 +135,10 @@ class MockSupabaseQuery {
   }
 
   private rowsForTable(): Array<Record<string, unknown>> {
+    if (this.table === 'users') {
+      return [{ id: TEST_USER.id, email: TEST_USER.email, role: TEST_USER.role }]
+    }
+
     if (this.table === 'skus') {
       return mockData.skus
     }
@@ -155,9 +165,21 @@ class MockSupabaseQuery {
 
 vi.mock('../src/db/supabaseClient', () => ({
   supabaseClient: {
+    auth: {
+      // Phase 23 JWT verification path: any non-empty token authenticates as TEST_USER
+      getUser: vi.fn(async (token: string) => {
+        if (token === 'valid-test-token') {
+          return { data: { user: { id: TEST_USER.id, email: TEST_USER.email } }, error: null }
+        }
+
+        return { data: { user: null }, error: new Error('Invalid token') }
+      }),
+    },
     schema: vi.fn(() => ({
       from: (table: string) => new MockSupabaseQuery(table),
     })),
+    // verifySupabaseJwt reads the shared users profile without schema('public')
+    from: (table: string) => new MockSupabaseQuery(table),
   },
 }))
 
@@ -180,6 +202,7 @@ const requestJson = async (
     ...options,
     headers: {
       'content-type': 'application/json',
+      authorization: 'Bearer valid-test-token',
       ...options.headers,
     },
   })

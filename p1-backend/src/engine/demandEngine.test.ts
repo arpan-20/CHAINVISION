@@ -68,4 +68,49 @@ describe('computeSensedDemand', () => {
     expect(results).toHaveLength(2)
     expect(results.map((result) => result.adjustedDemand)).toEqual([11, 22])
   })
+
+  it('throws on non-finite adjustmentPct', () => {
+    expect(() => computeSensedDemand([{ skuId: 'sku-1', dcId: 'dc-1', historicalDemand: 100 }], NaN)).toThrow(
+      'adjustmentPct must be a finite number',
+    )
+    expect(() => computeSensedDemand([{ skuId: 'sku-1', dcId: 'dc-1', historicalDemand: 100 }], Infinity)).toThrow(
+      'adjustmentPct must be a finite number',
+    )
+  })
+
+  it('throws on negative or non-finite historical demand', () => {
+    expect(() =>
+      computeSensedDemand([{ skuId: 'sku-1', dcId: 'dc-1', historicalDemand: -10 }], 0),
+    ).toThrow('historicalDemand values must be finite, non-negative numbers')
+    expect(() =>
+      computeSensedDemand([{ skuId: 'sku-1', dcId: 'dc-1', historicalDemand: NaN }], 0),
+    ).toThrow('historicalDemand values must be finite, non-negative numbers')
+  })
+
+  it('handles very large demand quantities without precision loss', () => {
+    const [result] = computeSensedDemand(
+      [{ skuId: 'sku-bulk', dcId: 'dc-1', historicalDemand: 1_000_000 }],
+      10,
+    )
+    expect(result.adjustedDemand).toBe(1_100_000)
+    expect(result.historicalAverageDemand).toBe(1_000_000)
+  })
+
+  it('handles single data point', () => {
+    const [result] = computeSensedDemand(
+      [{ skuId: 'sku-single', dcId: 'dc-1', historicalDemand: 50 }],
+      20,
+    )
+    expect(result.historicalAverageDemand).toBe(50)
+    expect(result.adjustedDemand).toBe(60)
+    expect(result.sampleCount).toBe(1)
+  })
+
+  it('handles zero adjustment with single data point', () => {
+    const [result] = computeSensedDemand(
+      [{ skuId: 'sku-single', dcId: 'dc-1', historicalDemand: 75 }],
+      0,
+    )
+    expect(result.adjustedDemand).toBe(75)
+  })
 })
