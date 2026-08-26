@@ -26,7 +26,7 @@ export default function PlannerSectionPlaceholder({
       </div>
 
       <div className="w-full rounded-xl border border-line bg-ink/60 p-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Lands in P9.2</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Module details</p>
         <ul className="mt-2 space-y-1.5">
           {comingIn.map((item) => (
             <li key={item} className="flex items-start gap-2 text-sm text-paper/80">

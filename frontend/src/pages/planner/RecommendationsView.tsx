@@ -128,7 +128,7 @@ export default function RecommendationsView() {
                 <p className="font-mono text-[10px] uppercase tracking-wider text-mist">AI rationale</p>
                 <p className="mt-1 text-sm text-paper/90">
                   {rec.aiRationale || (
-                    <span className="italic text-mist">Rationale generation lands in Phase 22.</span>
+                    <span className="italic text-mist">Rationale is not available for this recommendation yet.</span>
                   )}
                 </p>
               </div>

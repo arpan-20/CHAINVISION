@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 
 /**
- * ⚠️ TEMPORARY STUB — replaced in Phase 23 by a real hook backed by a
- * Supabase Auth session (see 00_PROJECT_CONTEXT.md Section 5.5).
+ * Temporary demo auth hook. The production hook is backed by a Supabase Auth
+ * session (see 00_PROJECT_CONTEXT.md Section 5.5).
  *
  * Every other component must depend on this hook's RETURN SHAPE
  * ({ user, role, loading }) and never on the fact that it currently
- * fakes a session — that's what makes the Phase 23 swap a one-file
- * change (only this file gets rewritten; call sites don't move).
+ * fakes a session so the production auth swap can preserve call sites.
  */
 
 export type PlannerRole = 'planner' | 'planning_manager'
