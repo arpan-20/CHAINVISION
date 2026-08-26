@@ -1,3 +1,5 @@
+import { UpstreamServiceError, withRetry } from '../middleware/rateLimitAwareRetry'
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim()
 const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-2.0-flash'
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
@@ -32,31 +34,41 @@ export const generateText = async (prompt: string): Promise<string> => {
     throw new Error('GEMINI_API_KEY is not configured')
   }
 
-  const response = await fetch(
-    `${GEMINI_BASE_URL}/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(
-      GEMINI_API_KEY,
-    )}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 160,
+  const response = await withRetry(
+    async () => {
+      const result = await fetch(
+        `${GEMINI_BASE_URL}/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(
+          GEMINI_API_KEY,
+        )}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 160,
+            },
+          }),
         },
-      }),
-    },
-  )
+      )
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Gemini call failed with ${response.status}: ${detail}`)
-  }
+      if (!result.ok) {
+        const detail = await result.text().catch(() => '')
+        throw new UpstreamServiceError(
+          `Gemini call failed with ${result.status}: ${detail}`,
+          result.status,
+        )
+      }
+
+      return result
+    },
+    { maxRetries: 2, baseDelayMs: 500, label: 'Gemini generateContent' },
+  )
 
   const body = (await response.json()) as GeminiResponse
   const text = body.candidates?.[0]?.content?.parts?.[0]?.text
