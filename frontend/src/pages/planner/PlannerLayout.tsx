@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 
 import { p1Client } from '../../api/p1Client'
 import NavBar from '../../components/NavBar'
-import { useAuthStub } from '../../hooks/useAuthStub'
+import { useAuth } from '../../hooks/useAuth'
 import { useReferenceData } from '../../hooks/useReferenceData'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -107,7 +107,7 @@ function useClock() {
 
 function TopBar() {
   const location = useLocation()
-  const { user } = useAuthStub()
+  const { user } = useAuth()
   const now = useClock()
 
   const title = PAGE_TITLES[location.pathname] ?? 'Planner'

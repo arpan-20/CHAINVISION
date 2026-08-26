@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { p1Client } from '../../api/p1Client'
 import { ChevronIcon, CrateIcon, HourglassIcon, PulseIcon, RouteIcon } from '../../components/icons'
-import { useAuthStub } from '../../hooks/useAuthStub'
+import { useAuth } from '../../hooks/useAuth'
 
 interface SkuSummary {
   id: string
@@ -69,7 +69,7 @@ function greeting(hour: number) {
 }
 
 export default function PlannerHome() {
-  const { user, loading: userLoading } = useAuthStub()
+  const { user, loading: userLoading } = useAuth()
   const [metrics, setMetrics] = useState<PlannerMetrics | null>(null)
   const [metricsState, setMetricsState] = useState<FetchState>('loading')
 

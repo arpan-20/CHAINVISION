@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { pr2Client } from '../../api/pr2Client'
 import { ChevronIcon } from '../../components/icons'
-import { useAuthStub } from '../../hooks/useAuthStub'
+import { useAuth } from '../../hooks/useAuth'
 import { PROCUREMENT_NAV_ITEMS } from './ProcurementLayout'
 
 interface SupplierSummary {
@@ -64,7 +64,7 @@ function greeting(hour: number) {
 }
 
 export default function ProcurementHome() {
-  const { user, loading: userLoading } = useAuthStub()
+  const { user, loading: userLoading } = useAuth()
   const [metrics, setMetrics] = useState<ProcurementMetrics | null>(null)
   const [metricsState, setMetricsState] = useState<FetchState>('loading')
 

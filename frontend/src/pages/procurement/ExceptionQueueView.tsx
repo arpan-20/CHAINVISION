@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { pr2Client } from '../../api/pr2Client'
 import { RefreshButton } from '../../components/badges'
-import { useAuthStub } from '../../hooks/useAuthStub'
+import { useAuth } from '../../hooks/useAuth'
 import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ const currency = (value: number | null) =>
     : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value)
 
 export default function ExceptionQueueView() {
-  const { user } = useAuthStub()
+  const { user } = useAuth()
   const [exceptions, setExceptions] = useState<ExceptionItem[]>([])
   const [state, setState] = useState<LoadState>('loading')
   const [resolvingId, setResolvingId] = useState<string | null>(null)

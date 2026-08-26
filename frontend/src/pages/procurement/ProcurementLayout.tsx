@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { NetworkMark, OverviewIcon } from '../../components/icons'
-import { useAuthStub } from '../../hooks/useAuthStub'
+import { useAuth } from '../../hooks/useAuth'
 
 // ---------------------------------------------------------------------------
 // Icons
@@ -120,7 +120,7 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 function ProcurementNavBar() {
-  const { user, role, loading } = useAuthStub()
+  const { user, role, loading, signOut } = useAuth()
 
   return (
     <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line bg-panel md:w-64">
@@ -171,7 +171,7 @@ function ProcurementNavBar() {
         ))}
       </nav>
 
-      {/* Auth-stub user card */}
+      {/* User card */}
       <div className="border-t border-line p-3 md:p-4">
         <div className="flex items-center gap-3 rounded-lg bg-panel2 px-3 py-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-xs text-signal">
@@ -184,9 +184,13 @@ function ProcurementNavBar() {
             </p>
           </div>
         </div>
-        <p className="mt-2 hidden font-mono text-[9px] uppercase tracking-[0.2em] text-alert/80 md:block">
-          Demo session
-        </p>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-2 hidden w-full rounded-md border border-line px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-mist transition-colors hover:border-signal/40 hover:text-signal md:block"
+        >
+          Sign out
+        </button>
       </div>
     </aside>
   )
@@ -203,7 +207,7 @@ function useClock() {
 
 function TopBar() {
   const location = useLocation()
-  const { user } = useAuthStub()
+  const { user } = useAuth()
   const now = useClock()
 
   const title = PAGE_TITLES[location.pathname] ?? 'Procurement'
