@@ -11,6 +11,18 @@ interface SkuSummary {
   name: string
 }
 
+interface DistributionCenterSummary {
+  id: string
+}
+
+interface RecommendationSummary {
+  status: 'NEW' | 'SENT_TO_PROCUREMENT' | 'ACKNOWLEDGED'
+}
+
+interface BatchSummary {
+  daysUntilExpiry: number
+}
+
 type FetchState = 'loading' | 'ok' | 'error'
 
 const MODULES = [
@@ -49,19 +61,28 @@ function greeting(hour: number) {
 export default function PlannerHome() {
   const { user, loading: userLoading } = useAuthStub()
   const [skus, setSkus] = useState<SkuSummary[]>([])
+  const [distributionCenters, setDistributionCenters] = useState<DistributionCenterSummary[]>([])
+  const [recommendations, setRecommendations] = useState<RecommendationSummary[]>([])
+  const [expiringBatches, setExpiringBatches] = useState<BatchSummary[]>([])
   const [skuState, setSkuState] = useState<FetchState>('loading')
 
   useEffect(() => {
     let cancelled = false
 
-    p1Client
-      .get<{ data: SkuSummary[] }>('/skus')
-      .then((response) => {
+    Promise.all([
+      p1Client.get<{ data: SkuSummary[] }>('/skus'),
+      p1Client.get<{ data: DistributionCenterSummary[] }>('/distribution-centers'),
+      p1Client.get<{ data: RecommendationSummary[] }>('/replenishment/recommendations'),
+      p1Client.get<{ data: { batches: BatchSummary[] } }>('/inventory', { params: { detail: 'batches' } }),
+    ])
+      .then(([skuResponse, dcResponse, recommendationResponse, inventoryResponse]) => {
         if (cancelled) return
-        // Temporary — confirms p1Client reaches the live P1 backend.
-        // Remove once P9.2 lands real inventory views.
-        console.log('[PlannerHome] GET /api/skus →', response.data)
-        setSkus(response.data.data)
+        setSkus(skuResponse.data.data)
+        setDistributionCenters(dcResponse.data.data)
+        setRecommendations(recommendationResponse.data.data)
+        setExpiringBatches(
+          inventoryResponse.data.data.batches.filter((batch) => batch.daysUntilExpiry <= 7),
+        )
         setSkuState('ok')
       })
       .catch(() => {
@@ -94,9 +115,24 @@ export default function PlannerHome() {
           tone={skuState === 'error' ? 'critical' : 'signal'}
           caption={skuState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
         />
-        <KpiTile label="Distribution centers" value="—" tone="mist" caption="Live in P9.2" />
-        <KpiTile label="Reorder alerts" value="—" tone="mist" caption="Live in P9.2" />
-        <KpiTile label="Expiry risk (7d)" value="—" tone="mist" caption="Live in P9.2" />
+        <KpiTile
+          label="Distribution centers"
+          value={skuState === 'ok' ? String(distributionCenters.length) : skuState === 'error' ? 'Offline' : '···'}
+          tone={skuState === 'error' ? 'critical' : 'signal'}
+          caption={skuState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
+        />
+        <KpiTile
+          label="Reorder alerts"
+          value={skuState === 'ok' ? String(recommendations.filter(({ status }) => status !== 'ACKNOWLEDGED').length) : skuState === 'error' ? 'Offline' : '···'}
+          tone={skuState === 'error' ? 'critical' : 'signal'}
+          caption={skuState === 'error' ? 'Check P1 API connection' : 'Open recommendations'}
+        />
+        <KpiTile
+          label="Expiry risk (7d)"
+          value={skuState === 'ok' ? String(expiringBatches.length) : skuState === 'error' ? 'Offline' : '···'}
+          tone={skuState === 'error' ? 'critical' : 'signal'}
+          caption={skuState === 'error' ? 'Check P1 API connection' : 'Batches expiring within 7 days'}
+        />
       </div>
 
       {/* Module cards */}

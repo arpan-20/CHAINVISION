@@ -2,11 +2,10 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import PlannerHome from './pages/planner/PlannerHome'
 import PlannerLayout from './pages/planner/PlannerLayout'
-import PlannerSectionPlaceholder from './pages/planner/PlannerSectionPlaceholder'
 import InventoryView from './pages/planner/InventoryView'
 import ExpiryHeatmap from './pages/planner/ExpiryHeatmap'
 import RecommendationsView from './pages/planner/RecommendationsView'
-import { PulseIcon } from './components/icons'
+import DemandSignalsView from './pages/planner/DemandSignalsView'
 import ProcurementHome from './pages/procurement/ProcurementHome'
 import ProcurementLayout from './pages/procurement/ProcurementLayout'
 import RequisitionsView from './pages/procurement/RequisitionsView'
@@ -34,21 +33,7 @@ function App() {
         <Route path="inventory" element={<InventoryView />} />
         <Route path="expiry-risk" element={<ExpiryHeatmap />} />
         <Route path="replenishment" element={<RecommendationsView />} />
-        <Route
-          path="demand-signals"
-          element={
-            <PlannerSectionPlaceholder
-              icon={PulseIcon}
-              title="Demand Signals"
-              description="Sensed demand against forecast, by region — including the flu-season spikes that trigger Tier-2 stockouts."
-              comingIn={[
-                'Historical and sensed demand by SKU/region',
-                'Forecast vs. actual comparison',
-                'Regional spike detection (e.g. flu-season demand)',
-              ]}
-            />
-          }
-        />
+        <Route path="demand-signals" element={<DemandSignalsView />} />
       </Route>
       <Route path="/procurement" element={<ProcurementLayout />}>
         <Route index element={<ProcurementHome />} />
