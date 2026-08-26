@@ -19,6 +19,9 @@ import ExceptionQueueView from './pages/procurement/ExceptionQueueView'
 import P2pAnalyticsView from './pages/procurement/P2pAnalyticsView'
 import LoginPage from './pages/LoginPage'
 
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { ToastContainer } from './components/Toast'
+
 function Placeholder() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink px-6 text-paper">
@@ -54,41 +57,48 @@ function HomeRedirect() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/planner"
-        element={
-          <RequireRole roles={['PLANNER', 'ADMIN']}>
-            <PlannerLayout />
-          </RequireRole>
-        }
-      >
-        <Route index element={<PlannerHome />} />
-        <Route path="inventory" element={<InventoryView />} />
-        <Route path="expiry-risk" element={<ExpiryHeatmap />} />
-        <Route path="replenishment" element={<RecommendationsView />} />
-        <Route path="demand-signals" element={<DemandSignalsView />} />
-      </Route>
-      <Route
-        path="/procurement"
-        element={
-          <RequireRole roles={['PROCUREMENT_OFFICER', 'ADMIN']}>
-            <ProcurementLayout />
-          </RequireRole>
-        }
-      >
-        <Route index element={<ProcurementHome />} />
-        <Route path="requisitions" element={<RequisitionsView />} />
-        <Route path="purchase-orders" element={<PurchaseOrdersView />} />
-        <Route path="goods-receipt" element={<GoodsReceiptView />} />
-        <Route path="invoices" element={<InvoiceUploadView />} />
-        <Route path="exceptions" element={<ExceptionQueueView />} />
-        <Route path="analytics" element={<P2pAnalyticsView />} />
-      </Route>
-      <Route path="/" element={<HomeRedirect />} />
-      <Route path="*" element={<HomeRedirect />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/planner"
+          element={
+            <ErrorBoundary>
+              <RequireRole roles={['PLANNER', 'ADMIN']}>
+                <PlannerLayout />
+              </RequireRole>
+            </ErrorBoundary>
+          }
+        >
+          <Route index element={<PlannerHome />} />
+          <Route path="inventory" element={<InventoryView />} />
+          <Route path="expiry-risk" element={<ExpiryHeatmap />} />
+          <Route path="replenishment" element={<RecommendationsView />} />
+          <Route path="demand-signals" element={<DemandSignalsView />} />
+        </Route>
+        <Route
+          path="/procurement"
+          element={
+            <ErrorBoundary>
+              <RequireRole roles={['PROCUREMENT_OFFICER', 'ADMIN']}>
+                <ProcurementLayout />
+              </RequireRole>
+            </ErrorBoundary>
+          }
+        >
+          <Route index element={<ProcurementHome />} />
+          <Route path="requisitions" element={<RequisitionsView />} />
+          <Route path="purchase-orders" element={<PurchaseOrdersView />} />
+          <Route path="goods-receipt" element={<GoodsReceiptView />} />
+          <Route path="invoices" element={<InvoiceUploadView />} />
+          <Route path="exceptions" element={<ExceptionQueueView />} />
+          <Route path="analytics" element={<P2pAnalyticsView />} />
+        </Route>
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="*" element={<HomeRedirect />} />
+      </Routes>
+      <ToastContainer />
+    </>
   )
 }
 

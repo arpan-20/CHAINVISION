@@ -66,18 +66,23 @@ public class GeminiClient {
                 "contents", List.of(contentPart),
                 "generationConfig", Map.of("responseMimeType", "application/json"));
         try {
-            String responseJson = restClient.post()
-                    .uri("/v1beta/models/{model}:generateContent?key={key}", model, apiKey)
-                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(requestBody)
-                    .retrieve()
-                    .body(String.class);
-            return extractText(responseJson);
+            return RateLimitAwareRetry.execute(
+                    () -> requestJson(requestBody), "Gemini generateContent");
         } catch (GeminiUnavailableException e) {
             throw e;
         } catch (Exception e) {
             throw new GeminiUnavailableException("Gemini call failed: " + e.getMessage(), e);
         }
+    }
+
+    private String requestJson(Map<String, Object> requestBody) {
+        String responseJson = restClient.post()
+                .uri("/v1beta/models/{model}:generateContent?key={key}", model, apiKey)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .retrieve()
+                .body(String.class);
+        return extractText(responseJson);
     }
 
     private String extractText(String responseJson) {

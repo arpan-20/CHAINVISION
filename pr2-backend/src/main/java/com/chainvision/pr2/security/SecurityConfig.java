@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -55,8 +54,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(
                         org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
-                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) ->
+                                writeError(response, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication is required"))
+                        .accessDeniedHandler((request, response, exception) ->
+                                writeError(response, HttpStatus.FORBIDDEN, "FORBIDDEN", "You are not allowed to access this resource")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health").permitAll()
                         .requestMatchers(HttpMethod.POST, INTERNAL_RECOMMENDATION_PATH)
@@ -87,5 +89,13 @@ public class SecurityConfig {
                 && MessageDigest.isEqual(
                         suppliedKey.getBytes(StandardCharsets.UTF_8),
                         expectedKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static void writeError(
+            jakarta.servlet.http.HttpServletResponse response, HttpStatus status, String code, String message)
+            throws java.io.IOException {
+        response.setStatus(status.value());
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":{\"code\":\"" + code + "\",\"message\":\"" + message + "\"}}");
     }
 }

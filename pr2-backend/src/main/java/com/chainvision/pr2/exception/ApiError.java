@@ -1,20 +1,12 @@
 package com.chainvision.pr2.exception;
 
-import java.time.OffsetDateTime;
-import java.util.Map;
+/** Consistent public error envelope used by every PR2 API failure response. */
+public record ApiError(Error error) {
 
-public record ApiError(
-        OffsetDateTime timestamp,
-        int status,
-        String error,
-        String message,
-        Map<String, String> fieldErrors) {
-
-    public static ApiError of(int status, String error, String message) {
-        return new ApiError(OffsetDateTime.now(), status, error, message, null);
+    public static ApiError of(String code, String message) {
+        return new ApiError(new Error(code, message));
     }
 
-    public static ApiError validation(int status, String error, Map<String, String> fieldErrors) {
-        return new ApiError(OffsetDateTime.now(), status, error, "Validation failed", fieldErrors);
+    public record Error(String code, String message) {
     }
 }

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { attachApiInterceptor } from './apiInterceptor' 
 
 import { supabaseClient } from '../lib/supabaseClient'
 
@@ -41,5 +42,9 @@ pr2Client.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// --- Toast-on-error (Phase 24.3) ---
+attachApiInterceptor(pr2Client) 
+// --- end toast-on-error ---
 
 export default pr2Client

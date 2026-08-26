@@ -74,6 +74,6 @@ public class SupabaseJwtAuthFilter extends OncePerRequestFilter {
     private void unauthorized(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":\"" + message + "\"}");
+        response.getWriter().write("{\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"" + message + "\"}}");
     }
 }
