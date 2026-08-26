@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { p1Client } from '../../api/p1Client'
 import { RefreshButton, UrgencyBadge, type Urgency } from '../../components/badges'
 import { useReferenceData } from '../../hooks/useReferenceData'
+import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 import DemandSpikeSimulator from './DemandSpikeSimulator'
 
 interface Recommendation {
@@ -46,6 +47,7 @@ export default function RecommendationsView() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [urgencyFilter])
+  useRealtimeTable('p1', 'replenishment_recommendations', load)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5">

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { pr2Client } from '../../api/pr2Client'
 import { RefreshButton, UrgencyBadge, type Urgency } from '../../components/badges'
 import { useReferenceData } from '../../hooks/useReferenceData'
+import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 import NlRequisitionChatbot from './NlRequisitionChatbot'
 
 // ---------------------------------------------------------------------------
@@ -91,6 +92,7 @@ export default function RequisitionsView() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [sourceFilter, statusFilter])
+  useRealtimeTable('pr2', 'purchase_requisitions', load)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">

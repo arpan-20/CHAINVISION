@@ -100,7 +100,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 21 — SUPABASE REALTIME
 
-- [❌] P21.1 — Realtime Subscriptions for Both Dashboards
+- [✅] P21.1 — Realtime Subscriptions for Both Dashboards
 
 ## PHASE 22 — GEMINI RATIONALE
 
@@ -346,10 +346,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P8.1, P11.1
 
 ### P21.1 — Realtime Subscriptions for Both Dashboards
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/frontend/src/hooks/useRealtimeTable.ts` and `/frontend/src/lib/supabaseClient.ts` do not exist. `.env.example` has no `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` entries.
-**Missing:** The entire prompt.
-**Documentation compliance:** NO
+**Status:** ✅ COMPLETE
+**Evidence:** `/frontend/src/lib/supabaseClient.ts` creates the browser Supabase client from `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` only, with no service-role key usage. `/frontend/src/hooks/useRealtimeTable.ts` subscribes to `postgres_changes` for a supplied schema/table and removes the channel on cleanup. `RecommendationsView.tsx`, `RequisitionsView.tsx`, `InvoiceUploadView.tsx`, and `ExceptionQueueView.tsx` now call the hook and refresh their existing data loads on realtime changes. `.env.example` includes the two Vite Supabase variables.
+**Missing:** Live two-browser visual verification was not possible in this audit environment; implementation and production frontend build were verified.
+**Documentation compliance:** YES
 **Dependencies:** P2.1 (met), P9.2 (met), P19.2/P19.3 (met)
 
 ### P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
@@ -420,7 +420,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Evidence:** `/scripts/` directory does not exist anywhere in the repo.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P20.1 (met), P21.1 (not started), P22.1 (not started), P18.1 (met), P19.3 (met) — this prompt is 🔴 BLOCKED by the remaining realtime and rationale dependencies.
+**Dependencies:** P20.1 (met), P21.1 (met), P22.1 (not started), P18.1 (met), P19.3 (met) — this prompt is 🔴 BLOCKED by the remaining rationale dependency.
 
 ### P26.1 — Integration Bug Bash and Fix Coordination
 **Status:** ❌ NOT STARTED
@@ -463,21 +463,21 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 28  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1, P19.1, P19.2, P19.3, P20.1)
+**✅ Complete:** 29  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1, P19.1, P19.2, P19.3, P20.1, P21.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
 **🟡 Partial:** 2  (P4.2, P24.2)
 
-**❌ Not started:** 15  (P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
+**❌ Not started:** 14  (P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
 **⚠️ Needs fix:** 0
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 28 / 2 / 15 / 0 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 29 / 2 / 14 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~66% (28 fully done + partial credit for the 2 partial items ≈ 29.5 "effective" prompts out of 45)
+**Overall project completion:** ~68% (29 fully done + partial credit for the 2 partial items ≈ 30.5 "effective" prompts out of 45)
 
 **P1 completion:** ~90% (all core deterministic engines, APIs, the Planner UI, and P1→PR2 handoff are done; only the AI rationale, auth, and error-hardening layers on the P1 side are missing)
 
@@ -493,7 +493,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **OCR completion:** ~80% (the P1 Tesseract.js OCR endpoint handles images and seeded sample PDFs, and PR2 now calls it before Gemini text structuring; remaining work is broader retry/backoff and live environment verification)
 
-**Realtime completion:** 0%
+**Realtime completion:** ~80% (the four P21.1 dashboard subscriptions are implemented and frontend build passes; live two-window validation remains environment-dependent)
 
 **Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
 
@@ -508,37 +508,32 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test (P1.1 through P20.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2/browser/database verification remains environment-dependent)
+P21.1 — Realtime Subscriptions for Both Dashboards (P1.1 through P21.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2/browser/database verification remains environment-dependent)
 
 **Current partial prompt:**
 P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 
 **Next prompt to execute:**
-Strictly by dependency order, the next not-started work is **P21.1 — Realtime Subscriptions for Both Dashboards** and **P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**. Both are now unblocked by P19.2/P19.3 and P20.1 respectively.
+Strictly by dependency order, the next not-started work is **P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**.
 
 **Prompts completed out of total:**
-28 / 45 fully complete (2 additional partial)
+29 / 45 fully complete (2 additional partial)
 
 **Overall completion:**
-~66%
+~68%
 
 ---
 
 # WHAT WE SHOULD DO NEXT
 
-The project is now through Phase 20 at implementation level. The remaining risk has shifted from "missing Procurement UI / missing handoff" to realtime, rationale, auth, hardening, and broader test coverage. Recommended next items in dependency-safe order:
+The project is now through Phase 21 at implementation level. The remaining risk has shifted from "missing Procurement UI / missing handoff" to rationale, auth, hardening, and broader test coverage. Recommended next items in dependency-safe order:
 
 **1. P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**
 - Why it's next: P20.1 is now complete, so P22.1 is fully unblocked. The Planner dashboard still shows blank `aiRationale` values.
 - Dependency status: ✅ Unblocked (P7.2 and P20.1 done)
 - Files it should touch: `/p1-backend/src/services/geminiClient.ts`, `/p1-backend/src/services/aiRationaleService.ts`, `/p1-backend/src/services/recommendationService.ts`.
 
-**2. P21.1 — Realtime Subscriptions for Both Dashboards**
-- Why it's next: P19.2/P19.3 now exist, so realtime wiring has real views to attach to.
-- Dependency status: ✅ Unblocked (P2.1, P9.2, P19.2, P19.3 done)
-- Files it should touch: `/frontend/src/hooks/useRealtimeTable.ts`, `/frontend/src/lib/supabaseClient.ts`, plus small additive hook usage in the four listed dashboard views.
-
-**3. P23.x — Supabase Auth**
+**2. P23.x — Supabase Auth**
 - Why it's next: Both dashboards and both backends are still effectively open. Auth can now land against real Planner and Procurement routes.
 - Dependency status: ✅ Unblocked for P23.1/P23.2/P23.3.
 
@@ -575,7 +570,7 @@ The project is now through Phase 20 at implementation level. The remaining risk 
 [✅] P19.2
 [✅] P19.3
 [✅] P20.1
-[❌] P21.1
+[✅] P21.1
 [❌] P22.1
 [❌] P23.1
 [❌] P23.2

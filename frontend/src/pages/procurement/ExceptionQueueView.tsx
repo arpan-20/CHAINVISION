@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { pr2Client } from '../../api/pr2Client'
 import { RefreshButton } from '../../components/badges'
 import { useAuthStub } from '../../hooks/useAuthStub'
+import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 
 // ---------------------------------------------------------------------------
 // Mirrors com.chainvision.pr2.dto.ExceptionResponse / InvoiceResponse /
@@ -87,6 +88,7 @@ export default function ExceptionQueueView() {
   }
 
   useEffect(load, [])
+  useRealtimeTable('pr2', 'payment_approvals', load)
 
   const resolve = (invoiceId: string, decision: Decision) => {
     setResolvingId(invoiceId)
