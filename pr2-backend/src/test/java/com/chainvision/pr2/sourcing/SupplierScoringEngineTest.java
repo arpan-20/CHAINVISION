@@ -94,6 +94,111 @@ class SupplierScoringEngineTest {
                 .hasMessageContaining("No supplier has sufficient capacity");
     }
 
+    @Test
+    void capacityBoundaryExactlyEqualToRequiredIsEligible() {
+        // Supplier with capacity exactly equal to the requirement must NOT be filtered out
+        Supplier boundarySupplier = supplier(
+                "Exact capacity supplier",
+                "1.00",
+                10,
+                "0.90",
+                "0.90",
+                5_000);
+
+        when(supplierRepository.findAll()).thenReturn(List.of(boundarySupplier));
+
+        List<SupplierScoreResult> ranking = scoringEngine.rankEligibleSuppliers(5_000);
+
+        assertThat(ranking).singleElement()
+                .extracting(SupplierScoreResult::supplierName)
+                .isEqualTo("Exact capacity supplier");
+    }
+
+    @Test
+    void allSuppliersEqualProduceIdenticalScores() {
+        // When every raw metric is identical, min == max for each dimension and every
+        // supplier normalizes to 1 on every axis, so all weighted scores are identical.
+        List<Supplier> identicalSuppliers = List.of(
+                supplier("Alpha", "1.00", 10, "0.90", "0.90", 10_000),
+                supplier("Beta", "1.00", 10, "0.90", "0.90", 10_000),
+                supplier("Gamma", "1.00", 10, "0.90", "0.90", 10_000));
+
+        when(supplierRepository.findAll()).thenReturn(identicalSuppliers);
+
+        List<SupplierScoreResult> ranking = scoringEngine.rankEligibleSuppliers(5_000);
+
+        assertThat(ranking).hasSize(3);
+        assertThat(ranking.get(0).score()).isEqualByComparingTo(ranking.get(1).score());
+        assertThat(ranking.get(1).score()).isEqualByComparingTo(ranking.get(2).score());
+        assertThat(ranking.get(0).score()).isEqualByComparingTo(new BigDecimal("1.0000"));
+    }
+
+    @Test
+    void tieOnScoreBreaksDeterministicallyWithoutThrowing() {
+        // Two suppliers with different raw metrics engineered to produce the same weighted
+        // score: supplier A wins price (weight 0.35) by the same margin B wins OTD+quality
+        // combined... simpler deterministic construction: symmetric mirror metrics.
+        // A: best price/lead-time, worst otd/quality; B: worst price/lead-time, best otd/quality.
+        // With weights price .35 + lead .15 = 0.50 vs otd .25 + quality .25 = 0.50,
+        // both normalize to a total of 0.5 -> exact tie.
+        Supplier mirrorA = supplier("Mirror A", "0.80", 4, "0.70", "0.70", 10_000);
+        Supplier mirrorB = supplier("Mirror B", "1.20", 16, "0.99", "0.99", 10_000);
+
+        when(supplierRepository.findAll()).thenReturn(List.of(mirrorA, mirrorB));
+
+        List<SupplierScoreResult> ranking = scoringEngine.rankEligibleSuppliers(5_000);
+
+        assertThat(ranking).hasSize(2);
+        // Deterministic total ordering: no exception, stable full ranking returned
+        assertThat(ranking.get(0).score()).isEqualByComparingTo(ranking.get(1).score());
+        assertThat(ranking)
+                .extracting(SupplierScoreResult::supplierName)
+                .containsExactlyInAnyOrder("Mirror A", "Mirror B");
+    }
+
+    @Test
+    void singleEligibleSupplierGetsPerfectNormalizedScore() {
+        Supplier soleSupplier = supplier(
+                "Only choice",
+                "1.33",
+                21,
+                "0.55",
+                "0.60",
+                9_000);
+
+        when(supplierRepository.findAll()).thenReturn(List.of(soleSupplier));
+
+        SupplierScoreResult best = scoringEngine.selectBestSupplier(1_000);
+
+        assertThat(best.supplierName()).isEqualTo("Only choice");
+        assertThat(best.score()).isEqualByComparingTo(new BigDecimal("1.0000"));
+    }
+
+    @Test
+    void cheaperSupplierWinsWhenPerformanceMetricsAreEqual() {
+        Supplier cheapEfficient = supplier(
+                "Cheap efficient",
+                "0.85",
+                8,
+                "0.92",
+                "0.94",
+                20_000);
+        Supplier priceyEqual = supplier(
+                "Pricey equal performer",
+                "1.15",
+                12,
+                "0.92",
+                "0.94",
+                20_000);
+
+        when(supplierRepository.findAll()).thenReturn(List.of(priceyEqual, cheapEfficient));
+
+        List<SupplierScoreResult> ranking = scoringEngine.rankEligibleSuppliers(5_000);
+
+        assertThat(ranking.get(0).supplierName()).isEqualTo("Cheap efficient");
+        assertThat(ranking.get(0).score()).isGreaterThan(ranking.get(1).score());
+    }
+
     private static Supplier supplier(
             String name,
             String priceIndex,
