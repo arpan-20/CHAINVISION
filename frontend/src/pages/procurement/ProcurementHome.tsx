@@ -71,28 +71,35 @@ export default function ProcurementHome() {
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([
+    const loadOverview = async () => {
+      const [supplierResult, requisitionResult, poResult] = await Promise.all([
       pr2Client.get<SupplierSummary[]>('/suppliers'),
       pr2Client.get<RequisitionSummary[]>('/requisitions'),
       pr2Client.get<PurchaseOrderSummary[]>('/purchase-orders'),
-      pr2Client.get<ExceptionSummary[]>('/exceptions'),
-    ])
-      .then(([supplierRes, requisitionRes, poRes, exceptionRes]) => {
-        if (cancelled) return
+      ])
 
-        setMetrics({
-          supplierCount: supplierRes.data.length,
-          openRequisitionCount: requisitionRes.data.filter((req) => req.status !== 'PO_RAISED').length,
-          poAwaitingReceiptCount: poRes.data.filter((po) =>
-            ['ISSUED', 'ACKNOWLEDGED', 'PARTIALLY_RECEIVED'].includes(po.status),
-          ).length,
-          exceptionCount: exceptionRes.data.length,
-        })
-        setMetricsState('ok')
+      if (cancelled) return
+      setMetrics({
+        supplierCount: supplierResult.data.length,
+        openRequisitionCount: requisitionResult.data.filter((req) => req.status !== 'PO_RAISED').length,
+        poAwaitingReceiptCount: poResult.data.filter((po) =>
+          ['ISSUED', 'ACKNOWLEDGED', 'PARTIALLY_RECEIVED'].includes(po.status),
+        ).length,
+        exceptionCount: 0,
       })
-      .catch(() => {
-        if (!cancelled) setMetricsState('error')
-      })
+      setMetricsState('ok')
+
+      try {
+        const exceptionResult = await pr2Client.get<ExceptionSummary[]>('/exceptions')
+        if (!cancelled) setMetrics((current) => (current ? { ...current, exceptionCount: exceptionResult.data.length } : current))
+      } catch {
+        // The exception queue is slower than the overview queries; keep the other KPIs usable.
+      }
+    }
+
+    void loadOverview().catch(() => {
+      if (!cancelled) setMetricsState('error')
+    })
 
     return () => {
       cancelled = true

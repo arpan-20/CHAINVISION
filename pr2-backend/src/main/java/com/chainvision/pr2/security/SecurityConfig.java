@@ -1,6 +1,7 @@
 package com.chainvision.pr2.security;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.security.MessageDigest;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,9 +73,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfigurationSource corsConfigurationSource(
+                        @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174}") String allowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+                configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                                .map(String::trim)
+                                .filter(origin -> !origin.isEmpty())
+                                .toList());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
