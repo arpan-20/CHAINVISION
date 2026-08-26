@@ -88,7 +88,7 @@ export default function NavBar() {
           </div>
         </div>
         <p className="mt-2 hidden font-mono text-[9px] uppercase tracking-[0.2em] text-alert/80 md:block">
-          Stub session · Phase 23 swaps this
+          Demo session
         </p>
       </div>
     </aside>

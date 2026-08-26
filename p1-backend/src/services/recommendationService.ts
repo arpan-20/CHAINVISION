@@ -9,6 +9,7 @@ import {
 import { supabaseClient } from '../db/supabaseClient'
 import { listDemandSignals, type DemandSignal } from './demandService'
 import { listInventoryBatches, type InventoryBatch } from './inventoryService'
+import { generateRationale, type RationaleInput } from './aiRationaleService'
 import * as pr2ClientService from './pr2ClientService'
 
 export type RecommendationUrgency = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
@@ -203,6 +204,10 @@ const buildRecommendationForCombo = ({
   | (Omit<RecommendationRow, 'id' | 'created_at'> & {
       skuName: string
       expiryRiskContext: string
+      rationaleInput: Omit<
+        RationaleInput,
+        'recommendedQty' | 'urgency' | 'reasonCode' | 'expiryRiskContext'
+      >
     })
   | null => {
   if (demandSignals.length === 0) {
@@ -271,6 +276,16 @@ const buildRecommendationForCombo = ({
     ai_rationale: '',
     skuName: sku.name,
     expiryRiskContext: expiryRiskContext(riskCounts, fefoBatches[0]?.batchNo),
+    rationaleInput: {
+      skuName: sku.name,
+      dcId,
+      currentStock,
+      daysOfCover,
+      reorderPoint,
+      safetyStock,
+      eoq,
+      leadTimeDays,
+    },
   }
 }
 
@@ -385,7 +400,20 @@ export const generateReplenishmentRecommendations = async (
       continue
     }
 
-    const { skuName, expiryRiskContext: context, ...rowInput } = candidate
+    const { skuName, expiryRiskContext: context, rationaleInput, ...rowInput } = candidate
+
+    // --- Gemini rationale (Phase 22, P22.1) ---
+    // Gemini only phrases already-computed values; all quantity, threshold,
+    // urgency, and expiry numbers above remain deterministic engine output.
+    rowInput.ai_rationale = await generateRationale({
+      ...rationaleInput,
+      recommendedQty: rowInput.recommended_qty,
+      urgency: rowInput.urgency,
+      reasonCode: rowInput.reason_code,
+      expiryRiskContext: context,
+    })
+    // --- end rationale ---
+
     const row = await insertRecommendation(rowInput)
     const contract = toContract(row, skuName, context)
 

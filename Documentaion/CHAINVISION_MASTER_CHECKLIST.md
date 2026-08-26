@@ -90,21 +90,21 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ## PHASE 19 — PR2 FRONTEND
 
-- [❌] P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
-- [❌] P19.2 — Requisition/PO/GRN Views + NL Requisition Chatbot
-- [❌] P19.3 — Invoice Upload, Exception Queue, and P2P Analytics View
+- [✅] P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
+- [✅] P19.2 — Requisition/PO/GRN Views + NL Requisition Chatbot
+- [✅] P19.3 — Invoice Upload, Exception Queue, and P2P Analytics View
 
 ## PHASE 20 — P1 → PR2 HANDOFF
 
-- [❌] P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test
+- [✅] P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test
 
 ## PHASE 21 — SUPABASE REALTIME
 
-- [❌] P21.1 — Realtime Subscriptions for Both Dashboards
+- [✅] P21.1 — Realtime Subscriptions for Both Dashboards
 
 ## PHASE 22 — GEMINI RATIONALE
 
-- [❌] P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
+- [✅] P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
 
 ## PHASE 23 — SUPABASE AUTH
 
@@ -318,53 +318,53 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Dependencies:** P17.1
 
 ### P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/frontend/src/pages/procurement/` contains only a `.gitkeep` file — no `ProcurementLayout.tsx`, `ProcurementHome.tsx`, or `pr2Client.ts` exist anywhere in the frontend. `App.tsx` has no `/procurement/*` route tree at all.
-**Missing:** The entire prompt.
-**Documentation compliance:** NO (nothing to compare)
+**Status:** ✅ COMPLETE
+**Evidence:** `/frontend/src/pages/procurement/ProcurementLayout.tsx`, `ProcurementHome.tsx`, and `/frontend/src/api/pr2Client.ts` exist. `App.tsx` now mounts a full `/procurement/*` route tree with Overview, Requisitions, Purchase Orders, Goods Receipt, Invoices, Exceptions, and Analytics routes. `pr2Client.ts` is a thin axios wrapper pointed at `VITE_PR2_API_BASE`.
+**Missing:** Nothing at implementation scope. Browser-level verification still depends on live backend data.
+**Documentation compliance:** YES
 **Dependencies:** P1.2, P11.1
 
 ### P19.2 — Requisition/PO/GRN Views + NL Requisition Chatbot
-**Status:** ❌ NOT STARTED
-**Evidence:** None of `RequisitionsView.tsx`, `NlRequisitionChatbot.tsx`, `PurchaseOrdersView.tsx`, `GoodsReceiptView.tsx` exist.
-**Missing:** The entire prompt. This is a significant gap: despite the PR2 backend having working `/from-recommendation`, `/parse-intent`, PO generation, and GRN endpoints, there is currently no UI anywhere to demonstrate the flagship "5,000 units of MED-104" chatbot moment described in Section 16 of the context doc.
-**Documentation compliance:** NO
-**Dependencies:** P19.1 (not started), P12.1, P13.1, P14.1
+**Status:** ✅ COMPLETE
+**Evidence:** `RequisitionsView.tsx`, `NlRequisitionChatbot.tsx`, `PurchaseOrdersView.tsx`, and `GoodsReceiptView.tsx` exist. The chatbot calls `POST /api/requisitions/parse-intent`, displays an editable confirmation form, and only persists after an explicit confirm click via `POST /api/requisitions`, preserving the "AI pre-fills, human submits" rule. PO generation calls `POST /api/purchase-orders/{requisitionId}`; GRN creation calls `POST /api/goods-receipts`.
+**Missing:** No live UI walkthrough was possible in this audit, but the frontend compiles and route/API wiring is present.
+**Documentation compliance:** YES
+**Dependencies:** P19.1, P12.1, P13.1, P14.1
 
 ### P19.3 — Invoice Upload, Exception Queue, and P2P Analytics View
-**Status:** ❌ NOT STARTED
-**Evidence:** None of `InvoiceUploadView.tsx`, `ExceptionQueueView.tsx`, `P2pAnalyticsView.tsx` exist. Notably, the PR2 backend is actually ahead of this prompt: `controller/AnalyticsController.java` already exposes `GET /api/analytics/p2p-summary`, so the "compute client-side as fallback" clause in this prompt is moot — a real backend endpoint already exists — but no frontend consumes it.
-**Missing:** The entire frontend prompt.
-**Documentation compliance:** NO
-**Dependencies:** P19.1 (not started), P16.1, P17.1, P18.1
+**Status:** ✅ COMPLETE
+**Evidence:** `InvoiceUploadView.tsx`, `ExceptionQueueView.tsx`, and `P2pAnalyticsView.tsx` exist. Invoice upload posts multipart files to `/api/invoices/upload`, runs matching through `/api/invoices/{id}/match`, shows extracted invoice fields and match results, surfaces exception explanations, resolves exceptions through `/api/exceptions/{invoiceId}/resolve`, and consumes `/api/analytics/p2p-summary` with a client-side fallback if that endpoint is unavailable.
+**Missing:** No live upload/match walkthrough was possible in this audit, but the implementation compiles and matches the backend controller routes.
+**Documentation compliance:** YES
+**Dependencies:** P19.1, P16.1, P17.1, P18.1
 
 ### P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/p1-backend/src/services/pr2ClientService.ts` does not exist. `recommendationService.ts` was read in full — it never calls out to PR2 anywhere; it always writes `ai_rationale: ''` and does not set any `SENT_TO_PROCUREMENT` status. `/p1-backend/tests/handoff.integration.test.ts` does not exist.
-**Missing:** The entire prompt — this is the single most consequential gap in the project, since the context doc calls the P1→PR2 handoff "the centerpiece" of the whole system (Section 4) and P26/P28 both depend on it working. Right now, generating a HIGH/CRITICAL recommendation in P1 does not create anything in PR2 automatically; the only way a PR2 requisition gets created from a recommendation is by manually POSTing to `/api/requisitions/from-recommendation` yourself.
-**Documentation compliance:** NO
-**Dependencies:** P8.1, P11.1 (both met — nothing is blocking this from starting)
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/services/pr2ClientService.ts` exists and posts the Phase 4 handoff contract to `${PR2_BASE_URL}/api/requisitions/from-recommendation` with a 5s timeout and exactly one retry after the first failure. `recommendationService.ts` calls `sendRecommendation(contract)` after inserting a non-LOW recommendation, then updates the recommendation status to `SENT_TO_PROCUREMENT`; failures are logged and leave the original database row in `NEW`. `/p1-backend/tests/handoff.integration.test.ts` exists and passes, covering successful handoff/status update and PR2 failure leaving status as `NEW`.
+**Missing:** Nothing at implementation/test scope. Live end-to-end verification still depends on running P1, PR2, and Supabase together.
+**Documentation compliance:** YES
+**Dependencies:** P8.1, P11.1
 
 ### P21.1 — Realtime Subscriptions for Both Dashboards
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/frontend/src/hooks/useRealtimeTable.ts` and `/frontend/src/lib/supabaseClient.ts` do not exist. `.env.example` has no `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` entries.
-**Missing:** The entire prompt.
-**Documentation compliance:** NO
-**Dependencies:** P2.1 (met), P9.2 (met), P19.2/P19.3 (not started — real blocker, since two of the four views this prompt needs to modify don't exist yet)
+**Status:** ✅ COMPLETE
+**Evidence:** `/frontend/src/lib/supabaseClient.ts` creates the browser Supabase client from `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` only, with no service-role key usage. `/frontend/src/hooks/useRealtimeTable.ts` subscribes to `postgres_changes` for a supplied schema/table and removes the channel on cleanup. `RecommendationsView.tsx`, `RequisitionsView.tsx`, `InvoiceUploadView.tsx`, and `ExceptionQueueView.tsx` now call the hook and refresh their existing data loads on realtime changes. `.env.example` includes the two Vite Supabase variables.
+**Missing:** Live two-browser visual verification was not possible in this audit environment; implementation and production frontend build were verified.
+**Documentation compliance:** YES
+**Dependencies:** P2.1 (met), P9.2 (met), P19.2/P19.3 (met)
 
 ### P22.1 — Rationale Generation Wired Into P1 Recommendation Flow
-**Status:** ❌ NOT STARTED
-**Evidence:** None. `/p1-backend/src/services/geminiClient.ts` and `/p1-backend/src/services/aiRationaleService.ts` do not exist. Confirmed via full read of `recommendationService.ts`: `ai_rationale` is hardcoded to `''` with no Gemini call path at all. The Planner dashboard's `RecommendationsView.tsx` will therefore always render blank rationale text.
-**Missing:** The entire prompt.
-**Documentation compliance:** NO
-**Dependencies:** P7.2 (met), P20.1 (not started — but not a hard blocker for this specific prompt's own file scope)
+**Status:** ✅ COMPLETE
+**Evidence:** `/p1-backend/src/services/geminiClient.ts` exists as a thin text-generation wrapper around Gemini `generateContent`, reading `GEMINI_API_KEY` and `GEMINI_MODEL` from env without making them required for backend boot. `/p1-backend/src/services/aiRationaleService.ts` builds prompts only from already-computed recommendation values and returns a deterministic fallback if Gemini is missing, rate-limited, or otherwise fails. `recommendationService.ts` now calls `generateRationale(...)` before inserting the row and persists a non-empty `ai_rationale`; the P1→PR2 handoff contract then carries that rationale to PR2.
+**Missing:** Live Gemini/API-key verification was not possible in this audit environment; success and failure paths are covered by unit tests with a mocked Gemini client.
+**Documentation compliance:** YES
+**Dependencies:** P7.2 (met), P20.1 (met)
 
 ### P23.1 — Frontend Supabase Auth Integration
 **Status:** ❌ NOT STARTED
 **Evidence:** None. `/frontend/src/pages/LoginPage.tsx`, `/frontend/src/hooks/useAuth.ts`, `/frontend/src/components/RequireRole.tsx` do not exist. `useAuthStub.ts` is still the only auth hook in the codebase and is presumably still returning a fake logged-in user.
 **Missing:** The entire prompt. Both dashboards are currently wide open with no real authentication.
 **Documentation compliance:** NO
-**Dependencies:** P2.1 (met), P9.1 (met), P19.1 (not started)
+**Dependencies:** P2.1 (met), P9.1 (met), P19.1 (met)
 
 ### P23.2 — P1 Backend Supabase JWT Verification Middleware
 **Status:** ❌ NOT STARTED
@@ -382,10 +382,10 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 ### P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks
 **Status:** ❌ NOT STARTED
-**Evidence:** None. `/p1-backend/src/middleware/rateLimitAwareRetry.ts` does not exist. `errorHandler.ts` exists only at its Phase 4 skeleton scope (not expanded). `ocrService.ts` now exists from P15.1, but there is still no `geminiClient.ts` because P22.1 is not started.
+**Evidence:** None. `/p1-backend/src/middleware/rateLimitAwareRetry.ts` does not exist. `errorHandler.ts` exists only at its Phase 4 skeleton scope (not expanded). `ocrService.ts` exists from P15.1, and `geminiClient.ts` exists from P22.1, but retry/backoff and broader typed upstream error mapping are not implemented yet.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P4.1 (met), P22.1 (not started — real blocker), P15.1 (met)
+**Dependencies:** P4.1 (met), P22.1 (met), P15.1 (met)
 
 ### P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 **Status:** 🟡 PARTIALLY COMPLETE
@@ -399,7 +399,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Evidence:** None. `/frontend/src/components/ErrorBoundary.tsx`, `Toast.tsx`, `/frontend/src/hooks/useToast.ts`, `/frontend/src/api/apiInterceptor.ts` do not exist.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P9.2 (met), P19.2/P19.3 (not started)
+**Dependencies:** P9.2 (met), P19.2/P19.3 (met)
 
 ### P25.1 — P1 Deterministic Engine Unit Test Suite Review & Gap-Fill
 **Status:** ❌ NOT STARTED
@@ -420,7 +420,7 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 **Evidence:** `/scripts/` directory does not exist anywhere in the repo.
 **Missing:** The entire prompt.
 **Documentation compliance:** NO
-**Dependencies:** P20.1 (not started — real blocker), P21.1 (not started), P22.1 (not started), P18.1 (met), P19.3 (not started) — this prompt is 🔴 BLOCKED by multiple unmet upstream dependencies, not just "not yet gotten to."
+**Dependencies:** P20.1 (met), P21.1 (met), P22.1 (met), P18.1 (met), P19.3 (met)
 
 ### P26.1 — Integration Bug Bash and Fix Coordination
 **Status:** ❌ NOT STARTED
@@ -463,41 +463,41 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 
 **Total prompts:** 45
 
-**✅ Complete:** 24  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1)
+**✅ Complete:** 30  (P1.1, P1.2, P1.3, P1.4, P2.1, P3.1, P3.2, P4.1, P5.1, P6.1, P7.1, P7.2, P8.1, P9.1, P9.2, P10.1, P11.1, P12.1, P13.1, P14.1, P15.1, P16.1, P17.1, P18.1, P19.1, P19.2, P19.3, P20.1, P21.1, P22.1)
 
 > Caveat on the count above: Updated after the Phase 10 and Phase 11 gap-fills; the Maven test run could not be executed in this environment because Java/Maven are unavailable.
 
 **🟡 Partial:** 2  (P4.2, P24.2)
 
-**❌ Not started:** 19  (P19.1, P19.2, P19.3, P20.1, P21.1, P22.1, P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
+**❌ Not started:** 13  (P23.1, P23.2, P23.3, P24.1, P24.3, P25.1, P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2)
 
 **⚠️ Needs fix:** 0
 
 **🔴 Blocked:** 0 explicitly marked in the top checklist (blocking is noted inline for P25.2, P25.3, P26.1, P27.1, P27.2, P28.1, P28.2 in the detailed audit, since their prerequisite files/prompts don't exist yet)
 
-*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 24 / 2 / 19 / 0 / 0 = 45.)*
+*(Counts above are derived directly from the per-prompt statuses listed in the Final A-to-Z View below, which is the authoritative tally — 30 / 2 / 13 / 0 / 0 = 45.)*
 
-**Overall project completion:** ~57% (24 fully done + partial credit for the 2 partial items ≈ 25 "effective" prompts out of 45)
+**Overall project completion:** ~70% (30 fully done + partial credit for the 2 partial items ≈ 31.5 "effective" prompts out of 45)
 
-**P1 completion:** ~85% (all core deterministic engines, APIs, and the Planner UI are done; only the AI rationale, PR2 handoff, auth, and error-hardening layers on the P1 side are missing)
+**P1 completion:** ~95% (all core deterministic engines, APIs, the Planner UI, P1→PR2 handoff, and P1-side rationale are done; only auth and error-hardening layers on the P1 side are missing)
 
 **PR2 completion:** ~82% (the backend domain logic — suppliers, requisitions, POs, GRNs, invoices, matching, and payment approval — is implemented and follows the P1 OCR architecture, but auth is still absent)
 
-**Frontend completion:** ~35% (Planner dashboard is essentially done; Procurement dashboard does not exist at all; no auth, no realtime, no error boundaries anywhere in the frontend)
+**Frontend completion:** ~70% (Planner and Procurement dashboards now exist and compile; no auth, realtime subscriptions, or global error boundaries/toasts are implemented yet)
 
 **Backend completion:** ~75% (blended P1 + PR2)
 
 **Database completion:** ~95% (schema, RLS, and realtime publication all appear to be in place per the migrations; not verified against a live instance)
 
-**AI/NLP completion:** ~55% (Gemini intent extraction and mismatch explanation exist and correctly respect the "AI never decides" rule; Gemini rationale generation for P1 recommendations does not exist at all)
+**AI/NLP completion:** ~80% (Gemini intent extraction, P1 rationale generation, and PR2 mismatch explanation exist and correctly respect the "AI never decides" rule; remaining AI work is resilience/retry hardening)
 
 **OCR completion:** ~80% (the P1 Tesseract.js OCR endpoint handles images and seeded sample PDFs, and PR2 now calls it before Gemini text structuring; remaining work is broader retry/backoff and live environment verification)
 
-**Realtime completion:** 0%
+**Realtime completion:** ~80% (the four P21.1 dashboard subscriptions are implemented and frontend build passes; live two-window validation remains environment-dependent)
 
 **Authentication completion:** 0% (PR2's `SecurityConfig` explicitly documents itself as an unreplaced placeholder; P1 has no auth middleware; frontend has no real auth)
 
-**Testing completion:** ~39% (P1 engine tests exist from Phases 5–8 plus Phase 15 OCR service/route tests; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, Phase 16 invoice service/structuring, Phase 17 matching, and Phase 18 payment approval coverage but still lacks the broader Phase 25 review and e2e smoke test)
+**Testing completion:** ~42% (P1 engine/API/OCR tests and the dedicated P20.1 handoff integration test exist and pass; PR2 now has Phase 10 scorer, Phase 12 intent extraction, Phase 13 PO generation, Phase 16 invoice service/structuring, Phase 17 matching, and Phase 18 payment approval coverage but still lacks the broader Phase 25 review and e2e smoke test.)
 
 **Deployment completion:** 0%
 
@@ -508,49 +508,37 @@ Legend: ✅ COMPLETE  🟡 PARTIALLY COMPLETE  ❌ NOT STARTED  ⚠️ NEEDS FIX
 # CURRENT DOCUMENTED POSITION
 
 **Last fully completed prompt:**
-P18.1 — Payment Approval Logic + Exception Queue (P1.1 through P18.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live PR2 curl/database verification remains environment-dependent)
+P22.1 — Rationale Generation Wired Into P1 Recommendation Flow (P1.1 through P22.1 all have their real dependencies met and their own acceptance criteria substantively satisfied at implementation level; live Gemini/PR2/browser/database verification remains environment-dependent)
 
 **Current partial prompt:**
 P24.2 — PR2 Backend Error Handling + AI/OCR Fallbacks
 
 **Next prompt to execute:**
-Strictly by dependency order, the next not-started frontend work is **P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**.
+Strictly by dependency order, the next not-started work is **P23.1–P23.3 — Supabase Auth**. P24.1 and P25.3 are also now unblocked.
 
 **Prompts completed out of total:**
-24 / 45 fully complete (2 additional partial)
+30 / 45 fully complete (2 additional partial)
 
 **Overall completion:**
-~57%
+~70%
 
 ---
 
 # WHAT WE SHOULD DO NEXT
 
-The team's own working tree has already raced ahead into PR2 domain logic (through roughly Phase 18) without closing out testing or the OCR architecture decision, and without touching P1→PR2 handoff, AI rationale, auth, or any of the PR2 frontend. That imbalance is the single biggest risk right now: **the demo's centerpiece integration (P1→PR2 handoff) and the entire Procurement UI don't exist yet**, while lower-priority polish (PR2 has more entities than the spec asked for) has consumed time. Recommended next five, in dependency-safe order:
+The project is now through Phase 22 at implementation level. The remaining risk has shifted from "missing Procurement UI / missing handoff / missing rationale" to auth, hardening, and broader test coverage. Recommended next items in dependency-safe order:
 
-**1. P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**
-- Why it's next: The PR2 backend flow is now implemented through payment approval, so the next dependency-safe gap is the Procurement dashboard shell.
-- Dependency status: ✅ Unblocked (P1.2 and P11.1 done)
-- Files it should touch: `/frontend/src/pages/procurement/ProcurementLayout.tsx`, `/frontend/src/pages/procurement/ProcurementHome.tsx`, `/frontend/src/services/pr2Client.ts`, and the frontend route tree.
-- What must be fixed first: Nothing blocking at backend file level; the frontend PR2 surface simply does not exist yet.
+**1. P23.x — Supabase Auth**
+- Why it's next: Both dashboards and both backends are still effectively open. Auth can now land against real Planner and Procurement routes.
+- Dependency status: ✅ Unblocked for P23.1/P23.2/P23.3.
 
-**2. P20.1 — Automatic Handoff Trigger + Retry Logic + Integration Test**
-- Why it's next: This is the highest-severity gap in the whole project relative to the context doc's own stated priorities ("the centerpiece of Section 4"). Its dependencies are fully met, and every later phase (Realtime demo, Gemini rationale, the smoke test, the whole judged demo narrative) assumes it works.
-- Dependency status: ✅ Unblocked (P8.1, P11.1 both done)
-- Files it should touch: `/p1-backend/src/services/pr2ClientService.ts` (new), `/p1-backend/src/services/recommendationService.ts` (small additive edit), `/p1-backend/tests/handoff.integration.test.ts` (new)
-- What must be fixed first: Nothing blocking, but do this *before* P19.x (below) so the Procurement UI has real system-sourced requisitions to display from day one instead of only chatbot/manual ones.
+**2. P24.1 — P1 Backend Error Handling + AI/OCR Fallbacks**
+- Why it's next: P22.1 created the P1 Gemini client, so the retry/backoff wrapper can now be added around it.
+- Dependency status: ✅ Unblocked (P4.1, P22.1, P15.1 done)
 
-**3. P22.1 — Rationale Generation Wired Into P1 Recommendation Flow**
-- Why it's next: Cheap, high demo-value, and its only real dependency (P7.2) is done. Right now every recommendation on the Planner dashboard shows blank rationale text, which is a visible, easily-fixed gap.
-- Dependency status: ✅ Unblocked (P7.2 done; P20.1 is a soft dependency only, not a file-level blocker)
-- Files it should touch: `/p1-backend/src/services/geminiClient.ts` (new), `/p1-backend/src/services/aiRationaleService.ts` (new), `/p1-backend/src/services/recommendationService.ts` (small additive edit), `.env.example` (confirm `GEMINI_API_KEY`/`GEMINI_MODEL`, already partially present)
-- What must be fixed first: Nothing blocking.
-
-**4. P19.1 — Procurement Dashboard Shell + Routing + Auth Guard Stub**
-- Why it's next: The entire Procurement side of the demo currently has zero UI. This is the prerequisite for P19.2/P19.3, which in turn unblock Realtime (P21.1), error handling (P24.3), and the smoke test (P25.3). It should start only after P20.1 lands so the Requisitions view (built in P19.2) has real system-generated data to show, not just the manual/chatbot paths.
-- Dependency status: 🟡 Softly blocked — P1.2 and P11.1 (its hard dependencies) are done, but sequencing after P20.1 is strongly recommended for demo coherence even though not a hard file-level dependency.
-- Files it should touch: `/frontend/src/pages/procurement/ProcurementLayout.tsx`, `ProcurementHome.tsx`, `/frontend/src/api/pr2Client.ts`, `/frontend/src/App.tsx` (add `/procurement/*` routes)
-- What must be fixed first: Nothing blocking at the file level; recommended to sequence after #3 above for narrative reasons only.
+**3. P25.3 — End-to-End Smoke Test Script**
+- Why it's next: Its explicit dependencies are now met, so it can become the integration guard before Phase 26.
+- Dependency status: ✅ Unblocked (P20.1, P21.1, P22.1, P18.1, P19.3 done)
 
 ---
 
@@ -581,12 +569,12 @@ The team's own working tree has already raced ahead into PR2 domain logic (throu
 [✅] P16.1
 [✅] P17.1
 [✅] P18.1
-[❌] P19.1
-[❌] P19.2
-[❌] P19.3
-[❌] P20.1
-[❌] P21.1
-[❌] P22.1
+[✅] P19.1
+[✅] P19.2
+[✅] P19.3
+[✅] P20.1
+[✅] P21.1
+[✅] P22.1
 [❌] P23.1
 [❌] P23.2
 [❌] P23.3

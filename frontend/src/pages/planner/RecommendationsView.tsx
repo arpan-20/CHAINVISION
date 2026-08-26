@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { p1Client } from '../../api/p1Client'
 import { RefreshButton, UrgencyBadge, type Urgency } from '../../components/badges'
 import { useReferenceData } from '../../hooks/useReferenceData'
+import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 import DemandSpikeSimulator from './DemandSpikeSimulator'
 
 interface Recommendation {
@@ -46,6 +47,7 @@ export default function RecommendationsView() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [urgencyFilter])
+  useRealtimeTable('p1', 'replenishment_recommendations', load)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5">
@@ -126,7 +128,7 @@ export default function RecommendationsView() {
                 <p className="font-mono text-[10px] uppercase tracking-wider text-mist">AI rationale</p>
                 <p className="mt-1 text-sm text-paper/90">
                   {rec.aiRationale || (
-                    <span className="italic text-mist">Rationale generation lands in Phase 22.</span>
+                    <span className="italic text-mist">Rationale is not available for this recommendation yet.</span>
                   )}
                 </p>
               </div>

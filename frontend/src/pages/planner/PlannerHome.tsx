@@ -16,21 +16,31 @@ interface DistributionCenterSummary {
 }
 
 interface RecommendationSummary {
+  id: string
   status: 'NEW' | 'SENT_TO_PROCUREMENT' | 'ACKNOWLEDGED'
 }
 
-interface BatchSummary {
+interface InventoryBatchRisk {
+  id: string
+  quantity: number
   daysUntilExpiry: number
 }
 
 type FetchState = 'loading' | 'ok' | 'error'
+
+interface PlannerMetrics {
+  skuCount: number
+  dcCount: number
+  reorderAlertCount: number
+  expiryRiskCount: number
+}
 
 const MODULES = [
   {
     to: '/planner/inventory',
     icon: CrateIcon,
     title: 'Inventory',
-    description: 'Stock on hand by SKU, DC, and batch — with expiry dates attached.',
+    description: 'Stock on hand by SKU, DC, and batch, with expiry dates attached.',
   },
   {
     to: '/planner/expiry-risk',
@@ -48,7 +58,7 @@ const MODULES = [
     to: '/planner/demand-signals',
     icon: PulseIcon,
     title: 'Demand Signals',
-    description: 'Sensed demand vs. forecast, by region — flu-season spikes included.',
+    description: 'Sensed demand vs. forecast, by region, including flu-season spikes.',
   },
 ] as const
 
@@ -60,11 +70,8 @@ function greeting(hour: number) {
 
 export default function PlannerHome() {
   const { user, loading: userLoading } = useAuthStub()
-  const [skus, setSkus] = useState<SkuSummary[]>([])
-  const [distributionCenters, setDistributionCenters] = useState<DistributionCenterSummary[]>([])
-  const [recommendations, setRecommendations] = useState<RecommendationSummary[]>([])
-  const [expiringBatches, setExpiringBatches] = useState<BatchSummary[]>([])
-  const [skuState, setSkuState] = useState<FetchState>('loading')
+  const [metrics, setMetrics] = useState<PlannerMetrics | null>(null)
+  const [metricsState, setMetricsState] = useState<FetchState>('loading')
 
   useEffect(() => {
     let cancelled = false
@@ -73,20 +80,25 @@ export default function PlannerHome() {
       p1Client.get<{ data: SkuSummary[] }>('/skus'),
       p1Client.get<{ data: DistributionCenterSummary[] }>('/distribution-centers'),
       p1Client.get<{ data: RecommendationSummary[] }>('/replenishment/recommendations'),
-      p1Client.get<{ data: { batches: BatchSummary[] } }>('/inventory', { params: { detail: 'batches' } }),
+      p1Client.get<{ data: { batches: InventoryBatchRisk[] } }>('/inventory', {
+        params: { detail: 'batches' },
+      }),
     ])
-      .then(([skuResponse, dcResponse, recommendationResponse, inventoryResponse]) => {
+      .then(([skuRes, dcRes, recommendationRes, inventoryRes]) => {
         if (cancelled) return
-        setSkus(skuResponse.data.data)
-        setDistributionCenters(dcResponse.data.data)
-        setRecommendations(recommendationResponse.data.data)
-        setExpiringBatches(
-          inventoryResponse.data.data.batches.filter((batch) => batch.daysUntilExpiry <= 7),
-        )
-        setSkuState('ok')
+
+        setMetrics({
+          skuCount: skuRes.data.data.length,
+          dcCount: dcRes.data.data.length,
+          reorderAlertCount: recommendationRes.data.data.filter((rec) => rec.status === 'NEW').length,
+          expiryRiskCount: inventoryRes.data.data.batches.filter(
+            (batch) => batch.quantity > 0 && batch.daysUntilExpiry <= 7,
+          ).length,
+        })
+        setMetricsState('ok')
       })
       .catch(() => {
-        if (!cancelled) setSkuState('error')
+        if (!cancelled) setMetricsState('error')
       })
 
     return () => {
@@ -96,46 +108,43 @@ export default function PlannerHome() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-8">
-      {/* Greeting */}
       <div className="animate-rise-in">
         <h2 className="font-display text-2xl font-semibold tracking-tight text-paper md:text-3xl">
           {greeting(new Date().getHours())}
           {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
         </h2>
         <p className="mt-1.5 text-sm text-mist">
-          {userLoading ? 'Syncing your session…' : `Watching ${user?.dc} and the wider MedCare Pharma network.`}
+          {userLoading ? 'Syncing your session...' : `Watching ${user?.dc} and the wider MedCare Pharma network.`}
         </p>
       </div>
 
-      {/* KPI strip */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <KpiTile
           label="SKUs tracked"
-          value={skuState === 'ok' ? String(skus.length) : skuState === 'error' ? 'Offline' : '···'}
-          tone={skuState === 'error' ? 'critical' : 'signal'}
-          caption={skuState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
+          value={metricValue(metricsState, metrics?.skuCount)}
+          tone={metricsState === 'error' ? 'critical' : 'signal'}
+          caption={metricsState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
         />
         <KpiTile
           label="Distribution centers"
-          value={skuState === 'ok' ? String(distributionCenters.length) : skuState === 'error' ? 'Offline' : '···'}
-          tone={skuState === 'error' ? 'critical' : 'signal'}
-          caption={skuState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
+          value={metricValue(metricsState, metrics?.dcCount)}
+          tone={metricsState === 'error' ? 'critical' : 'signal'}
+          caption={metricsState === 'error' ? 'Check P1 API connection' : 'Active network nodes'}
         />
         <KpiTile
           label="Reorder alerts"
-          value={skuState === 'ok' ? String(recommendations.filter(({ status }) => status !== 'ACKNOWLEDGED').length) : skuState === 'error' ? 'Offline' : '···'}
-          tone={skuState === 'error' ? 'critical' : 'signal'}
-          caption={skuState === 'error' ? 'Check P1 API connection' : 'Open recommendations'}
+          value={metricValue(metricsState, metrics?.reorderAlertCount)}
+          tone={metricsState === 'error' ? 'critical' : (metrics?.reorderAlertCount ?? 0) > 0 ? 'critical' : 'signal'}
+          caption={metricsState === 'error' ? 'Check P1 API connection' : 'NEW recommendations'}
         />
         <KpiTile
           label="Expiry risk (7d)"
-          value={skuState === 'ok' ? String(expiringBatches.length) : skuState === 'error' ? 'Offline' : '···'}
-          tone={skuState === 'error' ? 'critical' : 'signal'}
-          caption={skuState === 'error' ? 'Check P1 API connection' : 'Batches expiring within 7 days'}
+          value={metricValue(metricsState, metrics?.expiryRiskCount)}
+          tone={metricsState === 'error' ? 'critical' : (metrics?.expiryRiskCount ?? 0) > 0 ? 'critical' : 'signal'}
+          caption={metricsState === 'error' ? 'Check P1 API connection' : 'Batches nearing expiry'}
         />
       </div>
 
-      {/* Module cards */}
       <div>
         <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Planning modules</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -159,10 +168,16 @@ export default function PlannerHome() {
       </div>
 
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist/70">
-        Running on a temporary auth stub — Phase 23 swaps in Supabase Auth.
+        Demo planner session active
       </p>
     </div>
   )
+}
+
+function metricValue(state: FetchState, value: number | undefined) {
+  if (state === 'error') return 'Offline'
+  if (state === 'loading') return '...'
+  return String(value ?? 0)
 }
 
 function KpiTile({

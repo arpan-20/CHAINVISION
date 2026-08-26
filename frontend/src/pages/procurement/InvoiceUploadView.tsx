@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type DragEvent } from 'react'
 
 import { pr2Client } from '../../api/pr2Client'
 import { RefreshButton } from '../../components/badges'
+import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 
 // ---------------------------------------------------------------------------
 // Mirrors com.chainvision.pr2.dto.InvoiceResponse / ThreeWayMatchResponse /
@@ -146,6 +147,7 @@ export default function InvoiceUploadView() {
   }
 
   useEffect(load, [])
+  useRealtimeTable('pr2', 'invoices', load)
 
   const onDrop = (e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault()

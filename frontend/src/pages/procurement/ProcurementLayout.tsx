@@ -185,7 +185,7 @@ function ProcurementNavBar() {
           </div>
         </div>
         <p className="mt-2 hidden font-mono text-[9px] uppercase tracking-[0.2em] text-alert/80 md:block">
-          Stub session · Phase 23 swaps this
+          Demo session
         </p>
       </div>
     </aside>
@@ -233,10 +233,7 @@ function TopBar() {
 }
 
 /**
- * Placeholder content for the Requisitions / Purchase Orders / Goods
- * Receipt / Invoices / Exceptions / Analytics routes — real views land in
- * P19.2 / P19.3. Exported so `App.tsx` can wire routes for every nav item
- * without those views existing yet (keeps the nav fully clickable now).
+ * Reusable empty-state content for procurement modules.
  */
 export function ProcurementSectionPlaceholder({
   icon: Icon,
@@ -262,7 +259,7 @@ export function ProcurementSectionPlaceholder({
       </div>
 
       <div className="w-full rounded-xl border border-line bg-ink/60 p-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Lands in P19.2 / P19.3</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Module details</p>
         <ul className="mt-2 space-y-1.5">
           {comingIn.map((item) => (
             <li key={item} className="flex items-start gap-2 text-sm text-paper/80">
