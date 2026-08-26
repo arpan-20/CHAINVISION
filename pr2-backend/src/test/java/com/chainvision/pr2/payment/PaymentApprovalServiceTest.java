@@ -82,8 +82,8 @@ class PaymentApprovalServiceTest {
         fixture.invoice().markException();
         PaymentApproval pending =
                 new PaymentApproval(fixture.invoice().getId(), PaymentStatus.PENDING_REVIEW, null, null);
-        when(fixture.paymentApprovalRepository().findByInvoiceId(fixture.invoice().getId()))
-                .thenReturn(List.of(pending));
+        when(fixture.paymentApprovalRepository().findPendingReviewByInvoiceId(fixture.invoice().getId()))
+                .thenReturn(Optional.of(pending));
 
         PaymentApproval resolved =
                 fixture.service().resolve(fixture.invoice().getId(), PaymentDecision.APPROVE, "buyer@example.com");
@@ -100,8 +100,8 @@ class PaymentApprovalServiceTest {
         fixture.invoice().markException();
         PaymentApproval pending =
                 new PaymentApproval(fixture.invoice().getId(), PaymentStatus.PENDING_REVIEW, null, null);
-        when(fixture.paymentApprovalRepository().findByInvoiceId(fixture.invoice().getId()))
-                .thenReturn(List.of(pending));
+        when(fixture.paymentApprovalRepository().findPendingReviewByInvoiceId(fixture.invoice().getId()))
+                .thenReturn(Optional.of(pending));
 
         PaymentApproval resolved =
                 fixture.service().resolve(fixture.invoice().getId(), PaymentDecision.REJECT, "buyer@example.com");
