@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   listDemandSignals: vi.fn(),
   listInventoryBatches: vi.fn(),
+  sendRecommendation: vi.fn(),
   insertedRows: [] as Array<Record<string, unknown>>,
   skuRows: [] as Array<{ id: string; name: string; lead_time_days: number }>,
 }))
@@ -13,6 +14,10 @@ vi.mock('./demandService', () => ({
 
 vi.mock('./inventoryService', () => ({
   listInventoryBatches: mocks.listInventoryBatches,
+}))
+
+vi.mock('./pr2ClientService', () => ({
+  sendRecommendation: mocks.sendRecommendation,
 }))
 
 vi.mock('../db/supabaseClient', () => ({
@@ -72,6 +77,7 @@ describe('generateReplenishmentRecommendations', () => {
       { id: 'sku-medium', name: 'Guaifenesin Syrup', lead_time_days: 14 },
       { id: 'sku-ok', name: 'Aspirin 75mg', lead_time_days: 8 },
     ]
+    mocks.sendRecommendation.mockResolvedValue(undefined)
   })
 
   it('creates recommendation rows with varied deterministic urgencies', async () => {
