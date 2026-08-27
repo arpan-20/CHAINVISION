@@ -195,7 +195,14 @@ function ReceiptForm({
         expiryDate: expiryDate || undefined,
       })
       .then(() => onDone())
-      .catch(() => setError('Could not record the receipt. Check the quantity and try again.'))
+      .catch((requestError: unknown) => {
+        // Preserve the backend's actionable validation/state message instead
+        // of masking auth, already-received, or invalid-PO errors.
+        const message = (
+          requestError as { response?: { data?: { error?: { message?: string } } } }
+        ).response?.data?.error?.message
+        setError(message ?? 'Could not record the receipt. Check the quantity and try again.')
+      })
       .finally(() => setSubmitting(false))
   }
 

@@ -23,7 +23,7 @@ public class GeminiClient {
 
     public GeminiClient(
             @Value("${gemini.api-key:}") String apiKey,
-            @Value("${gemini.model:gemini-3.5-flash}") String model,
+            @Value("${gemini.model:gemini-2.5-flash}") String model,
             ObjectMapper objectMapper) {
         this.apiKey = apiKey;
         this.model = model;
@@ -31,6 +31,8 @@ public class GeminiClient {
         this.restClient = RestClient.builder()
                 .baseUrl("https://generativelanguage.googleapis.com")
                 .build();
+
+        
     }
 
     public boolean isConfigured() {

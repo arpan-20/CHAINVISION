@@ -51,8 +51,39 @@ public class IntentExtractionService {
             IntentExtractionResult parsed = objectMapper.readValue(json, IntentExtractionResult.class);
             return withManualEntryDefault(parsed);
         } catch (Exception e) {
-            return IntentExtractionResult.manualEntry(e.getMessage());
+            // Keep the chatbot useful when Gemini is unavailable (missing key,
+            // transient provider error, or an invalid model).  This deliberately
+            // extracts only unambiguous local patterns; the UI still requires
+            // explicit confirmation before creating the requisition.
+            return deterministicFallback(freeText);
         }
+    }
+
+    private static IntentExtractionResult deterministicFallback(String freeText) {
+        String sku = find(freeText, "(?i)\\b[A-Z]{2,10}-\\d{2,}[A-Z0-9-]*\\b");
+        String quantityText = find(freeText.replaceAll(",", ""), "(?i)\\b\\d+\\b(?=\\s*(?:units?|items?|packs?|qty|quantity)\\b)");
+        if (quantityText == null) {
+            quantityText = find(freeText.replaceAll(",", ""), "(?i)(?:need|requires?|order)\\s+(\\d+)\\b");
+        }
+        Integer quantity = quantityText == null ? null : Integer.valueOf(quantityText);
+        String dc = find(freeText, "(?i)\\b(?:DC|DISTRIBUTION CENTER)[ -]?[A-Z0-9]+\\b");
+        String urgency = find(freeText, "(?i)\\b(?:LOW|MEDIUM|HIGH|CRITICAL)\\b");
+        if (sku == null && quantity == null && dc == null && urgency == null) {
+            return IntentExtractionResult.manualEntry("No deterministic intent found");
+        }
+        boolean complete = sku != null && quantity != null;
+        return new IntentExtractionResult(
+                sku,
+                quantity,
+                dc,
+                urgency == null ? null : urgency.toUpperCase(),
+                complete ? 0.75 : 0.25,
+                !complete);
+    }
+
+    private static String find(String text, String regex) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(regex).matcher(text);
+        return matcher.find() ? matcher.group(matcher.groupCount()) : null;
     }
 
     private static IntentExtractionResult withManualEntryDefault(IntentExtractionResult parsed) {

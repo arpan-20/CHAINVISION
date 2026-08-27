@@ -3,6 +3,7 @@ package com.chainvision.pr2.goodsreceipt;
 import com.chainvision.pr2.entity.PurchaseOrderStatus;
 import com.chainvision.pr2.exception.InvalidStateException;
 import com.chainvision.pr2.exception.ResourceNotFoundException;
+import com.chainvision.pr2.exception.BusinessRuleViolationException;
 import com.chainvision.pr2.purchaseorder.PurchaseOrder;
 import com.chainvision.pr2.purchaseorder.PurchaseOrderRepository;
 import java.time.LocalDate;
@@ -39,12 +40,19 @@ public class GoodsReceiptService {
             throw new InvalidStateException("Purchase order " + poId + " is " + po.getStatus() + "; cannot record a receipt");
         }
 
+        int alreadyReceived = goodsReceiptRepository.findByPoId(poId).stream()
+                .mapToInt(GoodsReceipt::getReceivedQty)
+                .sum();
+        int remaining = po.getQuantity() - alreadyReceived;
+        if (receivedQty > remaining) {
+            throw new BusinessRuleViolationException(
+                    "Received quantity " + receivedQty + " exceeds the " + Math.max(remaining, 0) + " units remaining on this PO");
+        }
+
         GoodsReceipt grn = new GoodsReceipt(poId, receivedQty, batchNo, expiryDate);
         GoodsReceipt saved = goodsReceiptRepository.save(grn);
 
-        int totalReceived = goodsReceiptRepository.findByPoId(poId).stream()
-                .mapToInt(GoodsReceipt::getReceivedQty)
-                .sum();
+        int totalReceived = alreadyReceived + receivedQty;
 
         if (totalReceived >= po.getQuantity()) {
             po.markReceived();
