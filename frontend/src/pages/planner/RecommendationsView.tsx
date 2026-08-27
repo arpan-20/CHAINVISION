@@ -45,7 +45,6 @@ export default function RecommendationsView() {
       .catch(() => setState('error'))
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [urgencyFilter])
   useRealtimeTable('p1', 'replenishment_recommendations', load)
 
@@ -56,7 +55,7 @@ export default function RecommendationsView() {
           Replenishment recommendations
         </h2>
         <p className="mt-1 text-sm text-mist">
-          SKUs past their reorder point, with EOQ-based quantity and urgency — ready to hand off to procurement.
+          SKUs past their reorder point, with EOQ-based quantity and urgency - ready to hand off to procurement.
         </p>
       </div>
 
@@ -66,7 +65,7 @@ export default function RecommendationsView() {
         <select
           value={urgencyFilter}
           onChange={(e) => setUrgencyFilter(e.target.value as Urgency | '')}
-          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
           <option value="">All urgencies</option>
           <option value="CRITICAL">Critical</option>
@@ -78,17 +77,17 @@ export default function RecommendationsView() {
       </div>
 
       {state === 'error' ? (
-        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-critical">
+        <p className="rounded-xl panel-soft p-6 text-sm text-critical">
           Couldn't reach the P1 API. Check the backend connection and refresh.
         </p>
       ) : state === 'loading' ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl border border-line bg-panel" />
+            <div key={i} className="h-24 animate-pulse rounded-xl panel-soft" />
           ))}
         </div>
       ) : recommendations.length === 0 ? (
-        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-mist">
+        <p className="rounded-xl panel-soft p-6 text-sm text-mist">
           No open recommendations. Trigger a demand spike above, or check back after the next
           recalculation.
         </p>
@@ -97,7 +96,7 @@ export default function RecommendationsView() {
           {recommendations.map((rec) => (
             <div
               key={rec.id}
-              className="animate-rise-in rounded-xl border border-line bg-panel p-5 transition-colors hover:border-signal/30"
+              className="animate-rise-in rounded-xl panel-soft p-5 transition-colors hover:border-signal/30"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -108,7 +107,7 @@ export default function RecommendationsView() {
                     </span>
                   </p>
                   <p className="mt-0.5 font-mono text-xs text-mist">
-                    {dcById.get(rec.dcId)?.dcCode ?? rec.dcId} · {dcById.get(rec.dcId)?.name} · {rec.reasonCode}
+                    {dcById.get(rec.dcId)?.dcCode ?? rec.dcId} . {dcById.get(rec.dcId)?.name} . {rec.reasonCode}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -165,3 +164,4 @@ function StatusPill({ status }: { status: Recommendation['status'] }) {
     </span>
   )
 }
+

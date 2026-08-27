@@ -8,7 +8,7 @@ import { useRealtimeTable } from '../../hooks/useRealtimeTable'
 import NlRequisitionChatbot from './NlRequisitionChatbot'
 
 // ---------------------------------------------------------------------------
-// Types — mirror com.chainvision.pr2.dto.RequisitionResponse /
+// Types - mirror com.chainvision.pr2.dto.RequisitionResponse /
 // CreateRequisitionRequest (see Documentaion/00_PROJECT_CONTEXT.md Section 7.2 /
 // 13.2). Kept local rather than shared since PR2 has no generated client yet.
 // ---------------------------------------------------------------------------
@@ -90,7 +90,6 @@ export default function RequisitionsView() {
       .catch(() => setState('error'))
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [sourceFilter, statusFilter])
   useRealtimeTable('pr2', 'purchase_requisitions', load)
 
@@ -100,7 +99,7 @@ export default function RequisitionsView() {
         <h2 className="font-display text-xl font-semibold tracking-tight text-paper">Requisitions</h2>
         <p className="mt-1 text-sm text-mist">
           System-generated requisitions from P1 replenishment recommendations, alongside manual and
-          chatbot-sourced ones — every requisition still needs a PO before it becomes a supplier commitment.
+          chatbot-sourced ones - every requisition still needs a PO before it becomes a supplier commitment.
         </p>
       </div>
 
@@ -111,7 +110,7 @@ export default function RequisitionsView() {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as RequisitionSource | '')}
-            className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+            className="field-control"
           >
             <option value="">All sources</option>
             <option value="SYSTEM">System</option>
@@ -121,7 +120,7 @@ export default function RequisitionsView() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as RequisitionStatus | '')}
-            className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+            className="field-control"
           >
             <option value="">All statuses</option>
             <option value="CREATED">Created</option>
@@ -133,7 +132,7 @@ export default function RequisitionsView() {
           <button
             type="button"
             onClick={() => setShowManualForm((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg border border-line bg-panel2 px-3.5 py-1.5 text-xs font-medium text-paper transition-colors hover:border-signal/40 hover:text-signal"
+            className="secondary-action"
           >
             {showManualForm ? 'Close form' : '+ Manual requisition'}
           </button>
@@ -154,21 +153,21 @@ export default function RequisitionsView() {
       )}
 
       {state === 'error' ? (
-        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-critical">
+        <p className="rounded-xl panel-soft p-6 text-sm text-critical">
           Couldn't reach the PR2 API. Check the backend connection and refresh.
         </p>
       ) : state === 'loading' ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl border border-line bg-panel" />
+            <div key={i} className="h-20 animate-pulse rounded-xl panel-soft" />
           ))}
         </div>
       ) : requisitions.length === 0 ? (
-        <p className="rounded-xl border border-line bg-panel p-6 text-sm text-mist">
+        <p className="rounded-xl panel-soft p-6 text-sm text-mist">
           No requisitions yet. Try the chatbot above, or add one manually.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line bg-panel">
+        <div className="table-shell">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-line bg-ink/40 font-mono text-[10px] uppercase tracking-wider text-mist">
@@ -188,7 +187,7 @@ export default function RequisitionsView() {
                     <p className="font-mono text-sm text-paper">{req.skuCode}</p>
                     {req.rawNlInput && (
                       <p className="mt-0.5 max-w-xs truncate text-xs italic text-mist" title={req.rawNlInput}>
-                        “{req.rawNlInput}”
+                        "{req.rawNlInput}"
                       </p>
                     )}
                   </td>
@@ -225,7 +224,7 @@ export default function RequisitionsView() {
 }
 
 // ---------------------------------------------------------------------------
-// Manual create form — ad hoc testing, always tagged MANUAL by the backend
+// Manual create form - ad hoc testing, always tagged MANUAL by the backend
 // (RequisitionService.createManualRequisition).
 // ---------------------------------------------------------------------------
 
@@ -273,19 +272,19 @@ function ManualRequisitionForm({
   }
 
   return (
-    <div className="animate-rise-in rounded-xl border border-line bg-panel p-5">
+    <div className="animate-rise-in rounded-xl panel-soft p-5">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Manual requisition</p>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <select
           value={skuCode}
           onChange={(e) => setSkuCode(e.target.value)}
           disabled={refLoading}
-          className="rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
-          <option value="">SKU…</option>
+          <option value="">SKU...</option>
           {skus.map((sku) => (
             <option key={sku.skuCode} value={sku.skuCode}>
-              {sku.skuCode} — {sku.name}
+              {sku.skuCode} - {sku.name}
             </option>
           ))}
         </select>
@@ -293,12 +292,12 @@ function ManualRequisitionForm({
           value={dcCode}
           onChange={(e) => setDcCode(e.target.value)}
           disabled={refLoading}
-          className="rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
-          <option value="">DC…</option>
+          <option value="">DC...</option>
           {dcs.map((dc) => (
             <option key={dc.dcCode} value={dc.dcCode}>
-              {dc.dcCode} — {dc.name}
+              {dc.dcCode} - {dc.name}
             </option>
           ))}
         </select>
@@ -308,12 +307,12 @@ function ManualRequisitionForm({
           placeholder="Quantity"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
-          className="rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         />
         <select
           value={urgency}
           onChange={(e) => setUrgency(e.target.value as Urgency)}
-          className="rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
@@ -327,11 +326,12 @@ function ManualRequisitionForm({
           type="button"
           onClick={submit}
           disabled={submitting}
-          className="rounded-lg bg-signal px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="primary-action"
         >
-          {submitting ? 'Creating…' : 'Create requisition'}
+          {submitting ? 'Creating...' : 'Create requisition'}
         </button>
       </div>
     </div>
   )
 }
+

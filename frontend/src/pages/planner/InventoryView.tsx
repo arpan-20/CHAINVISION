@@ -40,7 +40,6 @@ export default function InventoryView() {
       .catch(() => setState('error'))
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [skuFilter, dcFilter])
 
   const toggleSort = (field: SortField) => {
@@ -56,9 +55,9 @@ export default function InventoryView() {
     const withLabels = rows.map((row) => ({
       ...row,
       skuLabel: skuById.get(row.skuId)?.skuCode ?? row.skuId,
-      skuName: skuById.get(row.skuId)?.name ?? '—',
+      skuName: skuById.get(row.skuId)?.name ?? '-',
       dcLabel: dcById.get(row.dcId)?.dcCode ?? row.dcId,
-      dcName: dcById.get(row.dcId)?.name ?? '—',
+      dcName: dcById.get(row.dcId)?.name ?? '-',
     }))
 
     const dir = sortDir === 'asc' ? 1 : -1
@@ -88,7 +87,7 @@ export default function InventoryView() {
             Current inventory
           </h2>
           <p className="mt-1 text-sm text-mist">
-            {state === 'ok' ? `${rows.length} SKU/DC positions · ${totalUnits.toLocaleString()} units on hand` : 'Loading current stock…'}
+            {state === 'ok' ? `${rows.length} SKU/DC positions . ${totalUnits.toLocaleString()} units on hand` : 'Loading current stock...'}
           </p>
         </div>
         <RefreshButton onClick={load} loading={state === 'loading'} />
@@ -98,30 +97,30 @@ export default function InventoryView() {
         <select
           value={skuFilter}
           onChange={(e) => setSkuFilter(e.target.value)}
-          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
           <option value="">All SKUs</option>
           {skus.map((sku) => (
             <option key={sku.id} value={sku.id}>
-              {sku.skuCode} · {sku.name}
+              {sku.skuCode} . {sku.name}
             </option>
           ))}
         </select>
         <select
           value={dcFilter}
           onChange={(e) => setDcFilter(e.target.value)}
-          className="rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+          className="field-control"
         >
           <option value="">All distribution centers</option>
           {dcs.map((dc) => (
             <option key={dc.id} value={dc.id}>
-              {dc.dcCode} · {dc.name}
+              {dc.dcCode} . {dc.name}
             </option>
           ))}
         </select>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-line bg-panel">
+      <div className="table-shell">
         {state === 'error' ? (
           <p className="p-6 text-sm text-critical">Couldn't reach the P1 API. Check the backend connection and refresh.</p>
         ) : state === 'ok' && sortedRows.length === 0 ? (
@@ -198,3 +197,4 @@ function SortableHeader({
     </th>
   )
 }
+

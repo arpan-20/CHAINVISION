@@ -22,16 +22,6 @@ import LoginPage from './pages/LoginPage'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastContainer } from './components/Toast'
 
-function Placeholder() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-ink px-6 text-paper">
-      <h1 className="text-center text-3xl font-semibold tracking-tight">
-        CHAINVISION - under construction
-      </h1>
-    </main>
-  )
-}
-
 const homeForRole = (role: AuthRole | null) => {
   if (role === 'PROCUREMENT_OFFICER') return '/procurement'
   return '/planner'

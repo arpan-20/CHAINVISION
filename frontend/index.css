@@ -5,11 +5,20 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    color-scheme: dark;
-  }
+  html,
   body {
     @apply bg-ink text-paper antialiased;
+    overflow: hidden;
+  }
+  html {
+    color-scheme: dark;
+    min-width: 320px;
+  }
+  body {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(47, 227, 196, 0.12), transparent 26rem),
+      radial-gradient(circle at 84% 12%, rgba(242, 169, 59, 0.1), transparent 24rem),
+      #0a0f1c;
   }
   ::selection {
     @apply bg-signal/30 text-paper;
@@ -24,6 +33,44 @@
     background-size: 36px 36px;
   }
 
+
+  .shell-surface {
+    background:
+      linear-gradient(135deg, rgba(17, 26, 44, 0.94), rgba(10, 15, 28, 0.98)),
+      radial-gradient(circle at top left, rgba(47, 227, 196, 0.08), transparent 22rem);
+  }
+
+  .panel-glass {
+    @apply border border-line/80 bg-panel/80 shadow-2xl shadow-ink/25 backdrop-blur-xl;
+  }
+
+  .panel-soft {
+    @apply border border-line/80 bg-panel/90 shadow-xl shadow-ink/15;
+  }
+
+  .interactive-panel {
+    @apply border border-line/80 bg-panel/90 shadow-xl shadow-ink/15 transition duration-200 hover:-translate-y-0.5 hover:border-signal/45 hover:bg-panel2/80 hover:shadow-signal/5;
+  }
+
+  .field-control {
+    @apply rounded-lg border border-line bg-panel2/80 px-3 py-2 text-sm text-paper shadow-sm shadow-ink/10 outline-none transition focus:border-signal/60 focus:ring-2 focus:ring-signal/10 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .primary-action {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-signal px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ink shadow-lg shadow-signal/10 transition hover:-translate-y-0.5 hover:shadow-signal/20 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .secondary-action {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-panel2/85 px-3.5 py-2 text-xs font-medium text-paper shadow-sm shadow-ink/10 transition hover:-translate-y-0.5 hover:border-signal/45 hover:text-signal disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .table-shell {
+    @apply overflow-hidden rounded-xl border border-line/80 bg-panel/90 shadow-xl shadow-ink/15;
+  }
+
+  .metric-number {
+    text-shadow: 0 0 18px rgba(47, 227, 196, 0.12);
+  }
   .fade-edges {
     mask-image: linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     -webkit-mask-image: linear-gradient(
@@ -39,7 +86,41 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker,
   .animate-pulse-dot,
-  .animate-rise-in {
+  .animate-rise-in,
+  .animate-shake {
     animation: none !important;
   }
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.5s ease-in-out; }
+
+@keyframes riseIn {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-rise-in { animation: riseIn 0.6s ease-out both; }
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.02); }
+}
+.animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+

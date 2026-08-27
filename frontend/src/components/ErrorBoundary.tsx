@@ -19,26 +19,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // eslint-disable-next-line no-console
     console.error('[ErrorBoundary] Caught render error:', error, errorInfo)
   }
 
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">
-            Something went wrong
-          </h2>
-          <p className="text-slate-600 mb-4">
-            Please try refreshing the page.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="rounded-md bg-slate-800 text-white px-4 py-2 text-sm hover:bg-slate-700"
-          >
-            Refresh
-          </button>
+        <div className="flex min-h-[60vh] items-center justify-center px-4 text-center">
+          <div className="panel-glass max-w-md rounded-xl p-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-critical">Render error</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-paper">
+              Something went wrong
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-mist">
+              The dashboard hit a rendering problem. Refresh the page to reload the current session.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="primary-action mt-5"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       )
     }
@@ -46,3 +49,4 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children
   }
 }
+

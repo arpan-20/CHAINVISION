@@ -22,9 +22,9 @@ export default function NavBar() {
   const { user, role, loading, signOut } = useAuth()
 
   return (
-    <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line bg-panel md:w-64">
-      <div className="flex items-center gap-3 border-b border-line px-4 py-5 md:px-6">
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel2 text-signal">
+    <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line/75 bg-panel/92 shadow-2xl shadow-ink/20 backdrop-blur-xl md:w-64">
+      <div className="flex items-center gap-3 border-b border-line/75 px-4 py-5 md:px-6">
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-signal/20 bg-panel2 text-signal shadow-lg shadow-signal/10">
           <NetworkMark className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse-dot rounded-full bg-signal" />
         </div>
@@ -43,7 +43,7 @@ export default function NavBar() {
             className={({ isActive }) =>
               [
                 'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive ? 'bg-panel2 text-paper' : 'text-mist hover:bg-panel2/60 hover:text-paper',
+                isActive ? 'bg-panel2 text-paper shadow-lg shadow-ink/20' : 'text-mist hover:bg-panel2/60 hover:text-paper',
               ].join(' ')
             }
           >
@@ -68,8 +68,8 @@ export default function NavBar() {
         ))}
       </nav>
 
-      <div className="border-t border-line p-3 md:p-4">
-        <div className="flex items-center gap-3 rounded-lg bg-panel2 px-3 py-2.5">
+      <div className="border-t border-line/75 p-3 md:p-4">
+        <div className="flex items-center gap-3 rounded-lg border border-line/70 bg-panel2/85 px-3 py-2.5 shadow-inner shadow-ink/20">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-xs text-signal">
             {loading ? '...' : user?.initials}
           </div>
@@ -91,3 +91,4 @@ export default function NavBar() {
     </aside>
   )
 }
+

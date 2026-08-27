@@ -16,14 +16,14 @@ const PAGE_TITLES: Record<string, string> = {
 
 // Fallback network activity for the manifest ticker, shown until the
 // live recommendations feed loads (or if it comes back empty). One
-// fetch on mount — no polling here, Phase 21 owns realtime refresh.
+// fetch on mount - no polling here, Phase 21 owns realtime refresh.
 const FALLBACK_FEED_ITEMS = [
-  { tag: 'FEFO', text: 'DC-KOL → DC-PTN · Batch #A231 sequenced', tone: 'signal' as const },
-  { tag: 'ALERT', text: 'ROP breached · SKU AZT-250 · urgency HIGH', tone: 'alert' as const },
-  { tag: 'GRN', text: 'GRN-00456 received · 1,200 units confirmed', tone: 'signal' as const },
-  { tag: 'EXPIRY', text: 'Batch #C118 · 92% shelf life consumed', tone: 'critical' as const },
-  { tag: 'DEMAND', text: 'Tier-2 flu-season spike detected · +58%', tone: 'alert' as const },
-  { tag: 'EOQ', text: 'Replenishment qty computed · SKU PCM-500', tone: 'signal' as const },
+  { tag: 'FEFO', text: 'DC-KOL -> DC-PTN . Batch #A231 sequenced', tone: 'signal' as const },
+  { tag: 'ALERT', text: 'ROP breached . SKU AZT-250 . urgency HIGH', tone: 'alert' as const },
+  { tag: 'GRN', text: 'GRN-00456 received . 1,200 units confirmed', tone: 'signal' as const },
+  { tag: 'EXPIRY', text: 'Batch #C118 . 92% shelf life consumed', tone: 'critical' as const },
+  { tag: 'DEMAND', text: 'Tier-2 flu-season spike detected . +58%', tone: 'alert' as const },
+  { tag: 'EOQ', text: 'Replenishment qty computed . SKU PCM-500', tone: 'signal' as const },
 ]
 
 const toneClass: Record<string, string> = {
@@ -59,7 +59,7 @@ function ManifestTicker() {
         setLiveItems(
           response.data.data.slice(0, 8).map((rec) => ({
             tag: rec.urgency,
-            text: `${skuById.get(rec.skuId)?.skuCode ?? rec.skuId} → ${dcById.get(rec.dcId)?.dcCode ?? rec.dcId} · qty ${rec.recommendedQty.toLocaleString()}`,
+            text: `${skuById.get(rec.skuId)?.skuCode ?? rec.skuId} -> ${dcById.get(rec.dcId)?.dcCode ?? rec.dcId} . qty ${rec.recommendedQty.toLocaleString()}`,
             tone: urgencyTone[rec.urgency],
           })),
         )
@@ -77,7 +77,7 @@ function ManifestTicker() {
   const track = [...items, ...items]
 
   return (
-    <div className="relative overflow-hidden border-b border-line bg-panel/60 py-2">
+    <div className="relative overflow-hidden border-b border-line/70 bg-panel/72 py-2 shadow-lg shadow-ink/10 backdrop-blur-xl">
       <div className="fade-edges flex w-max animate-ticker gap-3 pl-4">
         {track.map((item, i) => (
           <span
@@ -115,7 +115,7 @@ function TopBar() {
   )
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-line bg-ink px-5 py-3.5 md:px-8">
+    <header className="flex items-center justify-between gap-4 border-b border-line/70 bg-ink/90 px-5 py-3.5 shadow-lg shadow-ink/10 backdrop-blur-xl md:px-8">
       <div className="min-w-0">
         <p className="truncate font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
           MedCare Pharma / Planner
@@ -138,7 +138,7 @@ function TopBar() {
 
 export default function PlannerLayout() {
   return (
-    <div className="flex h-screen bg-ink text-paper">
+    <div className="flex h-screen shell-surface text-paper">
       <NavBar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
@@ -150,3 +150,5 @@ export default function PlannerLayout() {
     </div>
   )
 }
+
+

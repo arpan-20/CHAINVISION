@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 // Icons
 //
 // The shared `NavBar`/`icons.tsx` set is Planner-specific (hardcoded nav
-// items) and is read-only for this phase — see 00_PROJECT_CONTEXT.md /
+// items) and is read-only for this phase - see 00_PROJECT_CONTEXT.md /
 // P19.1 constraints. Procurement gets its own small icon set here, kept in
 // the same "minimal line icon" style as `components/icons.tsx` so the two
 // dashboards feel like one product. `OverviewIcon` and `NetworkMark` are
@@ -123,10 +123,10 @@ function ProcurementNavBar() {
   const { user, role, loading, signOut } = useAuth()
 
   return (
-    <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line bg-panel md:w-64">
+    <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line/75 bg-panel/92 shadow-2xl shadow-ink/20 backdrop-blur-xl md:w-64">
       {/* Brand */}
-      <div className="flex items-center gap-3 border-b border-line px-4 py-5 md:px-6">
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel2 text-signal">
+      <div className="flex items-center gap-3 border-b border-line/75 px-4 py-5 md:px-6">
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-signal/20 bg-panel2 text-signal shadow-lg shadow-signal/10">
           <NetworkMark className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse-dot rounded-full bg-signal" />
         </div>
@@ -146,7 +146,7 @@ function ProcurementNavBar() {
             className={({ isActive }) =>
               [
                 'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive ? 'bg-panel2 text-paper' : 'text-mist hover:bg-panel2/60 hover:text-paper',
+                isActive ? 'bg-panel2 text-paper shadow-lg shadow-ink/20' : 'text-mist hover:bg-panel2/60 hover:text-paper',
               ].join(' ')
             }
           >
@@ -172,15 +172,15 @@ function ProcurementNavBar() {
       </nav>
 
       {/* User card */}
-      <div className="border-t border-line p-3 md:p-4">
-        <div className="flex items-center gap-3 rounded-lg bg-panel2 px-3 py-2.5">
+      <div className="border-t border-line/75 p-3 md:p-4">
+        <div className="flex items-center gap-3 rounded-lg border border-line/70 bg-panel2/85 px-3 py-2.5 shadow-inner shadow-ink/20">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-xs text-signal">
-            {loading ? '···' : user?.initials}
+            {loading ? '...' : user?.initials}
           </div>
           <div className="hidden min-w-0 md:block">
-            <p className="truncate text-xs font-medium text-paper">{loading ? 'Loading session…' : user?.name}</p>
+            <p className="truncate text-xs font-medium text-paper">{loading ? 'Loading session...' : user?.name}</p>
             <p className="truncate font-mono text-[10px] uppercase tracking-wider text-mist">
-              {loading ? '—' : role}
+              {loading ? '-' : role}
             </p>
           </div>
         </div>
@@ -217,7 +217,7 @@ function TopBar() {
   )
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-line bg-ink px-5 py-3.5 md:px-8">
+    <header className="flex items-center justify-between gap-4 border-b border-line/70 bg-ink/90 px-5 py-3.5 shadow-lg shadow-ink/10 backdrop-blur-xl md:px-8">
       <div className="min-w-0">
         <p className="truncate font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
           MedCare Pharma / Procurement
@@ -279,7 +279,7 @@ export function ProcurementSectionPlaceholder({
 
 export default function ProcurementLayout() {
   return (
-    <div className="flex h-screen bg-ink text-paper">
+    <div className="flex h-screen shell-surface text-paper">
       <ProcurementNavBar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
@@ -290,3 +290,5 @@ export default function ProcurementLayout() {
     </div>
   )
 }
+
+
