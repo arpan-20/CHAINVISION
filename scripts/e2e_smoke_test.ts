@@ -270,6 +270,8 @@ class FlowRunner {
     let recommendationId: string | undefined
     let requisitionId: string | undefined
     let poId: string | undefined
+    let poQuantity = 100
+    let poUnitPrice: string | undefined
 
     // ---------------------------------------------------------------
     // STEP 1 — seeded inventory / alert data exists
@@ -345,12 +347,10 @@ class FlowRunner {
         const list = await fetchJson(this.pr2('/api/requisitions?source=SYSTEM'))
         const rows: any[] = Array.isArray(list.body) ? list.body : list.body?.data ?? []
         found =
-          rows.find((r) => r.recommendationId === recommendationId) ??
           rows.find((r) =>
-            r.skuCode != null &&
-            r.dcCode != null &&
+            r.recommendationId === recommendationId &&
             r.source === 'SYSTEM' &&
-            r.status !== undefined,
+            r.status === 'CREATED',
           ) ??
           null
       }
@@ -363,15 +363,8 @@ class FlowRunner {
       {
         requisitionId = found.id
       }
-      // Non-fatal if absent: continue with whatever requisition we can find.
-      if (!requisitionId) {
-        const all = await fetchJson(this.pr2('/api/requisitions'))
-        const rows: any[] = Array.isArray(all.body) ? all.body : all.body?.data ?? []
-        requisitionId = rows[0]?.id
-        if (requisitionId) {
-          console.log(`       (fallback: using existing requisition ${requisitionId})`)
-        }
-      }
+      // Never reuse a historical requisition: doing so can select one already
+      // PO_RAISED and make later PO/GRN failures misleading.
       if (!requisitionId) return this.finish()
     }
 
@@ -429,15 +422,10 @@ class FlowRunner {
           { status: poResponse.status, body: poResponse.body }))
       {
         poId = po.id
+        poQuantity = Number(po.quantity) || poQuantity
+        poUnitPrice = po.unitPrice != null ? String(po.unitPrice) : poUnitPrice
       } else {
-        // Maybe the requisition already has a PO from an earlier run — find it.
-        const pos = await fetchJson(this.pr2('/api/purchase-orders'))
-        const rows: any[] = Array.isArray(pos.body) ? pos.body : pos.body?.data ?? []
-        const existing = rows.find((p) => p.requisitionId === requisitionId)
-        if (existing) {
-          poId = existing.id
-          console.log(`       (PO already existed for requisition: ${poId})`)
-        }
+        // Do not reuse an old PO; the current requisition must produce a new one.
       }
       if (!poId) return this.finish()
     }
@@ -450,7 +438,7 @@ class FlowRunner {
         method: 'POST',
         body: {
           poId,
-          receivedQty: 100,
+          receivedQty: poQuantity,
           batchNo: `SMOKE-${Date.now()}`,
           expiryDate: '2027-06-01',
         },
@@ -460,7 +448,7 @@ class FlowRunner {
       const grnOk =
         (grn.status === 200 || grn.status === 201) &&
         grnBody?.id &&
-        grnBody?.receivedQty === 100
+        grnBody?.receivedQty === poQuantity
 
       assert(grnOk, 6,
         `GRN recorded: ${grnBody?.id} receivedQty=${grnBody?.receivedQty} batch=${grnBody?.batchNo}`,
@@ -475,6 +463,11 @@ class FlowRunner {
       const upload = await uploadInvoice(this.pr2('/api/invoices/upload'), {
         filePath: resolve(repoRoot, 'shared/seed-data/sample_invoices/invoice_matching.pdf'),
         poId,
+        // The fixture has a fixed quantity, while the recommendation engine
+        // intentionally computes a variable PO quantity. Supply the PO's
+        // deterministic values so this scenario tests matching itself.
+        manualQuantity: poQuantity,
+        manualUnitPrice: poUnitPrice,
       })
 
       const invoice = upload.body
@@ -611,7 +604,7 @@ class FlowRunner {
 
 async function uploadInvoice(
   url: string,
-  options: { filePath: string; poId?: string },
+  options: { filePath: string; poId?: string; manualQuantity?: number; manualUnitPrice?: string },
 ): Promise<{ status: number; body: any }> {
   if (!existsSync(options.filePath)) {
     return { status: 0, body: { error: `File not found: ${options.filePath}` } }
@@ -620,6 +613,8 @@ async function uploadInvoice(
   const formData = new FormData()
   formData.append('file', new Blob([readFileSync(options.filePath)], { type: 'application/pdf' }), options.filePath.split(/[\\/]/).pop())
   if (options.poId) formData.append('poId', options.poId)
+  if (options.manualQuantity != null) formData.append('manualQuantity', String(options.manualQuantity))
+  if (options.manualUnitPrice != null) formData.append('manualUnitPrice', options.manualUnitPrice)
 
   const token = await getToken()
   const headers: Record<string, string> = {}

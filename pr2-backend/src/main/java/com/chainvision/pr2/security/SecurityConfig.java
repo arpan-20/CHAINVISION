@@ -61,6 +61,11 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, exception) ->
                                 writeError(response, HttpStatus.FORBIDDEN, "FORBIDDEN", "You are not allowed to access this resource")))
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight requests do not carry the user's
+                        // bearer token.  They must be handled before the
+                        // authenticated /api/** rule, otherwise browser
+                        // clients fail before the actual request is sent.
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers(HttpMethod.POST, INTERNAL_RECOMMENDATION_PATH)
                         .access((authentication, context) -> new org.springframework.security.authorization.AuthorizationDecision(

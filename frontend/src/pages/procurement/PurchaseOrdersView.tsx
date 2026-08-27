@@ -32,6 +32,17 @@ interface Supplier {
   capacityUnits: number
 }
 
+interface SupplierScore {
+  supplier: Supplier
+  score: number
+}
+
+interface SupplierSelection {
+  selected: Supplier
+  score: number
+  ranking: SupplierScore[]
+}
+
 type LoadState = 'loading' | 'ok' | 'error'
 
 const PO_STATUS_STYLES: Record<PurchaseOrderStatus, string> = {
@@ -63,6 +74,8 @@ export default function PurchaseOrdersView() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [state, setState] = useState<LoadState>('loading')
   const [generatingId, setGeneratingId] = useState<string | null>(null)
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
+  const [selection, setSelection] = useState<Record<string, SupplierSelection>>({})
   const [genError, setGenError] = useState<string | null>(null)
 
   const supplierById = new Map(suppliers.map((s) => [s.id, s]))
@@ -87,6 +100,16 @@ export default function PurchaseOrdersView() {
   }
 
   useEffect(load, [])
+
+  const previewPo = (requisitionId: string) => {
+    setPreviewingId(requisitionId)
+    setGenError(null)
+    pr2Client
+      .post<SupplierSelection>(`/suppliers/select/${requisitionId}`)
+      .then(({ data }) => setSelection((current) => ({ ...current, [requisitionId]: data })))
+      .catch(() => setGenError('Could not score suppliers for that requisition — check supplier data and retry.'))
+      .finally(() => setPreviewingId(null))
+  }
 
   const generatePo = (requisitionId: string) => {
     setGeneratingId(requisitionId)
@@ -133,10 +156,10 @@ export default function PurchaseOrdersView() {
         ) : (
           <div className="space-y-2">
             {requisitions.map((req) => (
-              <div
-                key={req.id}
-                className="animate-rise-in flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel px-4 py-3"
-              >
+              <div key={req.id}>
+                <div
+                  className="animate-rise-in flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel px-4 py-3"
+                >
                 <div>
                   <p className="font-mono text-sm text-paper">
                     {req.skuCode} <span className="text-mist">→</span> {req.dcCode}
@@ -145,14 +168,44 @@ export default function PurchaseOrdersView() {
                     Qty {req.quantity.toLocaleString()} <SourceBadge source={req.source} />
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => generatePo(req.id)}
-                  disabled={generatingId === req.id}
-                  className="rounded-lg bg-signal px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {generatingId === req.id ? 'Generating…' : 'Generate PO'}
-                </button>
+                <div className="flex items-center gap-2">
+                  {!selection[req.id] && (
+                    <button
+                      type="button"
+                      onClick={() => previewPo(req.id)}
+                      disabled={previewingId === req.id || generatingId === req.id}
+                      className="rounded-lg bg-signal px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {previewingId === req.id ? 'Scoring…' : 'Generate PO'}
+                    </button>
+                  )}
+                  {selection[req.id] && (
+                    <button
+                      type="button"
+                      onClick={() => generatePo(req.id)}
+                      disabled={generatingId === req.id}
+                      className="rounded-lg bg-signal px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {generatingId === req.id ? 'Generating…' : 'Confirm & generate PO'}
+                    </button>
+                  )}
+                </div>
+                </div>
+                {selection[req.id] && (
+                  <div className="mt-2 rounded-lg border border-signal/30 bg-signal/5 px-4 py-3 text-xs">
+                  <p className="font-semibold text-signal">
+                    Recommended supplier: {selection[req.id].selected.name} · score {selection[req.id].score.toFixed(4)}
+                  </p>
+                  <p className="mt-1 text-mist">Deterministic ranking of eligible suppliers:</p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-mist">
+                    {selection[req.id].ranking.map((entry, index) => (
+                      <span key={entry.supplier.id}>
+                        {index + 1}. {entry.supplier.name} ({entry.score.toFixed(4)})
+                      </span>
+                    ))}
+                  </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

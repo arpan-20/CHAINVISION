@@ -1,0 +1,44 @@
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:114:20)
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:114:20)
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:114:20)
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-2641684192064633.js:114:20)

@@ -1,0 +1,41 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 342 >>
+stream
+BT
+/F1 24 Tf
+72 720 Td
+(INVOICE) Tj
+/F1 14 Tf
+0 -42 Td
+(Invoice Number: INV-MED104-001) Tj
+0 -26 Td
+(PO Number: PO-MED104-001) Tj
+0 -26 Td
+(Vendor: MedSure Life Sciences) Tj
+0 -26 Td
+(SKU: MED-104 Oseltamivir 75mg) Tj
+0 -26 Td
+(Quantity: 1200) Tj
+0 -26 Td
+(Unit Price: 10.325) Tj
+0 -26 Td
+(Total: 12390.00) Tj
+0 -40 Td
+(Matching sample invoice - PO and GRN agree.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+%%EOF

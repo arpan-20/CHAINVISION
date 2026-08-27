@@ -18,7 +18,11 @@ if (!baseURL) {
  */
 export const pr2Client = axios.create({
   baseURL,
-  timeout: 10_000,
+  // Exception queue responses include the latest match and AI explanation
+  // for every pending invoice and can take longer than the lightweight PR2
+  // overview endpoints. Keep the request alive long enough for Spring to
+  // finish querying and serializing the queue instead of aborting it at 10s.
+  timeout: 60_000,
   headers: {
     'Content-Type': 'application/json',
   },

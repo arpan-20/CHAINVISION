@@ -185,6 +185,14 @@ function ReceiptForm({
       setError('Enter a received quantity greater than zero.')
       return
     }
+    if (!expiryDate) {
+      setError('Enter the batch expiry date before confirming the receipt.')
+      return
+    }
+    if (!batchNo.trim()) {
+      setError('Enter the batch number before confirming the receipt.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     pr2Client
@@ -224,25 +232,27 @@ function ReceiptForm({
         </label>
         <label className="block">
           <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-mist">
-            Batch no. (optional)
+            Batch no. <span className="text-critical">*</span>
           </span>
           <input
             type="text"
             value={batchNo}
             onChange={(e) => setBatchNo(e.target.value)}
             disabled={submitting}
+            required
             className="w-full rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
           />
         </label>
         <label className="block">
           <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-mist">
-            Expiry date (optional)
+            Expiry date <span className="text-critical">*</span>
           </span>
           <input
             type="date"
             value={expiryDate}
             onChange={(e) => setExpiryDate(e.target.value)}
             disabled={submitting}
+            required
             className="w-full rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
           />
         </label>

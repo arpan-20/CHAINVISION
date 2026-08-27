@@ -1,0 +1,12 @@
+
+> chainvision-p1-backend@0.1.0 dev
+> ts-node-dev --respawn --transpile-only src/index.ts
+
+[INFO] 13:03:16 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[ERROR] 13:03:17 Error: listen EADDRINUSE: address already in use :::4000
+[INFO] 16:51:52 Restarting: C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\services\pr2ClientService.ts has been modified
+[ERROR] 16:51:52 Error: listen EADDRINUSE: address already in use :::4000
+[INFO] 18:01:00 Restarting: C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\services\pr2ClientService.ts has been modified
+[ERROR] 18:01:01 Error: listen EADDRINUSE: address already in use :::4000
+[INFO] 18:04:45 Restarting: C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\services\pr2ClientService.ts has been modified
+[ERROR] 18:04:46 Error: listen EADDRINUSE: address already in use :::4000

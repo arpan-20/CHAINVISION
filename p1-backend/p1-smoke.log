@@ -1,0 +1,38 @@
+
+> chainvision-p1-backend@0.1.0 dev
+> ts-node-dev --respawn --transpile-only src/index.ts
+
+[INFO] 16:53:16 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[p1-backend] listening on port 4000
+Warning: Indexing all PDF objects
+Warning: Indexing all PDF objects
+Warning: Indexing all PDF objects
+Warning: Indexing all PDF objects
+Warning: Indexing all PDF objects
+Warning: Indexing all PDF objects
+[INFO] 18:01:00 Restarting: C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\services\pr2ClientService.ts has been modified
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-8619002841663368.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-8619002841663368.js:114:20)
+[ERROR] 18:01:01 Error: listen EADDRINUSE: address already in use :::4000
+[INFO] 18:04:45 Restarting: C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\services\pr2ClientService.ts has been modified
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\src\index.ts:39:7)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1730:14)
+    at Module._compile (C:\Users\imarp\Desktop\Cognizant_Hackathon\Chainvision\p1-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-8619002841663368.js:69:33)
+    at node:internal/modules/cjs/loader:1895:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\imarp\AppData\Local\Temp\ts-node-dev-hook-8619002841663368.js:114:20)
+[ERROR] 18:04:46 Error: listen EADDRINUSE: address already in use :::4000

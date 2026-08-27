@@ -102,7 +102,10 @@ recommendation, requisition, PO, GRN, and two invoice rows. Running it twice in 
 - Step 3 falls back to an existing requisition if the exact one isn't found,
 - Step 5 falls back to an existing PO for the chosen requisition.
 
-Data accumulates across runs; re-run the seed scripts to reset to a clean demo state.
+Data accumulates across runs; the smoke test intentionally does not reuse historical
+requisitions or purchase orders. If the current P1→PR2 handoff does not create a fresh
+`CREATED` requisition, it fails at Step 3 so the underlying handoff problem is visible.
+Re-run the seed/reset scripts to reset to a clean demo state when needed.
 
 ---
 
