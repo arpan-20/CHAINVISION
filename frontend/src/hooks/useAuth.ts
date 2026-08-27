@@ -132,7 +132,16 @@ export function useAuth(): UseAuthResult {
 
   const signOut = useCallback(async () => {
     if (!supabaseClient) return
-    await supabaseClient.auth.signOut()
+    try {
+      await supabaseClient.auth.signOut()
+    } catch (error) {
+      // Logout should always finish locally, even if the remote session
+      // endpoint is unavailable. Avoid leaving the protected dashboard mounted
+      // long enough for its in-flight API calls to show error toasts.
+      console.warn('[useAuth] remote sign-out failed; clearing local session', error)
+    } finally {
+      window.location.replace('/login')
+    }
   }, [])
 
   return { user, role, loading, signOut }
