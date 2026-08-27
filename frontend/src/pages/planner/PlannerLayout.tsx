@@ -89,9 +89,7 @@ function ManifestTicker() {
           </span>
         ))}
       </div>
-      <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 font-mono text-[9px] uppercase tracking-[0.2em] text-mist/70 md:block">
-        {liveItems ? 'Live · replenishment recommendations' : 'Preview feed · live once recommendations exist'}
-      </span>
+      
     </div>
   )
 }
