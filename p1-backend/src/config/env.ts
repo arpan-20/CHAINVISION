@@ -35,7 +35,7 @@ const parsePort = (value: string): number => {
 export const env: AppEnv = {
   supabaseUrl: required('SUPABASE_URL'),
   supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
-  p1Port: parsePort(required('P1_PORT')),
+  p1Port: parsePort(process.env.P1_PORT ?? process.env.PORT ?? '4000'),
   pr2BaseUrl: required('PR2_BASE_URL'),
   internalApiKey: required('INTERNAL_API_KEY'),
 }
