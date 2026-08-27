@@ -7,6 +7,10 @@ public record AnalyticsSummaryResponse(
         long prsInFlight,
         long posInFlight,
         long invoicesInFlight,
+        long autoApprovedPayments,
+        long totalPayments,
+        long mismatchedThreeWayMatches,
+        long totalThreeWayMatches,
         double touchlessRatePct,
         double exceptionRatePct,
         Double avgCycleTimeHours) {

@@ -13,10 +13,15 @@ import com.chainvision.pr2.invoice.ThreeWayMatchEngine;
 import com.chainvision.pr2.invoice.ThreeWayMatchRepository;
 import com.chainvision.pr2.purchaseorder.PurchaseOrder;
 import com.chainvision.pr2.purchaseorder.PurchaseOrderRepository;
+import com.chainvision.pr2.requisition.PurchaseRequisition;
+import com.chainvision.pr2.requisition.PurchaseRequisitionRepository;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ public class MatchingService {
     private final InvoiceRepository invoiceRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final GoodsReceiptRepository goodsReceiptRepository;
+    private final PurchaseRequisitionRepository requisitionRepository;
     private final ThreeWayMatchRepository threeWayMatchRepository;
     private final MismatchExplanationService mismatchExplanationService;
     private final ThreeWayMatchEngine threeWayMatchEngine;
@@ -40,11 +46,26 @@ public class MatchingService {
             GoodsReceiptRepository goodsReceiptRepository,
             ThreeWayMatchRepository threeWayMatchRepository,
             MismatchExplanationService mismatchExplanationService,
+            java.math.BigDecimal quantityTolerancePct,
+            java.math.BigDecimal priceTolerancePct) {
+        this(invoiceRepository, purchaseOrderRepository, goodsReceiptRepository, null, threeWayMatchRepository,
+                mismatchExplanationService, quantityTolerancePct, priceTolerancePct);
+    }
+
+    @Autowired
+    public MatchingService(
+            InvoiceRepository invoiceRepository,
+            PurchaseOrderRepository purchaseOrderRepository,
+            GoodsReceiptRepository goodsReceiptRepository,
+            PurchaseRequisitionRepository requisitionRepository,
+            ThreeWayMatchRepository threeWayMatchRepository,
+            MismatchExplanationService mismatchExplanationService,
             @Value("${pr2.matching.quantity-tolerance-pct:2}") java.math.BigDecimal quantityTolerancePct,
             @Value("${pr2.matching.price-tolerance-pct:2}") java.math.BigDecimal priceTolerancePct) {
         this.invoiceRepository = invoiceRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.goodsReceiptRepository = goodsReceiptRepository;
+        this.requisitionRepository = requisitionRepository;
         this.threeWayMatchRepository = threeWayMatchRepository;
         this.mismatchExplanationService = mismatchExplanationService;
         this.threeWayMatchEngine = new ThreeWayMatchEngine(quantityTolerancePct, priceTolerancePct);
@@ -88,7 +109,12 @@ public class MatchingService {
                 .orElseThrow()
                 .getId();
 
-        ThreeWayMatchEngine.MatchDecision decision = threeWayMatchEngine.match(po, totalReceivedQty, invoice);
+        PurchaseRequisition requisition = requisitionRepository == null
+                ? null
+                : requisitionRepository.findById(po.getRequisitionId()).orElse(null);
+        String expectedSku = requisition == null ? null : requisition.getSkuCode();
+        String invoiceSku = extractSku(invoice.getRawOcrJson());
+        ThreeWayMatchEngine.MatchDecision decision = threeWayMatchEngine.match(po, totalReceivedQty, invoice, expectedSku, invoiceSku);
         String aiExplanation = decision.result() == MatchResult.MISMATCHED
                 ? mismatchExplanationService.explain(decision.mismatchReason())
                 : null;
@@ -112,6 +138,13 @@ public class MatchingService {
         invoiceRepository.save(invoice);
 
         return match;
+    }
+
+    private static String extractSku(String rawJson) {
+        if (rawJson == null) return null;
+        Matcher matcher = Pattern.compile("\\\"(?:skuCode|sku_code|sku)\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", Pattern.CASE_INSENSITIVE)
+                .matcher(rawJson);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private static UUID firstNonNull(UUID first, UUID second) {

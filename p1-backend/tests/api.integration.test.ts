@@ -223,6 +223,7 @@ describe('P1 API routes', () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'
     process.env.P1_PORT = '4000'
     process.env.PR2_BASE_URL = 'http://localhost:8080'
+    process.env.INTERNAL_API_KEY = 'test-internal-key'
 
     const { app } = await import('../src/index')
     server = http.createServer(app)

@@ -14,9 +14,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.chainvision.pr2.payment.PaymentApprovalRepository;
 
 // Invoice upload pipeline, Documentaion/00_PROJECT_CONTEXT.md Section 3 and Section 10:
 // P1/Tesseract extracts raw OCR text first; Gemini only structures that raw text into JSON.
@@ -32,17 +34,33 @@ public class InvoiceService {
     private final InvoiceStructuringService invoiceStructuringService;
     private final ObjectMapper objectMapper;
     private final Path uploadDir;
+    private final ThreeWayMatchRepository threeWayMatchRepository;
+    private final PaymentApprovalRepository paymentApprovalRepository;
 
     public InvoiceService(
             InvoiceRepository invoiceRepository,
             OcrClient ocrClient,
             InvoiceStructuringService invoiceStructuringService,
             ObjectMapper objectMapper,
+            String uploadDir) {
+        this(invoiceRepository, ocrClient, invoiceStructuringService, objectMapper, null, null, uploadDir);
+    }
+
+    @Autowired
+    public InvoiceService(
+            InvoiceRepository invoiceRepository,
+            OcrClient ocrClient,
+            InvoiceStructuringService invoiceStructuringService,
+            ObjectMapper objectMapper,
+            ThreeWayMatchRepository threeWayMatchRepository,
+            PaymentApprovalRepository paymentApprovalRepository,
             @Value("${pr2.upload-dir:./uploads}") String uploadDir) {
         this.invoiceRepository = invoiceRepository;
         this.ocrClient = ocrClient;
         this.invoiceStructuringService = invoiceStructuringService;
         this.objectMapper = objectMapper;
+        this.threeWayMatchRepository = threeWayMatchRepository;
+        this.paymentApprovalRepository = paymentApprovalRepository;
         this.uploadDir = Path.of(uploadDir);
     }
 
@@ -87,6 +105,20 @@ public class InvoiceService {
     public Invoice getInvoice(UUID id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + id));
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        if (!invoiceRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Invoice not found: " + id);
+        }
+        if (paymentApprovalRepository == null || threeWayMatchRepository == null) {
+            invoiceRepository.deleteById(id);
+            return;
+        }
+        paymentApprovalRepository.deleteAll(paymentApprovalRepository.findByInvoiceId(id));
+        threeWayMatchRepository.deleteAll(threeWayMatchRepository.findByInvoiceIdOrderByMatchedAtDesc(id));
+        invoiceRepository.deleteById(id);
     }
 
     private StructuredInvoice extractAndStructure(MultipartFile file) {

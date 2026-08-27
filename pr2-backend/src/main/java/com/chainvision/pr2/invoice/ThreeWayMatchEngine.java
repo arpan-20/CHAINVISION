@@ -28,17 +28,23 @@ public class ThreeWayMatchEngine {
     }
 
     public MatchDecision match(PurchaseOrder po, int receivedQuantity, Invoice invoice) {
+        return match(po, receivedQuantity, invoice, null, null);
+    }
+
+    public MatchDecision match(PurchaseOrder po, int receivedQuantity, Invoice invoice, String expectedSku, String invoiceSku) {
         boolean invoiceMatchesReceipt = withinTolerance(
                 BigDecimal.valueOf(invoice.getQuantityOcr()), BigDecimal.valueOf(receivedQuantity), quantityTolerancePct);
         boolean receiptMatchesPo = withinTolerance(
                 BigDecimal.valueOf(receivedQuantity), BigDecimal.valueOf(po.getQuantity()), quantityTolerancePct);
         boolean qtyMatch = invoiceMatchesReceipt && receiptMatchesPo;
         boolean priceMatch = withinTolerance(invoice.getUnitPriceOcr(), po.getUnitPrice(), priceTolerancePct);
-        MatchResult result = (qtyMatch && priceMatch) ? MatchResult.MATCHED : MatchResult.MISMATCHED;
+        boolean skuMatch = expectedSku == null || invoiceSku == null
+                || expectedSku.trim().equalsIgnoreCase(invoiceSku.trim());
+        MatchResult result = (qtyMatch && priceMatch && skuMatch) ? MatchResult.MATCHED : MatchResult.MISMATCHED;
         String mismatchReason = result == MatchResult.MISMATCHED
-                ? buildMismatchReason(invoice, receivedQuantity, po, invoiceMatchesReceipt, receiptMatchesPo, priceMatch)
+                ? buildMismatchReason(invoice, receivedQuantity, po, invoiceMatchesReceipt, receiptMatchesPo, priceMatch, skuMatch, expectedSku, invoiceSku)
                 : null;
-        return new MatchDecision(qtyMatch, priceMatch, result, mismatchReason);
+        return new MatchDecision(qtyMatch, priceMatch, skuMatch, result, mismatchReason);
     }
 
     private boolean withinTolerance(BigDecimal actual, BigDecimal expected, BigDecimal tolerancePct) {
@@ -58,7 +64,10 @@ public class ThreeWayMatchEngine {
             PurchaseOrder po,
             boolean invoiceMatchesReceipt,
             boolean receiptMatchesPo,
-            boolean priceMatch) {
+            boolean priceMatch,
+            boolean skuMatch,
+            String expectedSku,
+            String invoiceSku) {
         StringBuilder reason = new StringBuilder();
         if (!invoiceMatchesReceipt) {
             reason.append("Invoice quantity (%d) does not match goods received (%d); exceeds %s%% tolerance."
@@ -79,9 +88,13 @@ public class ThreeWayMatchEngine {
                     "Invoice unit price (%s) does not match PO unit price (%s); exceeds %s%% tolerance."
                             .formatted(invoice.getUnitPriceOcr(), po.getUnitPrice(), priceTolerancePct));
         }
+        if (!skuMatch) {
+            if (!reason.isEmpty()) reason.append(' ');
+            reason.append("Invoice SKU (%s) does not match expected SKU (%s).".formatted(invoiceSku, expectedSku));
+        }
         return reason.toString();
     }
 
-    public record MatchDecision(boolean qtyMatch, boolean priceMatch, MatchResult result, String mismatchReason) {
+    public record MatchDecision(boolean qtyMatch, boolean priceMatch, boolean skuMatch, MatchResult result, String mismatchReason) {
     }
 }

@@ -34,7 +34,7 @@ class GoodsReceiptServiceTest {
         when(goodsReceiptRepository.save(any(GoodsReceipt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(goodsReceiptRepository.findByPoId(poId))
-                .thenReturn(List.of(new GoodsReceipt(poId, 500, "B100", LocalDate.parse("2027-06-01"))));
+                .thenReturn(List.of());
 
         GoodsReceipt grn = goodsReceiptService.recordReceipt(poId, 500, "B100", LocalDate.parse("2027-06-01"));
 

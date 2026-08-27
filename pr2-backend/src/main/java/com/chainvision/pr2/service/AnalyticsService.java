@@ -72,6 +72,13 @@ public class AnalyticsService {
                 ? 0.0
                 : 100.0 * payments.stream().filter(p -> p.getStatus() == PaymentStatus.AUTO_APPROVED).count() / payments.size();
 
+        long autoApprovedPayments = payments.stream()
+                .filter(p -> p.getStatus() == PaymentStatus.AUTO_APPROVED)
+                .count();
+        long mismatchedThreeWayMatches = matches.stream()
+                .filter(m -> m.getResult() == MatchResult.MISMATCHED)
+                .count();
+
         Double avgCycleTimeHours = computeAvgCycleTimeHours(requisitions, purchaseOrders, invoices, payments);
 
         return new AnalyticsSummaryResponse(
@@ -81,6 +88,10 @@ public class AnalyticsService {
                 prsInFlight,
                 posInFlight,
                 invoicesInFlight,
+                autoApprovedPayments,
+                payments.size(),
+                mismatchedThreeWayMatches,
+                matches.size(),
                 touchlessRatePct,
                 exceptionRatePct,
                 avgCycleTimeHours);

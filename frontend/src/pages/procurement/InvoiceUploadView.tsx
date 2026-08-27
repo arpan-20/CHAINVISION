@@ -78,6 +78,7 @@ const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
   APPROVED: 'text-signal border-signal/30 bg-signal/10',
   EXCEPTION: 'text-critical border-critical/40 bg-critical/10',
 }
+const HIDDEN_PO_STORAGE_KEY = 'chainvision.hidden-received-po-ids'
 
 function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   return (
@@ -102,6 +103,15 @@ export default function InvoiceUploadView() {
   const [state, setState] = useState<LoadState>('loading')
 
   const [selectedPoId, setSelectedPoId] = useState('')
+  const [hiddenPoIds, setHiddenPoIds] = useState<string[]>(() => {
+    try {
+      const stored = window.localStorage.getItem(HIDDEN_PO_STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
+  const [managePoList, setManagePoList] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -110,6 +120,7 @@ export default function InvoiceUploadView() {
   const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null)
   const [matchByInvoiceId, setMatchByInvoiceId] = useState<Record<string, ThreeWayMatchResponse>>({})
   const [matching, setMatching] = useState(false)
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
   const [matchError, setMatchError] = useState<string | null>(null)
 
   const supplierById = new Map(suppliers.map((s) => [s.id, s]))
@@ -119,8 +130,12 @@ export default function InvoiceUploadView() {
   // otherwise), so this keeps the upload flow demo-safe end to end.
   const receivedPoIds = useMemo(() => new Set(goodsReceipts.map((g) => g.poId)), [goodsReceipts])
   const eligiblePos = useMemo(
-    () => purchaseOrders.filter((po) => receivedPoIds.has(po.id)),
-    [purchaseOrders, receivedPoIds],
+    () => purchaseOrders.filter((po) => receivedPoIds.has(po.id) && !hiddenPoIds.includes(po.id)),
+    [purchaseOrders, receivedPoIds, hiddenPoIds],
+  )
+  const receivedPurchaseOrders = useMemo(
+    () => purchaseOrders.filter((po) => receivedPoIds.has(po.id) && !hiddenPoIds.includes(po.id)),
+    [purchaseOrders, receivedPoIds, hiddenPoIds],
   )
 
   const activeInvoice = invoices.find((i) => i.id === activeInvoiceId) ?? null
@@ -147,6 +162,9 @@ export default function InvoiceUploadView() {
   }
 
   useEffect(load, [])
+  useEffect(() => {
+    window.localStorage.setItem(HIDDEN_PO_STORAGE_KEY, JSON.stringify(hiddenPoIds))
+  }, [hiddenPoIds])
   useRealtimeTable('pr2', 'invoices', load)
 
   const onDrop = (e: DragEvent<HTMLLabelElement>) => {
@@ -206,6 +224,19 @@ export default function InvoiceUploadView() {
       .finally(() => setMatching(false))
   }
 
+  const deleteInvoice = (invoice: InvoiceResponse) => {
+    if (!window.confirm(`Delete invoice ${invoice.invoiceNumber}? This cannot be undone.`)) return
+    setDeletingInvoiceId(invoice.id)
+    pr2Client.delete(`/invoices/${invoice.id}`)
+      .then(() => {
+        setInvoices((prev) => prev.filter((item) => item.id !== invoice.id))
+        setMatchByInvoiceId((prev) => { const next = { ...prev }; delete next[invoice.id]; return next })
+        if (activeInvoiceId === invoice.id) setActiveInvoiceId(null)
+      })
+      .catch(() => setMatchError('Could not delete the invoice. Please try again.'))
+      .finally(() => setDeletingInvoiceId(null))
+  }
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -232,11 +263,12 @@ export default function InvoiceUploadView() {
                 <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-mist">
                   Purchase order (must have a goods receipt)
                 </span>
+                <div className="relative">
                 <select
                   value={selectedPoId}
                   onChange={(e) => setSelectedPoId(e.target.value)}
                   disabled={uploading || state === 'loading'}
-                  className="w-full rounded-lg border border-line bg-panel2 px-3 py-2 text-sm text-paper focus:border-signal/50 focus:outline-none"
+                  className="w-full rounded-lg border border-line bg-panel2 px-3 py-2 pr-10 text-sm text-paper focus:border-signal/50 focus:outline-none"
                 >
                   <option value="">Select a PO…</option>
                   {eligiblePos.map((po) => (
@@ -246,6 +278,27 @@ export default function InvoiceUploadView() {
                     </option>
                   ))}
                 </select>
+                {selectedPoId && <button type="button" aria-label="Clear selected purchase order" onClick={() => setSelectedPoId('')} disabled={uploading}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-mist hover:bg-line hover:text-paper disabled:opacity-50">×</button>}
+                </div>
+                {receivedPurchaseOrders.length > 0 && (
+                  <>
+                    <button type="button" onClick={() => setManagePoList((open) => !open)}
+                      className="mt-2 inline-flex items-center rounded-lg border border-signal/50 bg-signal/10 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-signal transition-colors hover:bg-signal/20">
+                      {managePoList ? 'Hide PO manager' : 'Manage PO list'}
+                    </button>
+                    {managePoList && <div className="mt-2 flex flex-wrap gap-2">
+                      {receivedPurchaseOrders.map((po) => (
+                        <span key={po.id} className="inline-flex items-center gap-1 rounded-full border border-line bg-panel2 px-2.5 py-1 font-mono text-[10px] text-mist">
+                          PO {po.id.slice(0, 8)}
+                          <button type="button" aria-label={`Remove PO ${po.id.slice(0, 8)} from list`}
+                            onClick={() => { setHiddenPoIds((ids) => [...ids, po.id]); if (selectedPoId === po.id) setSelectedPoId('') }}
+                            className="rounded-full px-1 text-mist hover:bg-critical/10 hover:text-critical">×</button>
+                        </span>
+                      ))}
+                    </div>}
+                  </>
+                )}
                 {eligiblePos.length === 0 && state === 'ok' && (
                   <p className="mt-1.5 text-xs text-mist">
                     No POs have a recorded goods receipt yet — record one on the Goods Receipt tab first.
@@ -374,9 +427,8 @@ export default function InvoiceUploadView() {
             ) : (
               <div className="space-y-2">
                 {invoices.map((inv) => (
-                  <button
+                  <div
                     key={inv.id}
-                    type="button"
                     onClick={() => setActiveInvoiceId(inv.id)}
                     className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
                       inv.id === activeInvoiceId ? 'border-signal/40 bg-panel2' : 'border-line bg-panel hover:border-signal/20'
@@ -388,8 +440,14 @@ export default function InvoiceUploadView() {
                         {inv.vendorNameOcr} · {currency(inv.totalOcr)}
                       </p>
                     </div>
+                    <div className="flex shrink-0 items-center gap-3">
                     <InvoiceStatusBadge status={inv.status} />
-                  </button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); deleteInvoice(inv) }} disabled={deletingInvoiceId === inv.id}
+                      className="rounded-md border border-critical/30 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-critical hover:bg-critical/10 disabled:opacity-50">
+                      {deletingInvoiceId === inv.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

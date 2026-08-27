@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { pr2Client } from '../../api/pr2Client'
 import { RefreshButton } from '../../components/badges'
@@ -43,6 +44,10 @@ interface AnalyticsSummary {
   prsInFlight: number
   posInFlight: number
   invoicesInFlight: number
+  autoApprovedPayments: number
+  totalPayments: number
+  mismatchedThreeWayMatches: number
+  totalThreeWayMatches: number
   touchlessRatePct: number
   exceptionRatePct: number
   avgCycleTimeHours: number | null
@@ -61,7 +66,7 @@ export default function P2pAnalyticsView() {
     pr2Client
       .get<AnalyticsSummary>('/analytics/p2p-summary')
       .then((res) => {
-        setSummary(res.data)
+        setSummary(normalizeSummary(res.data))
         setState('ok')
       })
       .catch(() => {
@@ -78,6 +83,7 @@ export default function P2pAnalyticsView() {
             const touchlessRatePct =
               processed.length === 0 ? 0 : (100 * (processed.length - openExceptionIds.size)) / processed.length
             const exceptionRatePct = processed.length === 0 ? 0 : (100 * openExceptionIds.size) / processed.length
+            const autoApprovedPayments = processed.length - openExceptionIds.size
 
             setSummary({
               totalRequisitions: 0,
@@ -86,6 +92,10 @@ export default function P2pAnalyticsView() {
               prsInFlight: 0,
               posInFlight: 0,
               invoicesInFlight: invoices.filter((i) => i.status !== 'APPROVED').length,
+              autoApprovedPayments,
+              totalPayments: processed.length,
+              mismatchedThreeWayMatches: openExceptionIds.size,
+              totalThreeWayMatches: processed.length,
               touchlessRatePct,
               exceptionRatePct,
               avgCycleTimeHours: null,
@@ -132,9 +142,9 @@ export default function P2pAnalyticsView() {
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              label="Touchless processing"
-              value={`${summary.touchlessRatePct.toFixed(1)}%`}
-              hint="Auto-approved payments / total payments"
+              label="Auto-approved payments"
+              value={summary.autoApprovedPayments.toLocaleString()}
+              hint={`${summary.totalPayments.toLocaleString()} total payments`}
             />
             <StatCard
               label="Invoices processed"
@@ -142,9 +152,9 @@ export default function P2pAnalyticsView() {
               hint={`${summary.invoicesInFlight.toLocaleString()} in flight`}
             />
             <StatCard
-              label="Exception rate"
-              value={`${summary.exceptionRatePct.toFixed(1)}%`}
-              hint="3-way matches that mismatched"
+              label="Mismatched 3-way matches"
+              value={summary.mismatchedThreeWayMatches.toLocaleString()}
+              hint={`${summary.totalThreeWayMatches.toLocaleString()} total 3-way matches`}
             />
             <StatCard
               label="Avg. cycle time"
@@ -160,6 +170,11 @@ export default function P2pAnalyticsView() {
               <StatCard label="Invoices" value={summary.totalInvoices.toLocaleString()} hint={`${summary.invoicesInFlight} in flight`} />
             </div>
           )}
+
+          <PaymentMatchPieChart
+            autoApprovedPayments={summary.autoApprovedPayments}
+            mismatchedThreeWayMatches={summary.mismatchedThreeWayMatches}
+          />
         </>
       )}
     </div>
@@ -173,5 +188,66 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint: 
       <p className="mt-1.5 font-display text-3xl font-semibold tracking-tight text-paper">{value}</p>
       <p className="mt-1 text-xs text-mist">{hint}</p>
     </div>
+  )
+}
+
+/** Supports analytics responses from before the integer count fields were added. */
+function normalizeSummary(data: Partial<AnalyticsSummary>): AnalyticsSummary {
+  const payload = data ?? {}
+  const totalInvoices = Number(payload.totalInvoices ?? 0)
+  const totalPayments = Number(payload.totalPayments ?? payload.totalInvoices ?? 0)
+  const totalThreeWayMatches = Number(payload.totalThreeWayMatches ?? payload.totalInvoices ?? 0)
+  const touchlessRatePct = Number(payload.touchlessRatePct ?? 0)
+  const exceptionRatePct = Number(payload.exceptionRatePct ?? 0)
+
+  return {
+    totalRequisitions: Number(payload.totalRequisitions ?? 0),
+    totalPurchaseOrders: Number(payload.totalPurchaseOrders ?? 0),
+    totalInvoices,
+    prsInFlight: Number(payload.prsInFlight ?? 0),
+    posInFlight: Number(payload.posInFlight ?? 0),
+    invoicesInFlight: Number(payload.invoicesInFlight ?? 0),
+    autoApprovedPayments: Number(payload.autoApprovedPayments ?? Math.round((touchlessRatePct / 100) * totalPayments)),
+    totalPayments,
+    mismatchedThreeWayMatches: Number(
+      payload.mismatchedThreeWayMatches ?? Math.round((exceptionRatePct / 100) * totalThreeWayMatches),
+    ),
+    totalThreeWayMatches,
+    touchlessRatePct,
+    exceptionRatePct,
+    avgCycleTimeHours: payload.avgCycleTimeHours != null ? Number(payload.avgCycleTimeHours) : null,
+  }
+}
+
+function PaymentMatchPieChart({
+  autoApprovedPayments,
+  mismatchedThreeWayMatches,
+}: {
+  autoApprovedPayments: number
+  mismatchedThreeWayMatches: number
+}) {
+  const data = [
+    { name: 'Auto-approved payments', value: autoApprovedPayments, color: '#47d7ac' },
+    { name: 'Mismatched 3-way matches', value: mismatchedThreeWayMatches, color: '#fb7185' },
+  ]
+
+  return (
+    <section className="rounded-xl border border-line bg-panel p-5">
+      <div>
+        <h3 className="font-display text-lg font-semibold tracking-tight text-paper">Payment &amp; match outcomes</h3>
+        <p className="mt-1 text-sm text-mist">Auto-approved payments compared with 3-way matches that mismatched.</p>
+      </div>
+      <div className="mt-4 h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={92} paddingAngle={3}>
+              {data.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+            </Pie>
+            <Tooltip formatter={(value: number) => [value.toLocaleString(), 'Count']} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
   )
 }
