@@ -61,6 +61,13 @@ public class InvoiceStructuringService {
         try {
             String json = geminiClient.generateJson(prompt, SCHEMA_HINT);
             StructuredInvoicePayload payload = objectMapper.readValue(json, StructuredInvoicePayload.class);
+            // For our explicit labelled test/demo invoices, prefer the deterministic
+            // values read directly from the OCR text over an AI transcription.
+            // This prevents a valid quantity such as 900 being hallucinated as 300.
+            StructuredInvoice labelled = structureLabelledText(rawOcrText);
+            if (labelled != null) {
+                return labelled;
+            }
             return StructuredInvoice.fromPayload(payload, json);
         } catch (Exception e) {
             // The OCR text is already available from P1.  Keep the invoice

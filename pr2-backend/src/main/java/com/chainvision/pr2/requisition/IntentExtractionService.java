@@ -37,8 +37,14 @@ public class IntentExtractionService {
                 "urgency": "LOW"|"MEDIUM"|"HIGH"|"CRITICAL"|null, "confidence": number between 0 and 1,
                 "manualEntryRequired": boolean}
 
+                The medicine may be identified by either its SKU code or its medicine name.
+                Return the supplied medicine name in skuGuess when no SKU code is present.
+                The distribution center may be identified by either its DC code or its name/city.
+                Return the supplied name or city in dcGuess when no DC code is present.
                 Example: "We need 5,000 more units of MED-104 for the flu season."
                 Expected key facts: skuGuess MED-104, quantity 5000.
+                Example: "We need 5,000 Oseltamivir 75mg capsules."
+                Expected key facts: skuGuess Oseltamivir 75mg, quantity 5000.
 
                 Section 9 hard rule: these values are guesses to pre-fill a form for human
                 confirmation only. Do not make sourcing, purchasing, or business decisions.

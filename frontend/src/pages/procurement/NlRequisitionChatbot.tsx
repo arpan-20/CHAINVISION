@@ -34,16 +34,53 @@ function normalizeUrgency(value: string | null): Urgency {
 }
 
 /** Best-effort match of Gemini's free-text guess onto a known SKU/DC code. */
-function resolveGuess<T extends { skuCode?: string; dcCode?: string }>(
+function resolveGuess<T extends { skuCode?: string; dcCode?: string; name?: string }>(
   guess: string | null,
   refs: T[],
   field: 'skuCode' | 'dcCode',
 ): string {
   if (!guess) return ''
-  const exact = refs.find((r) => r[field]?.toLowerCase() === guess.toLowerCase())
+  const normalizedGuess = guess.trim().toLowerCase()
+  const exact = refs.find(
+    (r) => r[field]?.toLowerCase() === normalizedGuess || r.name?.toLowerCase() === normalizedGuess,
+  )
   if (exact) return exact[field] as string
-  const partial = refs.find((r) => r[field]?.toLowerCase().includes(guess.toLowerCase()))
+  const partial = refs.find(
+    (r) =>
+      r[field]?.toLowerCase().includes(normalizedGuess) ||
+      r.name?.toLowerCase().includes(normalizedGuess),
+  )
   return (partial?.[field] as string) ?? guess
+}
+
+/**
+ * Adds an SKU hint when the request names a medicine. This makes name-based
+ * requests work even while the AI provider is unavailable and its local
+ * fallback can only recognise SKU-shaped identifiers.
+ */
+function addMedicineSkuHint(message: string, skus: SkuRef[]): string {
+  const normalizedMessage = message.toLowerCase()
+  const fullNameMatch = skus.find((sku) => normalizedMessage.includes(sku.name.toLowerCase()))
+  if (fullNameMatch) return `${message} (Medicine SKU: ${fullNameMatch.skuCode})`
+
+  const candidates = skus.filter((sku) => {
+    const distinctiveTerms = sku.name.toLowerCase().match(/[a-z]{4,}/g) ?? []
+    return distinctiveTerms.some((term) => normalizedMessage.includes(term))
+  })
+  return candidates.length === 1 ? `${message} (Medicine SKU: ${candidates[0].skuCode})` : message
+}
+
+/** Adds a DC-code hint when the request refers to a distribution-center name or city. */
+function addDistributionCenterHint(message: string, dcs: DcRef[]): string {
+  const normalizedMessage = message.toLowerCase()
+  const fullNameMatch = dcs.find((dc) => normalizedMessage.includes(dc.name.toLowerCase()))
+  if (fullNameMatch) return `${message} (Distribution center: ${fullNameMatch.dcCode})`
+
+  const candidates = dcs.filter((dc) => {
+    const distinctiveTerms = dc.name.toLowerCase().match(/[a-z]{4,}/g) ?? []
+    return distinctiveTerms.some((term) => normalizedMessage.includes(term))
+  })
+  return candidates.length === 1 ? `${message} (Distribution center: ${candidates[0].dcCode})` : message
 }
 
 export default function NlRequisitionChatbot({
@@ -75,7 +112,9 @@ export default function NlRequisitionChatbot({
     const submittedText = text.trim()
 
     pr2Client
-      .post<IntentExtractionResult>('/requisitions/parse-intent', { text: submittedText })
+      .post<IntentExtractionResult>('/requisitions/parse-intent', {
+        text: addDistributionCenterHint(addMedicineSkuHint(submittedText, skus), dcs),
+      })
       .then((response) => {
         const result = response.data
         setGuess(result)
@@ -93,7 +132,9 @@ export default function NlRequisitionChatbot({
   }
 
   const confirm = () => {
-    if (!skuCode || !dcCode || !quantity) {
+    const resolvedSkuCode = resolveGuess(skuCode, skus, 'skuCode')
+    const resolvedDcCode = resolveGuess(dcCode, dcs, 'dcCode')
+    if (!resolvedSkuCode || !resolvedDcCode || !quantity) {
       setErrorMessage('SKU, DC, and quantity are required before confirming.')
       return
     }
@@ -105,8 +146,8 @@ export default function NlRequisitionChatbot({
     // rawNlInput preserves the original sentence for audit/demo purposes.
     pr2Client
       .post('/requisitions', {
-        skuCode,
-        dcCode,
+        skuCode: resolvedSkuCode,
+        dcCode: resolvedDcCode,
         quantity: Number(quantity),
         urgency,
         rawNlInput: rawInputAtParse,
@@ -155,7 +196,7 @@ export default function NlRequisitionChatbot({
                 submitText()
               }
             }}
-            placeholder="e.g. We need 5,000 more units of MED-104 for the flu season."
+            placeholder="e.g. We need 5,000 Oseltamivir units for Delhi."
             disabled={state === 'parsing'}
             className="flex-1 rounded-lg border border-line bg-panel2 px-3.5 py-2.5 text-sm text-paper placeholder:text-mist/60 focus:border-signal/50 focus:outline-none"
           />
@@ -189,7 +230,7 @@ export default function NlRequisitionChatbot({
           )}
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <Field label="SKU code">
+            <Field label="SKU code or medicine name">
               <input
                 list="chatbot-sku-options"
                 value={skuCode}
@@ -205,7 +246,7 @@ export default function NlRequisitionChatbot({
                 ))}
               </datalist>
             </Field>
-            <Field label="DC code">
+            <Field label="DC code or location">
               <input
                 list="chatbot-dc-options"
                 value={dcCode}
