@@ -1,7 +1,7 @@
 import { UpstreamServiceError, withRetry } from '../middleware/rateLimitAwareRetry'
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim()
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-2.0-flash'
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash'
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 interface GeminiResponsePart {
@@ -51,7 +51,7 @@ export const generateText = async (prompt: string): Promise<string> => {
             ],
             generationConfig: {
               temperature: 0.3,
-              maxOutputTokens: 160,
+              maxOutputTokens: 1024,
             },
           }),
         },

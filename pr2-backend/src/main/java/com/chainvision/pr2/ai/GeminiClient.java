@@ -23,7 +23,7 @@ public class GeminiClient {
 
     public GeminiClient(
             @Value("${gemini.api-key:}") String apiKey,
-            @Value("${gemini.model:gemini-2.0-flash}") String model,
+            @Value("${gemini.model:gemini-3.5-flash}") String model,
             ObjectMapper objectMapper) {
         this.apiKey = apiKey;
         this.model = model;
@@ -64,7 +64,9 @@ public class GeminiClient {
         }
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(contentPart),
-                "generationConfig", Map.of("responseMimeType", "application/json"));
+                "generationConfig", Map.of(
+                    "responseMimeType", "application/json",
+                    "maxOutputTokens", 1024));
         try {
             return RateLimitAwareRetry.execute(
                     () -> requestJson(requestBody), "Gemini generateContent");
