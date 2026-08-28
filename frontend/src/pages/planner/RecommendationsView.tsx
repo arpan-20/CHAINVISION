@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { p1Client } from '../../api/p1Client'
 import { RefreshButton, UrgencyBadge, type Urgency } from '../../components/badges'
 import { useReferenceData } from '../../hooks/useReferenceData'
 import { useRealtimeTable } from '../../hooks/useRealtimeTable'
+import { formatINR } from '../../lib/format'
 import DemandSpikeSimulator from './DemandSpikeSimulator'
 
 interface Recommendation {
@@ -48,15 +49,34 @@ export default function RecommendationsView() {
   useEffect(load, [urgencyFilter])
   useRealtimeTable('p1', 'replenishment_recommendations', load)
 
+  // Aggregate ₹ value of all open recommendations (the headline "this is how much $$ we're committing" number)
+  const totalRecommendedValue = useMemo(() => {
+    return recommendations.reduce((sum, rec) => {
+      const sku = skuById.get(rec.skuId)
+      const unitCost = sku?.unitCost ?? 0
+      return sum + unitCost * rec.recommendedQty
+    }, 0)
+  }, [recommendations, skuById])
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5">
-      <div>
-        <h2 className="font-display text-xl font-semibold tracking-tight text-paper">
-          Replenishment recommendations
-        </h2>
-        <p className="mt-1 text-sm text-mist">
-          SKUs past their reorder point, with EOQ-based quantity and urgency - ready to hand off to procurement.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-semibold tracking-tight text-paper">
+            Replenishment recommendations
+          </h2>
+          <p className="mt-1 text-sm text-mist">
+            SKUs past their reorder point, with EOQ-based quantity and urgency - ready to hand off to procurement.
+          </p>
+        </div>
+        {totalRecommendedValue > 0 && (
+          <div className="rounded-lg border border-signal/30 bg-signal/5 px-4 py-2.5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-signal/80">Total PO value</p>
+            <p className="mt-0.5 font-display text-2xl font-semibold tracking-tight text-signal">
+              {formatINR(totalRecommendedValue)}
+            </p>
+          </div>
+        )}
       </div>
 
       <DemandSpikeSimulator skus={skus} dcs={dcs} onRecommendationsUpdated={load} />
@@ -93,7 +113,11 @@ export default function RecommendationsView() {
         </p>
       ) : (
         <div className="space-y-3">
-          {recommendations.map((rec) => (
+          {recommendations.map((rec) => {
+            const sku = skuById.get(rec.skuId)
+            const unitCost = sku?.unitCost ?? 0
+            const recommendedValue = unitCost * rec.recommendedQty
+            return (
             <div
               key={rec.id}
               className="animate-rise-in rounded-xl panel-soft p-5 transition-colors hover:border-signal/30"
@@ -117,7 +141,11 @@ export default function RecommendationsView() {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Recommended qty" value={rec.recommendedQty.toLocaleString()} highlight />
+                <Stat
+                  label="Recommended qty"
+                  value={rec.recommendedQty.toLocaleString() + (recommendedValue > 0 ? ` · ${formatINR(recommendedValue)}` : '')}
+                  highlight
+                />
                 <Stat label="Reorder point" value={rec.reorderPoint.toLocaleString()} />
                 <Stat label="Safety stock" value={rec.safetyStock.toLocaleString()} />
                 <Stat label="EOQ" value={rec.eoq.toLocaleString()} />
@@ -136,7 +164,8 @@ export default function RecommendationsView() {
                 {new Date(rec.createdAt).toLocaleString()}
               </p>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

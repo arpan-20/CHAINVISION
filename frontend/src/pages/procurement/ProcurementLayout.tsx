@@ -86,6 +86,22 @@ function AnalyticsIcon({ className }: IconProps) {
   )
 }
 
+function SupplierIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      {/* Building */}
+      <path d="M4 21V9l5-3 5 3v12" />
+      <path d="M14 21V11l4-1.5V21" />
+      <path d="M2 21h20" />
+      {/* Windows */}
+      <rect x="6" y="11" width="2" height="2" />
+      <rect x="6" y="15" width="2" height="2" />
+      <rect x="10" y="11" width="2" height="2" />
+      <rect x="10" y="15" width="2" height="2" />
+    </svg>
+  )
+}
+
 export const ProcurementIcons = {
   RequisitionIcon,
   PurchaseOrderIcon,
@@ -93,6 +109,7 @@ export const ProcurementIcons = {
   InvoiceIcon,
   ExceptionIcon,
   AnalyticsIcon,
+  SupplierIcon,
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +124,7 @@ export const PROCUREMENT_NAV_ITEMS = [
   { to: '/procurement/invoices', label: 'Invoices', icon: InvoiceIcon, end: false },
   { to: '/procurement/exceptions', label: 'Exceptions', icon: ExceptionIcon, end: false },
   { to: '/procurement/analytics', label: 'Analytics', icon: AnalyticsIcon, end: false },
+  { to: '/procurement/suppliers', label: 'Suppliers', icon: SupplierIcon, end: false },
 ] as const
 
 const PAGE_TITLES: Record<string, string> = {
@@ -117,6 +135,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/procurement/invoices': 'Invoices',
   '/procurement/exceptions': 'Exceptions',
   '/procurement/analytics': 'Analytics',
+  '/procurement/suppliers': 'Supplier scorecard',
 }
 
 function ProcurementNavBar() {

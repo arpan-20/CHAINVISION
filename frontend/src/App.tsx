@@ -17,6 +17,7 @@ import GoodsReceiptView from './pages/procurement/GoodsReceiptView'
 import InvoiceUploadView from './pages/procurement/InvoiceUploadView'
 import ExceptionQueueView from './pages/procurement/ExceptionQueueView'
 import P2pAnalyticsView from './pages/procurement/P2pAnalyticsView'
+import SupplierScorecardPage from './pages/procurement/SupplierScorecardPage'
 import LoginPage from './pages/LoginPage'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -83,6 +84,7 @@ function App() {
           <Route path="invoices" element={<InvoiceUploadView />} />
           <Route path="exceptions" element={<ExceptionQueueView />} />
           <Route path="analytics" element={<P2pAnalyticsView />} />
+          <Route path="suppliers" element={<SupplierScorecardPage />} />
         </Route>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="*" element={<HomeRedirect />} />

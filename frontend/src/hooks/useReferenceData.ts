@@ -7,6 +7,10 @@ export interface SkuRef {
   skuCode: string
   name: string
   category: string
+  /** Per-unit cost in ₹ — backend already returns this on /api/skus. */
+  unitCost?: number
+  /** Lead time in days — backend already returns this. */
+  leadTimeDays?: number
 }
 
 export interface DcRef {

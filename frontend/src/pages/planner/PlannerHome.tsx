@@ -17,8 +17,8 @@ import {
 } from 'recharts'
 
 import { p1Client } from '../../api/p1Client'
-import AiInsightBanner from '../../components/AiInsightBanner'
-import LiveActivityFeed from '../../components/LiveActivityFeed'
+import RealDataAiInsightBanner from '../../components/RealDataAiInsightBanner'
+import RealDataLiveActivityFeed from '../../components/RealDataLiveActivityFeed'
 import SupplyNetwork3D from '../../components/SupplyNetwork3D'
 import { useCountUp, useMounted } from '../../hooks/useMotion'
 import { useAuth } from '../../hooks/useAuth'
@@ -267,7 +267,7 @@ export default function PlannerHome() {
       </div>
 
       {/* ── AI Insight Banner ───────────────────────── */}
-      <AiInsightBanner />
+      <RealDataAiInsightBanner />
 
       {/* ── KPI tiles (count-up) ───────────────────────── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -339,7 +339,7 @@ export default function PlannerHome() {
 
         {/* Live activity feed in the 4th slot */}
         <div className="lg:col-span-1">
-          <LiveActivityFeed className="h-full" />
+          <RealDataLiveActivityFeed />
         </div>
       </section>
     </div>

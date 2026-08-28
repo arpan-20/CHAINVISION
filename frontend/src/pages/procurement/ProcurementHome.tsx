@@ -17,8 +17,8 @@ import {
 } from 'recharts'
 
 import { pr2Client } from '../../api/pr2Client'
-import AiInsightBanner from '../../components/AiInsightBanner'
-import LiveActivityFeed from '../../components/LiveActivityFeed'
+import RealDataAiInsightBanner from '../../components/RealDataAiInsightBanner'
+import RealDataLiveActivityFeed from '../../components/RealDataLiveActivityFeed'
 import SupplyNetwork3D from '../../components/SupplyNetwork3D'
 import { useCountUp, useMounted } from '../../hooks/useMotion'
 import { useAuth } from '../../hooks/useAuth'
@@ -292,7 +292,7 @@ export default function ProcurementHome() {
       </div>
 
       {/* ── AI Insight Banner ───────────────────────── */}
-      <AiInsightBanner />
+      <RealDataAiInsightBanner />
 
       {/* ── KPI tiles (count-up) ───────────────────────── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -363,7 +363,7 @@ export default function ProcurementHome() {
         </ChartPanel>
 
         <div className="lg:col-span-1">
-          <LiveActivityFeed className="h-full" />
+          <RealDataLiveActivityFeed />
         </div>
       </section>
     </div>
