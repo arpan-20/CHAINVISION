@@ -18,7 +18,10 @@ if (!baseURL) {
  */
 export const p1Client = axios.create({
   baseURL,
-  timeout: 10_000,
+  // Free-tier Render services can take longer than 10 seconds to wake after
+  // idling. Keep the initial dashboard request alive instead of marking the
+  // overview offline while P1 is starting.
+  timeout: 60_000,
   headers: {
     'Content-Type': 'application/json',
   },
