@@ -363,8 +363,8 @@ export default function ProcurementHome() {
         </ChartPanel>
 
         <div className="lg:col-span-1">
-          <RealDataLiveActivityFeed />
-        </div>
+                  <RealDataLiveActivityFeed className="h-[220px]" />
+                </div>
       </section>
     </div>
   )

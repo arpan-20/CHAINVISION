@@ -28,15 +28,15 @@ export default function ExpiryHeatmap() {
   const [selectedCell, setSelectedCell] = useState<{ skuId: string; dcId: string } | null>(null)
 
   const load = () => {
-    setState('loading')
-    p1Client
-      .get<{ data: { batches: Batch[] } }>('/inventory', { params: { detail: 'batches' } })
-      .then((response) => {
-        setBatches(response.data.data.batches)
-        setState('ok')
-      })
-      .catch(() => setState('error'))
-  }
+      setState('loading')
+      p1Client
+        .get<{ data: { batches: Batch[] } }>('/inventory', { params: { detail: 'batches' } })
+        .then((response) => {
+          setBatches(response.data.data.batches)
+          setState('ok')
+        })
+        .catch(() => setState('error'))
+    }
 
   useEffect(load, [])
 
@@ -108,17 +108,16 @@ export default function ExpiryHeatmap() {
   }, [mostUrgent, skuById])
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-xl font-semibold tracking-tight text-paper">Expiry risk heatmap</h2>
-          <p className="mt-1 text-sm text-mist">Worst-case batch risk per SKU × distribution center.</p>
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-xl font-semibold tracking-tight text-paper">Expiry risk heatmap</h2>
+            <p className="mt-1 text-sm text-mist">Worst-case batch risk per SKU × distribution center.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <RefreshButton onClick={load} loading={state === 'loading'} />
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Legend />
-          <RefreshButton onClick={load} loading={state === 'loading'} />
-        </div>
-      </div>
 
       {totalValueAtRisk > 0 && (
         <div className="rounded-xl border border-critical/40 bg-critical/5 p-4">
@@ -133,7 +132,7 @@ export default function ExpiryHeatmap() {
               </p>
             </div>
             <div className="text-right">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Sooneest expiry</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Soonest expiry</p>
               <p className="mt-1 font-display text-xl font-semibold tabular-nums text-paper">
                 {mostUrgent[0]?.daysUntilExpiry ?? 0}d
               </p>
@@ -152,87 +151,88 @@ export default function ExpiryHeatmap() {
       ) : rowSkus.length === 0 ? (
         <p className="rounded-xl border border-line bg-panel p-6 text-sm text-mist">No batches on hand yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-panel p-4">
-          <table className="w-full border-separate border-spacing-1.5 text-left text-xs">
-            <thead>
-              <tr>
-                <th className="px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-mist">SKU \ DC</th>
-                {colDcs.map((dc) => (
-                  <th key={dc.id} className="px-2 py-1 text-center font-mono text-[10px] uppercase tracking-wider text-mist">
-                    {dc.dcCode}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rowSkus.map((sku) => (
-                <tr key={sku.id}>
-                  <td className="whitespace-nowrap px-2 py-1 font-mono text-[11px] text-paper">{sku.skuCode}</td>
-                  {colDcs.map((dc) => {
-                    const cell = grid.get(`${sku.id}:${dc.id}`)
-                    return (
-                      <td key={dc.id} className="p-0">
-                        {cell ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCell({ skuId: sku.id, dcId: dc.id })}
-                            title={`${cell.count} batch(es) · soonest expiry in ${cell.soonestDays}d · click for FEFO stack`}
-                            className={`flex h-14 w-20 flex-col items-center justify-center rounded-lg border font-mono transition-all hover:scale-[1.06] hover:ring-1 hover:ring-signal/60 cursor-pointer ${RISK_CELL_STYLES[cell.worst]}`}
-                          >
-                            <span className="text-[10px] font-semibold uppercase tracking-wide">{cell.worst}</span>
-                            <span className="text-[10px] opacity-80">{cell.soonestDays}d · ×{cell.count}</span>
-                          </button>
-                        ) : (
-                          <div className={`flex h-14 w-20 items-center justify-center rounded-lg border ${RISK_CELL_STYLES.EMPTY}`}>
-                            <span className="text-[10px]">—</span>
-                          </div>
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <div className="overflow-x-auto rounded-xl border border-line bg-panel">
+                  <table className="w-full border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-line/50">
+                        <th className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-mist sticky left-0 bg-panel z-10">SKU \\ DC</th>
+                        {colDcs.map((dc) => (
+                          <th key={dc.id} className="px-3 py-2 text-center font-mono text-[10px] uppercase tracking-wider text-mist min-w-[80px]">
+                            {dc.dcCode}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rowSkus.map((sku) => (
+                        <tr key={sku.id} className="border-b border-line/30 last:border-0">
+                          <td className="px-3 py-2 font-mono text-[11px] text-paper sticky left-0 bg-panel z-10">{sku.skuCode}</td>
+                          {colDcs.map((dc) => {
+                            const cell = grid.get(`${sku.id}:${dc.id}`)
+                            return (
+                              <td key={dc.id} className="px-1 py-1 min-w-[80px]">
+                                {cell ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedCell({ skuId: sku.id, dcId: dc.id })}
+                                    title={`${cell.count} batch(es) · soonest expiry in ${cell.soonestDays}d · click for FEFO stack`}
+                                    className={`flex h-14 w-full flex-col items-center justify-center rounded-lg border font-mono transition-all hover:scale-[1.02] hover:ring-1 hover:ring-signal/60 cursor-pointer ${RISK_CELL_STYLES[cell.worst]}`}
+                                  >
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide">{cell.worst}</span>
+                                    <span className="text-[10px] opacity-80">{cell.soonestDays}d · ×{cell.count}</span>
+                                  </button>
+                                ) : (
+                                  <div className={`flex h-14 w-full items-center justify-center rounded-lg border ${RISK_CELL_STYLES.EMPTY}`}>
+                                    <span className="text-[10px]">—</span>
+                                  </div>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
       )}
 
       {mostUrgent.length > 0 && (
-        <div className="rounded-xl border border-line bg-panel p-5">
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Most urgent batches</p>
-          <div className="space-y-2">
-            {mostUrgent.map((batch) => {
-              const sku = skuById.get(batch.skuId)
-              const batchValue = (sku?.unitCost ?? 0) * batch.quantity
-              return (
-                <div key={batch.id} className="flex items-center justify-between gap-4 rounded-lg border border-line/70 bg-ink/40 px-3.5 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-paper">
-                      <span className="font-mono text-xs">{sku?.skuCode ?? batch.skuId}</span>
-                      <span className="mx-1.5 text-mist">·</span>
-                      <span className="font-mono text-xs">{dcById.get(batch.dcId)?.dcCode ?? batch.dcId}</span>
-                      <span className="mx-1.5 text-mist">·</span>
-                      batch {batch.batchNo}
-                    </p>
-                    <p className="mt-0.5 text-xs text-mist">
-                      {batch.quantity.toLocaleString()} units · expires {batch.expiryDate}
-                      {batch.daysUntilExpiry >= 0 ? ` (in ${batch.daysUntilExpiry}d)` : ` (${Math.abs(batch.daysUntilExpiry)}d ago)`}
-                      {batchValue > 0 && (
-                        <>
-                          <span className="mx-1.5 text-mist/50">·</span>
-                          <span className="text-alert">{formatINR(batchValue)}</span>
-                          <span className="text-mist/70"> at risk</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <RiskBadge risk={batch.expiryRisk} />
+              <div className="rounded-xl border border-line bg-panel p-5">
+                <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Most urgent batches</p>
+                <div className="space-y-2">
+                  {mostUrgent.map((batch) => {
+                    const sku = skuById.get(batch.skuId)
+                    const batchValue = (sku?.unitCost ?? 0) * batch.quantity
+                    return (
+                      <div
+                        key={batch.id}
+                        className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line/70 bg-ink/40 px-4 py-3"
+                      >
+                        <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-sm text-paper">{sku?.skuCode ?? batch.skuId}</span>
+                          <span className="text-mist/50">·</span>
+                          <span className="font-mono text-sm text-paper">{dcById.get(batch.dcId)?.dcCode ?? batch.dcId}</span>
+                          <span className="text-mist/50">·</span>
+                          <span className="font-mono text-sm text-paper">batch {batch.batchNo}</span>
+                          <span className="text-mist/50">·</span>
+                          <span className="text-sm text-mist">
+                            {batch.quantity.toLocaleString()} units · expires {batch.expiryDate}
+                            {batch.daysUntilExpiry >= 0 ? ` (in ${batch.daysUntilExpiry}d)` : ` (${Math.abs(batch.daysUntilExpiry)}d ago)`}
+                          </span>
+                          {batchValue > 0 && (
+                            <>
+                              <span className="text-mist/50">·</span>
+                              <span className="text-alert font-mono">{formatINR(batchValue)} at risk</span>
+                            </>
+                          )}
+                        </div>
+                        <RiskBadge risk={batch.expiryRisk} />
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+              </div>
+            )}
 
       {/* FEFO stack modal — opens when a cell is clicked */}
       {selectedCell && fefoStack.length > 0 && (

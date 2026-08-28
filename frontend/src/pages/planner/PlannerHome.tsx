@@ -338,9 +338,9 @@ export default function PlannerHome() {
         </ChartPanel>
 
         {/* Live activity feed in the 4th slot */}
-        <div className="lg:col-span-1">
-          <RealDataLiveActivityFeed />
-        </div>
+                <div className="lg:col-span-1">
+                  <RealDataLiveActivityFeed className="h-[220px]" />
+                </div>
       </section>
     </div>
   )

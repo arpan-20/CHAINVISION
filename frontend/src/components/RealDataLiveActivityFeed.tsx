@@ -10,7 +10,7 @@ import LiveActivityFeed, { type ActivityEvent } from './LiveActivityFeed'
    platform events in real time. Refreshes every
    30s via the underlying LiveActivityFeed tick.
    ────────────────────────────────────────────── */
-export default function RealDataLiveActivityFeed() {
+export default function RealDataLiveActivityFeed({ className = '' }: { className?: string }) {
   const [events, setEvents] = useState<ActivityEvent[]>([])
   const [tick, setTick] = useState(0)
 
@@ -142,5 +142,5 @@ export default function RealDataLiveActivityFeed() {
     return () => clearInterval(t)
   }, [])
 
-  return <LiveActivityFeed events={events} className="" />
+  return <LiveActivityFeed events={events} className={className} />
 }
