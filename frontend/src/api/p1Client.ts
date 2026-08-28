@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { attachApiInterceptor } from './apiInterceptor'
 
-import { supabaseClient } from '../lib/supabaseClient'
+import { getSupabaseAccessToken } from '../lib/supabaseClient'
 
 const baseURL = import.meta.env.VITE_P1_API_BASE
 
@@ -25,12 +25,9 @@ export const p1Client = axios.create({
 })
 
 p1Client.interceptors.request.use(async (config) => {
-  if (supabaseClient) {
-    const { data } = await supabaseClient.auth.getSession()
-    const accessToken = data.session?.access_token
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`
-    }
+  const accessToken = await getSupabaseAccessToken()
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`
   }
   return config
 })

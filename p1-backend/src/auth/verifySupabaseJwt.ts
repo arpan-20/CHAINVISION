@@ -49,6 +49,7 @@ export const verifySupabaseJwt = async (
 
     const { data: authData, error: authError } = await supabaseClient.auth.getUser(token)
     if (authError || !authData.user) {
+      console.warn('[auth] Supabase access-token verification failed:', authError?.message ?? 'No user returned')
       unauthorized(res)
       return
     }
@@ -60,6 +61,10 @@ export const verifySupabaseJwt = async (
       .maybeSingle<UserProfileRow>()
 
     if (profileError || !profile?.role) {
+      console.warn(
+        '[auth] User profile lookup failed:',
+        profileError?.message ?? `No role found for user ${authData.user.id}`,
+      )
       unauthorized(res)
       return
     }
@@ -70,7 +75,8 @@ export const verifySupabaseJwt = async (
     }
 
     next()
-  } catch {
+  } catch (error) {
+    console.warn('[auth] Unexpected authentication failure:', error instanceof Error ? error.message : error)
     unauthorized(res)
   }
 }
