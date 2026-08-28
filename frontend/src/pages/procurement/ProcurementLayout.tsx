@@ -139,7 +139,7 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 function ProcurementNavBar() {
-  const { user, role, loading, signOut } = useAuth()
+  const { user, role, loading, signOut, switchWorkspace } = useAuth()
 
   return (
     <aside className="flex h-screen w-[76px] shrink-0 flex-col border-r border-line/75 bg-panel/92 shadow-2xl shadow-ink/20 backdrop-blur-xl md:w-64">
@@ -206,9 +206,16 @@ function ProcurementNavBar() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className="mt-2 hidden w-full rounded-md border border-line px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-mist transition-colors hover:border-signal/40 hover:text-signal md:block"
+          className="mt-2 w-full rounded-md border border-line px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-mist transition-colors hover:border-signal/40 hover:text-signal"
         >
           Sign out
+        </button>
+        <button
+          type="button"
+          onClick={() => switchWorkspace('PLANNER')}
+          className="mt-2 w-full rounded-md border border-signal/30 bg-signal/5 px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] leading-tight text-signal transition-colors hover:border-signal/60 hover:bg-signal/10"
+        >
+          Switch to planner
         </button>
       </div>
     </aside>

@@ -18,6 +18,7 @@ export interface UseAuthResult {
   role: AuthRole | null
   loading: boolean
   signOut: () => Promise<void>
+  switchWorkspace: (role: 'PLANNER' | 'PROCUREMENT_OFFICER') => void
 }
 
 interface UserProfileRow {
@@ -43,6 +44,13 @@ const initialsFromName = (name: string) =>
 
 const dcForRole = (role: AuthRole | null) =>
   role === 'PROCUREMENT_OFFICER' ? 'Procurement Ops' : role === 'ADMIN' ? 'All DCs' : 'Kolkata DC'
+
+const WORKSPACE_STORAGE_KEY = 'chainvision.activeWorkspace'
+
+const storedWorkspace = (): 'PLANNER' | 'PROCUREMENT_OFFICER' | null => {
+  const workspace = window.localStorage.getItem(WORKSPACE_STORAGE_KEY)
+  return workspace === 'PLANNER' || workspace === 'PROCUREMENT_OFFICER' ? workspace : null
+}
 
 const toAuthUser = (authUser: SupabaseUser, profile: UserProfileRow | null): AuthUser => {
   const email = profile?.email ?? authUser.email ?? ''
@@ -80,7 +88,7 @@ async function loadSessionUser(session: Session | null) {
 
   return {
     user: toAuthUser(session.user, data ?? null),
-    role: data?.role ?? null,
+    role: storedWorkspace() ?? data?.role ?? null,
   }
 }
 
@@ -140,9 +148,15 @@ export function useAuth(): UseAuthResult {
       // long enough for its in-flight API calls to show error toasts.
       console.warn('[useAuth] remote sign-out failed; clearing local session', error)
     } finally {
+      window.localStorage.removeItem(WORKSPACE_STORAGE_KEY)
       window.location.replace('/login')
     }
   }, [])
 
-  return { user, role, loading, signOut }
+  const switchWorkspace = useCallback((nextRole: 'PLANNER' | 'PROCUREMENT_OFFICER') => {
+    window.localStorage.setItem(WORKSPACE_STORAGE_KEY, nextRole)
+    window.location.replace(nextRole === 'PROCUREMENT_OFFICER' ? '/procurement' : '/planner')
+  }, [])
+
+  return { user, role, loading, signOut, switchWorkspace }
 }
