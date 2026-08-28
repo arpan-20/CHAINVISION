@@ -17,6 +17,10 @@ import {
 } from 'recharts'
 
 import { pr2Client } from '../../api/pr2Client'
+import AiInsightBanner from '../../components/AiInsightBanner'
+import LiveActivityFeed from '../../components/LiveActivityFeed'
+import SupplyNetwork3D from '../../components/SupplyNetwork3D'
+import { useCountUp, useMounted } from '../../hooks/useMotion'
 import { useAuth } from '../../hooks/useAuth'
 
 interface SupplierSummary {
@@ -105,16 +109,55 @@ const chartMargins = {
   bar: { top: 16, right: 28, bottom: 8, left: 8 },
   line: { top: 16, right: 32, bottom: 8, left: 8 },
 }
+
 function greeting(hour: number) {
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
   return 'Good evening'
 }
 
+/* ──────────────────────────────────────────────
+   ANIMATED COUNT-UP KPI TILE
+   ────────────────────────────────────────────── */
+function AnimatedKpiTile({
+  label,
+  value,
+  tone,
+  caption,
+  suffix = '',
+  delay = 0,
+  className = '',
+}: {
+  label: string
+  value: number
+  tone: 'signal' | 'critical' | 'mist'
+  caption: string
+  suffix?: string
+  delay?: number
+  className?: string
+}) {
+  const display = useCountUp(value, 1100, delay)
+  const toneClass = { signal: 'text-signal', critical: 'text-critical', mist: 'text-paper/40' }[tone]
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(17,26,44,0.86),rgba(17,26,44,0.62))] p-3 shadow-lg shadow-ink/20 transition-all duration-300 hover:-translate-y-0.5 hover:border-signal/30 hover:shadow-signal/10 ${className}`}
+    >
+      <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-signal/0 blur-xl transition-all duration-500 group-hover:bg-signal/20" />
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist">{label}</p>
+      <p className={`mt-1 font-display text-xl font-semibold tracking-tight tabular-nums ${toneClass}`}>
+        {Math.round(display).toLocaleString()}
+        <span className="ml-0.5 text-sm text-mist/70">{suffix}</span>
+      </p>
+      <p className="mt-0.5 text-[10px] text-mist/80">{caption}</p>
+    </div>
+  )
+}
+
 export default function ProcurementHome() {
   const { user, loading: userLoading } = useAuth()
   const [metrics, setMetrics] = useState<ProcurementMetrics | null>(null)
   const [metricsState, setMetricsState] = useState<FetchState>('loading')
+  const mounted = useMounted(50)
 
   useEffect(() => {
     let cancelled = false
@@ -202,63 +245,90 @@ export default function ProcurementHome() {
   )
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <div className="animate-rise-in">
-        <h2 className="font-display text-xl font-semibold tracking-tight text-paper md:text-2xl">
-          {greeting(new Date().getHours())}
-          {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
-        </h2>
-        <p className="mt-1 text-xs text-mist">
-          {userLoading
-            ? 'Syncing your session...'
-            : `Watching procure-to-pay across ${user?.dc} and the wider MedCare Pharma network.`}
-        </p>
+    <div
+      className={`mx-auto flex max-w-6xl flex-col gap-4 transition-all duration-700 ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+      }`}
+    >
+      {/* ── Cinematic 3D Hero ───────────────────────── */}
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-panel/60 to-ink/80 shadow-2xl shadow-ink/40">
+        <div className="absolute inset-0 opacity-90">
+          <SupplyNetwork3D height={300} />
+        </div>
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-transparent"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"
+          aria-hidden="true"
+        />
+
+        <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
+          <div className="flex items-center gap-2 text-signal">
+            <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-signal shadow-[0_0_8px_rgba(47,227,196,0.7)]" />
+            <span>Live procurement</span>
+          </div>
+          <div className="hidden items-center gap-3 text-mist/70 sm:flex">
+            <span>5 suppliers</span>
+            <span className="h-3 w-px bg-mist/20" />
+            <span>{metricsState === 'ok' ? 'Synced' : 'Syncing'}</span>
+            <span className="h-3 w-px bg-mist/20" />
+            <span>P2P flow active</span>
+          </div>
+        </div>
+
+        <div className="relative z-10 px-5 pb-6 pt-14 sm:px-8 sm:pt-16">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-alert/80">Live procurement model</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-paper sm:text-4xl">
+            {greeting(new Date().getHours())}
+            {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
+          </h1>
+          <p className="mt-1.5 max-w-xl text-sm text-mist">
+            Watching procure-to-pay across <span className="text-paper">{user?.dc ?? 'your network'}</span> and the wider MedCare Pharma network.
+            Sourcing health, open dock work, and exception pressure in one flow.
+          </p>
+        </div>
       </div>
 
-      <section className="space-y-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Live procurement model</p>
-        <h3 className="font-display text-xl font-semibold tracking-tight text-paper">
-          Requisitions, suppliers, purchase orders, and payment exceptions in one flow.
-        </h3>
-        <p className="max-w-3xl text-xs leading-relaxed text-mist">
-          The P2P chain surfaces sourcing health, open dock work, and exception pressure at a glance.
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <MiniStat label="Network" value={metricsState === 'ok' ? 'Synced' : metricsState === 'loading' ? 'Syncing' : 'Offline'} />
-          <MiniStat label="Quality" value={`${metrics?.supplierQualityAverage.toFixed(1) ?? '0.0'}%`} />
-          <MiniStat label="Lead" value={`${metrics?.supplierLeadTimeAverage.toFixed(1) ?? '0.0'}d`} />
-        </div>
-      </section>
+      {/* ── AI Insight Banner ───────────────────────── */}
+      <AiInsightBanner />
 
+      {/* ── KPI tiles (count-up) ───────────────────────── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiTile
+        <AnimatedKpiTile
           label="Suppliers onboarded"
-          value={metricValue(metricsState, metrics?.supplierCount)}
+          value={metrics?.supplierCount ?? 0}
+          delay={0}
           tone={metricsState === 'error' ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check PR2 API connection' : 'Live from PR2 API'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="Open requisitions"
-          value={metricValue(metricsState, metrics?.openRequisitionCount)}
+          value={metrics?.openRequisitionCount ?? 0}
+          delay={80}
           tone={metricsState === 'error' ? 'critical' : (metrics?.openRequisitionCount ?? 0) > 0 ? 'signal' : 'mist'}
           caption={metricsState === 'error' ? 'Check PR2 API connection' : 'Awaiting PO creation'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="POs awaiting receipt"
-          value={metricValue(metricsState, metrics?.poAwaitingReceiptCount)}
+          value={metrics?.poAwaitingReceiptCount ?? 0}
+          delay={160}
           tone={metricsState === 'error' ? 'critical' : (metrics?.poAwaitingReceiptCount ?? 0) > 0 ? 'signal' : 'mist'}
           caption={metricsState === 'error' ? 'Check PR2 API connection' : 'Open dock confirmations'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="Exceptions queued"
-          value={metricValue(metricsState, metrics?.exceptionCount)}
+          value={metrics?.exceptionCount ?? 0}
+          delay={240}
           tone={metricsState === 'error' ? 'critical' : (metrics?.exceptionCount ?? 0) > 0 ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check PR2 API connection' : 'Needs human review'}
         />
       </div>
 
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <ChartPanel title="P2P Volume" subtitle="Suppliers, requisitions, dock work, and exceptions">
+      {/* ── Charts + Live activity feed ───────────────────────── */}
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+        <ChartPanel title="P2P Volume" subtitle="Suppliers, requisitions, dock work, and exceptions" className="lg:col-span-1">
           <ChartShell height={220}>
             <BarChart data={volumeData} margin={chartMargins.bar} barCategoryGap="32%">
               <CartesianGrid {...gridProps} />
@@ -274,11 +344,11 @@ export default function ProcurementHome() {
           </ChartShell>
         </ChartPanel>
 
-        <ChartPanel title="PO Completion" subtitle="Closed, in flight, and exception counts">
+        <ChartPanel title="PO Completion" subtitle="Closed, in flight, and exception counts" className="lg:col-span-1">
           <DonutChart data={poStatusData} total={metrics?.totalPurchaseOrders ?? poStatusData.reduce((sum, item) => sum + item.value, 0)} label="POs" />
         </ChartPanel>
 
-        <ChartPanel title="Cycle Time by Stage" subtitle="Hours at each P2P step versus target">
+        <ChartPanel title="Cycle Time by Stage" subtitle="Hours at each P2P step versus target" className="lg:col-span-1">
           <ChartShell height={220}>
             <LineChart data={cycleData} margin={chartMargins.line}>
               <CartesianGrid {...gridProps} />
@@ -291,12 +361,11 @@ export default function ProcurementHome() {
             </LineChart>
           </ChartShell>
         </ChartPanel>
+
+        <div className="lg:col-span-1">
+          <LiveActivityFeed className="h-full" />
+        </div>
       </section>
-
-
-      <p className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-mist/70">
-        Demo procurement session active
-      </p>
     </div>
   )
 }
@@ -367,14 +436,6 @@ function DonutChart({ data, total, label }: { data: { label: string; value: numb
     </div>
   )
 }
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-2.5 shadow-sm shadow-ink/20">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-mist">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold text-paper">{value}</p>
-    </div>
-  )
-}
 
 function ChartPanel({ title, subtitle, children, className = '' }: { title: string; subtitle: string; children: ReactNode; className?: string }) {
   return (
@@ -387,32 +448,3 @@ function ChartPanel({ title, subtitle, children, className = '' }: { title: stri
     </section>
   )
 }
-
-function metricValue(state: FetchState, value: number | undefined) {
-  if (state === 'error') return 'Offline'
-  if (state === 'loading') return '...'
-  return String(value ?? 0)
-}
-
-function KpiTile({
-  label,
-  value,
-  caption,
-  tone,
-}: {
-  label: string
-  value: string
-  caption: string
-  tone: 'signal' | 'critical' | 'mist'
-}) {
-  const toneClass = { signal: 'text-signal', critical: 'text-critical', mist: 'text-paper/40' }[tone]
-  return (
-    <div className="animate-rise-in rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(17,26,44,0.86),rgba(17,26,44,0.62))] p-3 shadow-lg shadow-ink/20">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist">{label}</p>
-      <p className={`mt-1 font-display text-xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
-      <p className="mt-0.5 text-[10px] text-mist/80">{caption}</p>
-    </div>
-  )
-}
-
-

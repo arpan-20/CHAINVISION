@@ -17,7 +17,10 @@ import {
 } from 'recharts'
 
 import { p1Client } from '../../api/p1Client'
-import { ChevronIcon, CrateIcon, HourglassIcon, PulseIcon, RouteIcon } from '../../components/icons'
+import AiInsightBanner from '../../components/AiInsightBanner'
+import LiveActivityFeed from '../../components/LiveActivityFeed'
+import SupplyNetwork3D from '../../components/SupplyNetwork3D'
+import { useCountUp, useMounted } from '../../hooks/useMotion'
 import { useAuth } from '../../hooks/useAuth'
 
 interface SkuSummary {
@@ -98,43 +101,52 @@ const chartMargins = {
   line: { top: 16, right: 32, bottom: 8, left: 8 },
 }
 
-const MODULES = [
-  {
-    to: '/planner/inventory',
-    icon: CrateIcon,
-    title: 'Inventory',
-    description: 'Stock on hand by SKU, DC, and batch, with expiry dates attached.',
-  },
-  {
-    to: '/planner/expiry-risk',
-    icon: HourglassIcon,
-    title: 'Expiry Risk',
-    description: 'Batches ranked by how much shelf life is left before write-off.',
-  },
-  {
-    to: '/planner/replenishment',
-    icon: RouteIcon,
-    title: 'Replenishment Recommendations',
-    description: 'SKUs past reorder point, with EOQ and FEFO-aware quantities.',
-  },
-  {
-    to: '/planner/demand-signals',
-    icon: PulseIcon,
-    title: 'Demand Signals',
-    description: 'Sensed demand vs. forecast, by region, including flu-season spikes.',
-  },
-] as const
-
 function greeting(hour: number) {
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
   return 'Good evening'
 }
 
+/* ──────────────────────────────────────────────
+   ANIMATED COUNT-UP KPI TILE
+   ────────────────────────────────────────────── */
+function AnimatedKpiTile({
+  label,
+  value,
+  tone,
+  caption,
+  delay = 0,
+  className = '',
+}: {
+  label: string
+  value: number
+  tone: 'signal' | 'critical' | 'mist'
+  caption: string
+  delay?: number
+  className?: string
+}) {
+  const display = useCountUp(value, 1100, delay)
+  const toneClass = { signal: 'text-signal', critical: 'text-critical', mist: 'text-paper/40' }[tone]
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(17,26,44,0.86),rgba(17,26,44,0.62))] p-3 shadow-lg shadow-ink/20 transition-all duration-300 hover:-translate-y-0.5 hover:border-signal/30 hover:shadow-signal/10 ${className}`}
+    >
+      {/* Corner glow on hover */}
+      <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-signal/0 blur-xl transition-all duration-500 group-hover:bg-signal/20" />
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist">{label}</p>
+      <p className={`mt-1 font-display text-xl font-semibold tracking-tight tabular-nums ${toneClass}`}>
+        {Math.round(display).toLocaleString()}
+      </p>
+      <p className="mt-0.5 text-[10px] text-mist/80">{caption}</p>
+    </div>
+  )
+}
+
 export default function PlannerHome() {
   const { user, loading: userLoading } = useAuth()
   const [metrics, setMetrics] = useState<PlannerMetrics | null>(null)
   const [metricsState, setMetricsState] = useState<FetchState>('loading')
+  const mounted = useMounted(50)
 
   useEffect(() => {
     let cancelled = false
@@ -149,7 +161,6 @@ export default function PlannerHome() {
     ])
       .then(([skuRes, dcRes, recommendationRes, inventoryRes]) => {
         if (cancelled) return
-
         setMetrics({
           skuCount: skuRes.data.data.length,
           dcCount: dcRes.data.data.length,
@@ -189,6 +200,7 @@ export default function PlannerHome() {
       { label: 'Expiry', value: expiry, fill: CHART_COLORS.critical },
     ]
   }, [metrics])
+
   const trendData = useMemo(
     () => [
       { day: 'Mon', demand: 34, inventory: 76 },
@@ -203,60 +215,94 @@ export default function PlannerHome() {
   )
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <div className="animate-rise-in">
-        <h2 className="font-display text-xl font-semibold tracking-tight text-paper md:text-2xl">
-          {greeting(new Date().getHours())}
-          {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
-        </h2>
-        <p className="mt-1 text-xs text-mist">
-          {userLoading ? 'Syncing your session...' : `Watching ${user?.dc} and the wider MedCare Pharma network.`}
-        </p>
+    <div
+      className={`mx-auto flex max-w-6xl flex-col gap-4 transition-all duration-700 ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+      }`}
+    >
+      {/* ── Cinematic 3D Hero ───────────────────────── */}
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-panel/60 to-ink/80 shadow-2xl shadow-ink/40">
+        {/* 3D scene background */}
+        <div className="absolute inset-0 opacity-90">
+          <SupplyNetwork3D height={300} />
+        </div>
+
+        {/* Gradient overlay for text legibility */}
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-transparent"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"
+          aria-hidden="true"
+        />
+
+        {/* Top status strip */}
+        <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
+          <div className="flex items-center gap-2 text-signal">
+            <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-signal shadow-[0_0_8px_rgba(47,227,196,0.7)]" />
+            <span>Live network</span>
+          </div>
+          <div className="hidden items-center gap-3 text-mist/70 sm:flex">
+            <span>6 nodes</span>
+            <span className="h-3 w-px bg-mist/20" />
+            <span>{metrics?.dcCount ?? 0} DCs</span>
+            <span className="h-3 w-px bg-mist/20" />
+            <span>{metricsState === 'ok' ? 'Synced' : 'Syncing'}</span>
+          </div>
+        </div>
+
+        {/* Hero content */}
+        <div className="relative z-10 px-5 pb-6 pt-14 sm:px-8 sm:pt-16">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-signal/80">Live planning model</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-paper sm:text-4xl">
+            {greeting(new Date().getHours())}
+            {!userLoading && user ? `, ${user.name.split(' ')[0]}` : ''}.
+          </h1>
+          <p className="mt-1.5 max-w-xl text-sm text-mist">
+            Watching <span className="text-paper">{user?.dc ?? 'your network'}</span> and the wider MedCare Pharma network.
+            Demand pressure flows into replenishment, then into DC stock and expiry risk.
+          </p>
+        </div>
       </div>
 
-      <section className="space-y-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist">Live planning model</p>
-        <h3 className="font-display text-xl font-semibold tracking-tight text-paper">
-          Inventory, expiry, and demand signals in one operating view.
-        </h3>
-        <p className="max-w-3xl text-xs leading-relaxed text-mist">
-          Demand pressure flows into replenishment decisions, then into DC stock and expiry risk.
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <MiniStat label="Network" value={metricsState === 'ok' ? 'Synced' : metricsState === 'loading' ? 'Syncing' : 'Offline'} />
-          <MiniStat label="Flow" value={`${metrics?.reorderAlertCount ?? 0} alerts`} tone={metricsState === 'error' ? 'critical' : (metrics?.reorderAlertCount ?? 0) > 0 ? 'critical' : 'signal'} />
-          <MiniStat label="Risk" value={`${metrics?.expiryRiskCount ?? 0} batches`} tone={metricsState === 'error' ? 'critical' : (metrics?.expiryRiskCount ?? 0) > 0 ? 'critical' : 'signal'} />
-        </div>
-      </section>
+      {/* ── AI Insight Banner ───────────────────────── */}
+      <AiInsightBanner />
 
+      {/* ── KPI tiles (count-up) ───────────────────────── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiTile
+        <AnimatedKpiTile
           label="SKUs tracked"
-          value={metricValue(metricsState, metrics?.skuCount)}
+          value={metrics?.skuCount ?? 0}
+          delay={0}
           tone={metricsState === 'error' ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check P1 API connection' : 'Live from P1 API'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="Distribution centers"
-          value={metricValue(metricsState, metrics?.dcCount)}
+          value={metrics?.dcCount ?? 0}
+          delay={80}
           tone={metricsState === 'error' ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check P1 API connection' : 'Active network nodes'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="Reorder alerts"
-          value={metricValue(metricsState, metrics?.reorderAlertCount)}
+          value={metrics?.reorderAlertCount ?? 0}
+          delay={160}
           tone={metricsState === 'error' ? 'critical' : (metrics?.reorderAlertCount ?? 0) > 0 ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check P1 API connection' : 'NEW recommendations'}
         />
-        <KpiTile
+        <AnimatedKpiTile
           label="Expiry risk (7d)"
-          value={metricValue(metricsState, metrics?.expiryRiskCount)}
+          value={metrics?.expiryRiskCount ?? 0}
+          delay={240}
           tone={metricsState === 'error' ? 'critical' : (metrics?.expiryRiskCount ?? 0) > 0 ? 'critical' : 'signal'}
           caption={metricsState === 'error' ? 'Check P1 API connection' : 'Batches nearing expiry'}
         />
       </div>
 
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      {/* ── Charts + Live activity feed ───────────────────────── */}
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-4">
         <ChartPanel title="Planning Volume" subtitle="SKUs, DCs, reorder alerts, and expiry risk counts" className="lg:col-span-1">
           <ChartShell height={220}>
             <BarChart data={volumeData} margin={chartMargins.bar} barCategoryGap="32%">
@@ -290,11 +336,12 @@ export default function PlannerHome() {
             </LineChart>
           </ChartShell>
         </ChartPanel>
-      </section>
 
-      <p className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-mist/70">
-        Demo planner session active
-      </p>
+        {/* Live activity feed in the 4th slot */}
+        <div className="lg:col-span-1">
+          <LiveActivityFeed className="h-full" />
+        </div>
+      </section>
     </div>
   )
 }
@@ -366,16 +413,6 @@ function DonutChart({ data, total, label }: { data: { label: string; value: numb
   )
 }
 
-function MiniStat({ label, value, tone = 'signal' }: { label: string; value: string; tone?: 'signal' | 'warning' | 'critical' | 'mist' }) {
-  const toneClass = { signal: 'text-signal', warning: 'text-alert', critical: 'text-critical', mist: 'text-paper/40' }[tone]
-  return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-2.5 shadow-sm shadow-ink/20">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-mist">{label}</p>
-      <p className={`mt-1 truncate text-sm font-semibold ${toneClass}`}>{value}</p>
-    </div>
-  )
-}
-
 function ChartPanel({ title, subtitle, children, className = '' }: { title: string; subtitle: string; children: ReactNode; className?: string }) {
   return (
     <section className={`flex flex-col overflow-hidden rounded-lg border border-white/10 bg-panel/80 shadow-xl shadow-ink/20 ${className}`}>
@@ -385,32 +422,5 @@ function ChartPanel({ title, subtitle, children, className = '' }: { title: stri
       </div>
       <div className="flex-1 p-2.5">{children}</div>
     </section>
-  )
-}
-
-function metricValue(state: FetchState, value: number | undefined) {
-  if (state === 'error') return 'Offline'
-  if (state === 'loading') return '...'
-  return String(value ?? 0)
-}
-
-function KpiTile({
-  label,
-  value,
-  caption,
-  tone,
-}: {
-  label: string
-  value: string
-  caption: string
-  tone: 'signal' | 'critical' | 'mist'
-}) {
-  const toneClass = { signal: 'text-signal', critical: 'text-critical', mist: 'text-paper/40' }[tone]
-  return (
-    <div className="animate-rise-in rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(17,26,44,0.86),rgba(17,26,44,0.62))] p-3 shadow-lg shadow-ink/20">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist">{label}</p>
-      <p className={`mt-1 font-display text-xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
-      <p className="mt-0.5 text-[10px] text-mist/80">{caption}</p>
-    </div>
   )
 }
