@@ -29,6 +29,16 @@ export const attachApiInterceptor = (client: AxiosInstance): void => {
   client.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
+      // Dashboard views issue GET requests as soon as they mount. Those views
+      // already render their own loading/error state, so a transient backend
+      // failure must not produce a global "Unexpected error" alert on every
+      // browser refresh (or twice in React Strict Mode during development).
+      // Keep automatic notifications for actions initiated by the user, such
+      // as creating, updating, or deleting a record.
+      if (error.config?.method?.toLowerCase() === 'get') {
+        return Promise.reject(error)
+      }
+
       const data = error.response?.data
 
       if (isApiErrorShape(data)) {
