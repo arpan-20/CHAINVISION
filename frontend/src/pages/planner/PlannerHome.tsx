@@ -149,6 +149,11 @@ export default function PlannerHome() {
   const mounted = useMounted(50)
 
   useEffect(() => {
+    // The route may mount before the independently loaded auth profile is
+    // ready. Do not spend this one-shot overview fetch without a confirmed
+    // authenticated user; otherwise it has no automatic retry on first load.
+    if (userLoading || !user) return
+
     let cancelled = false
 
     Promise.all([
@@ -178,7 +183,7 @@ export default function PlannerHome() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [userLoading, user?.id])
 
   const volumeData = useMemo(
     () => [
